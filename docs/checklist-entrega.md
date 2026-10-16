@@ -63,8 +63,8 @@ Sale con código 1 solo si encuentra un secreto o un `.env` versionado. El resto
 | `b-op` | Exigido | El proyecto usa la API de Open Payments | ❌ Ver "Lo que falta", punto 1 |
 | `b-primer-pago` | Recomendado | Lo primero: un pago de punta a punta | ❌ #3 abierto |
 | `b-prompts` | Exigido | Prompts reales desde el primer minuto | ✅ 10 archivos en `prompts/` con el texto literal; cada PR agrega los suyos |
-| `b-servicio` | Recomendado | El servicio de Open Payments con poca IA | ⚠️ Aún no existe. La regla `ia-y-prompts.md` dice que lo escribe el equipo y Claude solo explica y revisa |
-| `b-revisar-ia` | Recomendado | Revisar y probar lo que genera la IA | ✅ La web y el bot tienen pruebas (`npm run verificar` en `web/`, `npm test` en `telegram/`) y revisiones con hallazgos corregidos (PR #49) |
+| `b-servicio` | Recomendado | El servicio de Open Payments con poca IA | ⚠️ Aún no existe. La regla `ia-y-prompts.md` dice que lo escribe el equipo y Claude solo explica y revisa; el hook `.claude/hooks/guardia-edicion.mjs` le impide a Claude escribir código en `pagos/` |
+| `b-revisar-ia` | Recomendado | Revisar y probar lo que genera la IA | ✅ La web y el bot tienen pruebas (`npm run verificar` en `web/`, `npm test` en `telegram/`) y revisiones con hallazgos corregidos (PR #49). GitHub las corre en cada PR (`.github/workflows/calidad.yml`) y Claude no puede cerrar un turno con pruebas en rojo (`.claude/hooks/verificar-al-parar.mjs`) |
 | `b-push` | Plan | Subir cambios seguido | ✅ Del #1 al #51, todo entra por PR a `develop` |
 | `b-evidencia` | Plan | Evidencia de cada pago real de prueba | ❌ No hay pagos todavía |
 | `b-checkpoint` | Plan | 15:00, checkpoint de alcance | ⚠️ Ver "Lo que falta", punto 4 |
