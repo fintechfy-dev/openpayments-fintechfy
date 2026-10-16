@@ -1,0 +1,24 @@
+{
+  "name": "integracion-natillera-descuento-actividades-aplicado-descontar-obligaciones",
+  "description": "BRG-013 (conditional, regla key) — Las obligaciones en ALERTA de la participación se cierran como DESCONTADAS; las PAGADAS lo rechazan por estado. Regla natillera-participacion -> natillera-obligacion-actividad de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-participacion",
+      "sourceEvent": "DescuentoActividadesAplicado",
+      "targetTemplate": "natillera-obligacion-actividad",
+      "targetTrigger": "DescontarEnLiquidacion",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "ParticipacionId": "participacionId"
+        },
+        "cardinality": "many"
+      },
+      "parameterMapping": {
+        "currentDate": "CurrentDate"
+      }
+    }
+  ]
+}

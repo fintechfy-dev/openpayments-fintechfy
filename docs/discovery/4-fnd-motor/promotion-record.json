@@ -1,0 +1,32 @@
+{
+  "$schema": "fnd-promotion-record-v1",
+  "generated_at": "2026-10-16T02:44:29.0832417Z",
+  "generated_by": "FndValidator 1.1.0",
+  "templates": [
+    {
+      "contract": "CONT-001",
+      "template_path": "dotnet-backend/product-templates/natillera/natillera-cuenta.json",
+      "sha256": "sha256:107b5f1b44465e386dd9eaec61a7d644d3ddb4b4e728b1a68ef67bd9b498abba"
+    },
+    {
+      "contract": "CONT-002",
+      "template_path": "dotnet-backend/product-templates/natillera/natillera-participacion.json",
+      "sha256": "sha256:630d92b45db6580aba12e1b9807c1b6d4796dd1373707baf9d74e58cf05dddeb"
+    },
+    {
+      "contract": "CONT-003",
+      "template_path": "dotnet-backend/product-templates/natillera/natillera-credito-ahorro.json",
+      "sha256": "sha256:64e202ff2004cf99d421737cc0c19098b627f6574b341ab8ee66c72ae8912bf7"
+    },
+    {
+      "contract": "CONT-004",
+      "template_path": "dotnet-backend/product-templates/natillera/natillera-obligacion-actividad.json",
+      "sha256": "sha256:b51824de79ddc7487d9ce70a5344c3d08b6ea6142348d10b9c667f237ec34620"
+    },
+    {
+      "contract": "CONT-005",
+      "template_path": "dotnet-backend/product-templates/natillera/natillera-actividad.json",
+      "sha256": "sha256:5be14545289a01d3c816719b6a4f085c856259b42843fb45d053fa45c58d7df0"
+    }
+  ]
+}

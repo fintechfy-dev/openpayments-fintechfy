@@ -1,0 +1,23 @@
+# Secretos: nunca al repositorio (el repo es público)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+private*.key
+keys/
+secrets/
+
+# Dependencias y compilados
+node_modules/
+dist/
+build/
+.venv/
+__pycache__/
+*.pyc
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+*.log
+.idea/

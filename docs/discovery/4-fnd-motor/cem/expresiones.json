@@ -1,0 +1,451 @@
+{
+  "$comment": "Fórmulas con nombre del CEM. Las genera generator/natillera.py y son LITERALES las que van en los templates; las prueba Natillera2ExpressionTests con oráculo a mano.",
+  "formulas": {
+    "natillera.NumeroCuotas": {
+      "type": "Add",
+      "left": {
+        "type": "Floor",
+        "operand": {
+          "type": "Divide",
+          "left": {
+            "type": "Subtract",
+            "left": {
+              "type": "Subtract",
+              "left": {
+                "type": "Add",
+                "left": {
+                  "type": "Multiply",
+                  "left": {
+                    "type": "Year",
+                    "dateConcept": "FechaFinal"
+                  },
+                  "right": {
+                    "type": "Constant",
+                    "value": 12,
+                    "valueType": "integer"
+                  }
+                },
+                "right": {
+                  "type": "Month",
+                  "dateConcept": "FechaFinal"
+                }
+              },
+              "right": {
+                "type": "Add",
+                "left": {
+                  "type": "Multiply",
+                  "left": {
+                    "type": "Year",
+                    "dateConcept": "FechaInicio"
+                  },
+                  "right": {
+                    "type": "Constant",
+                    "value": 12,
+                    "valueType": "integer"
+                  }
+                },
+                "right": {
+                  "type": "Month",
+                  "dateConcept": "FechaInicio"
+                }
+              }
+            },
+            "right": {
+              "type": "Conditional",
+              "condition": {
+                "type": "LessThan",
+                "left": {
+                  "type": "Day",
+                  "dateConcept": "FechaFinal"
+                },
+                "right": {
+                  "type": "Day",
+                  "dateConcept": "FechaInicio"
+                }
+              },
+              "trueValue": {
+                "type": "Constant",
+                "value": 1,
+                "valueType": "integer"
+              },
+              "falseValue": {
+                "type": "Constant",
+                "value": 0,
+                "valueType": "integer"
+              }
+            }
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "PeriodicidadMeses"
+          }
+        }
+      },
+      "right": {
+        "type": "Constant",
+        "value": 1,
+        "valueType": "integer"
+      }
+    },
+    "natillera.FechaLimiteCupo": {
+      "type": "AddDays",
+      "dateConcept": "FechaInicio",
+      "daysExpression": {
+        "type": "Concept",
+        "concept": "DiasEsperaCupo"
+      }
+    },
+    "natillera.FechaProximoCobro": {
+      "type": "AddMonths",
+      "dateConcept": "FechaInicio",
+      "monthsExpression": {
+        "type": "Multiply",
+        "left": {
+          "type": "Concept",
+          "concept": "PeriodoActual"
+        },
+        "right": {
+          "type": "Concept",
+          "concept": "PeriodicidadMeses"
+        }
+      }
+    },
+    "natillera.PartePorParticipante": {
+      "type": "Multiply",
+      "left": {
+        "type": "Constant",
+        "value": 0.01,
+        "valueType": "currency"
+      },
+      "right": {
+        "type": "Floor",
+        "operand": {
+          "type": "Multiply",
+          "left": {
+            "type": "Divide",
+            "left": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            },
+            "right": {
+              "type": "Concept",
+              "concept": "ParticipantesValidados"
+            }
+          },
+          "right": {
+            "type": "Constant",
+            "value": 100,
+            "valueType": "decimal"
+          }
+        }
+      }
+    },
+    "natillera.SobranteTotal": {
+      "type": "Subtract",
+      "left": {
+        "type": "Concept",
+        "concept": "SaldoNatillera"
+      },
+      "right": {
+        "type": "Concept",
+        "concept": "SumaPartesNetas"
+      }
+    },
+    "natillera.SobrantePorParticipante": {
+      "type": "Multiply",
+      "left": {
+        "type": "Constant",
+        "value": 0.01,
+        "valueType": "currency"
+      },
+      "right": {
+        "type": "Floor",
+        "operand": {
+          "type": "Multiply",
+          "left": {
+            "type": "Divide",
+            "left": {
+              "type": "Concept",
+              "concept": "SobranteTotal"
+            },
+            "right": {
+              "type": "Concept",
+              "concept": "ParticipantesValidados"
+            }
+          },
+          "right": {
+            "type": "Constant",
+            "value": 100,
+            "valueType": "decimal"
+          }
+        }
+      }
+    },
+    "natillera.Residuo": {
+      "type": "Subtract",
+      "left": {
+        "type": "Concept",
+        "concept": "SobranteTotal"
+      },
+      "right": {
+        "type": "Multiply",
+        "left": {
+          "type": "Concept",
+          "concept": "SobrantePorParticipante"
+        },
+        "right": {
+          "type": "Concept",
+          "concept": "ParticipantesValidados"
+        }
+      }
+    },
+    "participacion.MoraDelDia": {
+      "type": "Round",
+      "operand": {
+        "type": "Multiply",
+        "left": {
+          "type": "Multiply",
+          "left": {
+            "type": "Concept",
+            "concept": "DeudaCuotas"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "PorcentajeMoraDiaria"
+          }
+        },
+        "right": {
+          "type": "Concept",
+          "concept": "DiasDeMora"
+        }
+      },
+      "decimals": 2
+    },
+    "participacion.DescuentoActividades": {
+      "type": "Min",
+      "left": {
+        "type": "Concept",
+        "concept": "DeudaActividades"
+      },
+      "right": {
+        "type": "Parameter",
+        "parameter": "PartePorParticipante"
+      }
+    },
+    "participacion.DescuentoCuotas": {
+      "type": "Min",
+      "left": {
+        "type": "Add",
+        "left": {
+          "type": "Concept",
+          "concept": "DeudaCuotas"
+        },
+        "right": {
+          "type": "Concept",
+          "concept": "MoraAcumulada"
+        }
+      },
+      "right": {
+        "type": "Subtract",
+        "left": {
+          "type": "Parameter",
+          "parameter": "PartePorParticipante"
+        },
+        "right": {
+          "type": "Concept",
+          "concept": "DescuentoActividades"
+        }
+      }
+    },
+    "participacion.MontoDescuentoPrestamo": {
+      "type": "Min",
+      "left": {
+        "type": "Concept",
+        "concept": "DeudaPrestamoEnMora"
+      },
+      "right": {
+        "type": "Subtract",
+        "left": {
+          "type": "Subtract",
+          "left": {
+            "type": "Parameter",
+            "parameter": "PartePorParticipante"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "DescuentoActividades"
+          }
+        },
+        "right": {
+          "type": "Concept",
+          "concept": "DescuentoCuotas"
+        }
+      }
+    },
+    "participacion.ParteNeta": {
+      "type": "Subtract",
+      "left": {
+        "type": "Subtract",
+        "left": {
+          "type": "Subtract",
+          "left": {
+            "type": "Parameter",
+            "parameter": "PartePorParticipante"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "DescuentoActividades"
+          }
+        },
+        "right": {
+          "type": "Concept",
+          "concept": "DescuentoCuotas"
+        }
+      },
+      "right": {
+        "type": "Concept",
+        "concept": "MontoDescuentoPrestamo"
+      }
+    },
+    "participacion.SobranteAsignado": {
+      "type": "Add",
+      "left": {
+        "type": "Parameter",
+        "parameter": "SobrantePorParticipante"
+      },
+      "right": {
+        "type": "Conditional",
+        "condition": {
+          "type": "TextEquals",
+          "left": {
+            "type": "Concept",
+            "concept": "ParticipacionId"
+          },
+          "right": {
+            "type": "Parameter",
+            "parameter": "ParticipacionResiduo"
+          }
+        },
+        "trueValue": {
+          "type": "Parameter",
+          "parameter": "Residuo"
+        },
+        "falseValue": {
+          "type": "Constant",
+          "value": 0,
+          "valueType": "currency"
+        }
+      }
+    },
+    "participacion.MontoMaximoPrestamo": {
+      "type": "Multiply",
+      "left": {
+        "type": "Concept",
+        "concept": "ValorCuota"
+      },
+      "right": {
+        "type": "Concept",
+        "concept": "MultiploPrestamo"
+      }
+    },
+    "credito.CuotaMensual": {
+      "type": "Round",
+      "operand": {
+        "type": "FrenchAmortization",
+        "capitalConcept": "Capital",
+        "rateConcept": "TasaMensual",
+        "termConcept": "PlazoMeses"
+      },
+      "decimals": 2
+    },
+    "credito.InteresDelPeriodo": {
+      "type": "Multiply",
+      "left": {
+        "type": "Constant",
+        "value": 1,
+        "valueType": "currency"
+      },
+      "right": {
+        "type": "Round",
+        "operand": {
+          "type": "Multiply",
+          "left": {
+            "type": "Divide",
+            "left": {
+              "type": "Multiply",
+              "left": {
+                "type": "Concept",
+                "concept": "SaldoCapital"
+              },
+              "right": {
+                "type": "Concept",
+                "concept": "TasaMensual"
+              }
+            },
+            "right": {
+              "type": "Constant",
+              "value": 30,
+              "valueType": "decimal"
+            }
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "DiasCausados"
+          }
+        },
+        "decimals": 2
+      }
+    },
+    "credito.AbonoInteres": {
+      "type": "Min",
+      "left": {
+        "type": "Parameter",
+        "parameter": "MontoPago"
+      },
+      "right": {
+        "type": "Concept",
+        "concept": "InteresCausado"
+      }
+    },
+    "obligacion.CastigoDelDia": {
+      "type": "Round",
+      "operand": {
+        "type": "Multiply",
+        "left": {
+          "type": "Multiply",
+          "left": {
+            "type": "Concept",
+            "concept": "ValorObligacion"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "CastigoMoraDiario"
+          }
+        },
+        "right": {
+          "type": "Concept",
+          "concept": "DiasDeCastigo"
+        }
+      },
+      "decimals": 2
+    },
+    "actividad.RestoPremio": {
+      "type": "Min",
+      "left": {
+        "type": "Parameter",
+        "parameter": "MontoRecaudo"
+      },
+      "right": {
+        "type": "Subtract",
+        "left": {
+          "type": "Concept",
+          "concept": "Premio"
+        },
+        "right": {
+          "type": "Concept",
+          "concept": "PremioPagado"
+        }
+      }
+    }
+  }
+}

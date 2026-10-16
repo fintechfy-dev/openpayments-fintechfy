@@ -1,0 +1,30 @@
+{
+  "name": "integracion-natillera-obligacion-actividad-requerida-crear-obligacion",
+  "description": "BRG-014 (creation, regla create) — Regla de creación: «En el motor financiero le creará a cada participante una cuenta por pagar». Una sola por (participación, actividad): un evento re-entregado no crea una segunda. Regla natillera-participacion -> natillera-obligacion-actividad de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-participacion",
+      "sourceEvent": "ObligacionActividadRequerida",
+      "targetTemplate": "natillera-obligacion-actividad",
+      "resolution": {
+        "mode": "create",
+        "identity": [
+          "participacionId",
+          "actividadId"
+        ]
+      },
+      "parameterMapping": {
+        "actividadId": "ActividadId",
+        "castigoMoraDiario": "CastigoMoraDiario",
+        "currentDate": "CurrentDate",
+        "fechaPago": "FechaPago",
+        "natilleraId": "NatilleraId",
+        "participacionId": "ParticipacionId",
+        "valor": "ValorObligacion",
+        "walletParticipante": "WalletParticipante"
+      }
+    }
+  ]
+}

@@ -1,0 +1,356 @@
+# ============================================================================
+# mapa.yaml — Natillera 2.0 (IMD-20261014-natillera-2)
+#
+# Estado: Fase 3 (Mapa). Todo nodo sale de taller-crudo.md; la trazabilidad
+# de quién dijo qué vive allí. Lo completado por el facilitador fuera del
+# taller, y aceptado por el equipo, se marca con [fuera del taller].
+# Validar con:  python impact-mapping-discovery/tools/imd_lint.py <sesion>
+#
+# Atribución: estructura de Impact Mapping de Gojko Adzic (impactmapping.org,
+# CC BY 4.0). Sus autores no respaldan este trabajo.
+# ============================================================================
+
+version: "1.0"
+mapa_id: "MAP-001"
+nombre: "Natillera 2.0 — corte para la hackathon de Open Payments Medellín"
+arquetipo: "IM-PROD"
+fecha: "2026-10-14"
+
+decision:
+  pendiente: "Qué corte del ciclo de Natillera 2.0 construir en las 9 horas de la hackathon y mostrar en 5 minutos, elegido para que sirva también como primera entrega del producto sobre el motor"
+  quien_rol: "Equipo de la hackathon"
+  fecha_limite: "2026-10-16"
+
+# Taller realizado el 2026-10-14 con dos personas del equipo; cada una
+# respondió desde las cuatro perspectivas (negocio, pagos, frontend, pitch).
+modo: "taller"
+asistentes:
+  - rol: "Proponente — negocio y producto (decisor)"
+  - rol: "Integrante del equipo de la hackathon"
+
+contexto_uso: "enfocar_entrega"
+destino_previsto: "sin_decidir"
+
+jerarquia:
+  mision: "Que cualquier comunidad pueda ahorrar en grupo y acceder a crédito formal de forma segura, devolviéndole la confianza a la natillera a quienes hoy están fuera del sistema financiero."
+  meta_negocio: "Que la financiera que opere Natillera 2.0 sume ahorradores constantes que después tomen crédito formal respaldado por su ahorro."
+
+meta_hito:
+  enunciado: "Que el jurado de la hackathon de Open Payments Medellín lleve nuestra propuesta a la ronda final y la premie por su aporte a la inclusión financiera."
+  medicion:
+    escala: "Etapa alcanzada en la evaluación: 0 sin entrega válida · 1 evaluado en ronda 1 con flujo de pago real · 2 finalista (top 12, ronda 2) · 3 premio"
+    medidor: "Anuncios oficiales de la organización: finalistas a las 14:30 y ganadores a las 16:30 del 2026-10-17"
+    benchmark:
+      valor: 0
+      fuente: "Estado del equipo declarado por el usuario: inscrito y sin entrega"
+      fecha: "2026-10-14"
+      # Hueco declarado: cuántos equipos compiten. Solo se sabe que pasan 12 a la ronda 2.
+    minimo_aceptable: 1     # entrega válida antes de las 11:00 con el flujo de pago real completo
+    objetivo:
+      valor: 3              # Premio a la Inclusión (Puntored)
+      plazo: "2026-10-17"
+  degenerada:
+    pregunta_hecha: true
+    atajo_nombrado: "Demo de humo: pantallas bonitas con pagos simulados y un pitch emotivo."
+    que_lo_impide: "La demo ejecuta pagos reales en la Test Wallet de Open Payments con el flujo completo (solicitud, autorización, ejecución y finalización) y el código pasa la revisión de los mentores a las 11:00 del sábado."
+  contrafactual: "Si el equipo llega el viernes sin un corte decidido y arranca desde el PDF completo, el proponente estima que termina en el nivel 1: algo de pago funciona, pero el jurado no ve la natillera ni la inclusión. Es una estimación del proponente, no una tasa medida. El hito solo aporta lo que suba de 1 a 2 o 3, y eso no lo da el flujo técnico por sí solo: lo da que el jurado entienda el problema, la inclusión y el impacto."
+
+actores:
+  - id: "ACT-001"
+    rol: "Jurado de la hackathon (ronda 1 y panel final)"
+    clase: "primario"              # consume la demo y el pitch; su elección es la meta
+    zona: "influencia"
+    prioridad: "ahora_no"          # sus impactos J1/J2 quedaron AHORA-NO en la votación
+  - id: "ACT-002"
+    rol: "Participante de la natillera que ahorra para tener su dinero en diciembre"
+    clase: "primario"
+    zona: "influencia"
+    prioridad: "ahora"
+  - id: "ACT-003"
+    rol: "Administrador de la natillera (tesorero)"
+    clase: "secundario"
+    zona: "influencia"
+    prioridad: "ahora"
+  - id: "ACT-004"
+    rol: "Financiera que custodia el dinero y presta (no identificada; simulada en la hackathon)"
+    clase: "secundario"
+    zona: "influencia"
+    prioridad: "ahora"
+  - id: "ACT-005"
+    rol: "Regulador de la captación de dinero del público"
+    clase: "off_stage"
+    zona: "influencia"
+    prioridad: "ahora_no"
+  - id: "ACT-006"
+    rol: "Oferentes de alternativas de ahorro más rentables (otras natilleras, financieras)"
+    clase: "off_stage"
+    zona: "influencia"
+    prioridad: "ahora_no"
+  - id: "ACT-007"
+    rol: "Proveedor de billetera digital personal (en el evento, la Test Wallet)"
+    clase: "off_stage"
+    zona: "influencia"
+    prioridad: "ahora"             # sin billetera no hay débito: se vigila en el corte
+
+impactos:
+  - id: "IMP-001"                  # J1
+    actor: "ACT-001"
+    conducta: "empieza a creer que una natillera con pagos transparentes entre participantes, administrador y financiera quita la fricción que deja a las comunidades fuera del sistema financiero"
+    tipo_cambio: "empezar"
+    magnitud: "de la etapa 1 (ve un pago que funciona) a la 2-3 (finalistas o premio a la Inclusión)"
+    direccion: "ayuda"
+    ya_ocurre: false
+    prioridad: "ahora_no"
+    supuestos:
+      - "el jurado valora la transparencia del flujo de dinero como aporte a la inclusión [fuera del taller]"
+    medicion:
+      estado: "sin_medir"
+      razon: "se conoce con los anuncios oficiales del 2026-10-17"
+
+  - id: "IMP-002"                  # J2
+    actor: "ACT-001"
+    conducta: "empieza a creer que ahorrar en grupo, entre familiares y amigos, es una vía de inclusión más efectiva que ahorrar solo y factible hoy con Open Payments"
+    tipo_cambio: "empezar"
+    magnitud: "de la etapa 1 (ve un pago que funciona) a la 2-3 (finalistas o premio a la Inclusión)"
+    direccion: "ayuda"
+    ya_ocurre: false
+    prioridad: "ahora_no"
+    supuestos:
+      - "el jurado ve el ahorro programado entre muchas personas como un caso de uso de Open Payments (puente de P1 en el esqueleto)"
+    medicion:
+      estado: "sin_medir"
+      razon: "se conoce con los anuncios oficiales del 2026-10-17"
+
+  - id: "IMP-003"                  # PA1
+    actor: "ACT-002"
+    conducta: "ahorra desde su billetera digital con débito automático en vez de entregar efectivo al organizador, y ve en todo momento su aporte y el total de la natillera"
+    tipo_cambio: "hacer_distinto"
+    magnitud: "de entregar efectivo sin ver saldos a pagar cada cuota por débito automático con su aporte y el total visibles tras cada pago"
+    direccion: "ayuda"
+    ya_ocurre: true                # ya ahorra en natilleras; cambia el cómo
+    prioridad: "ahora"
+    supuestos:
+      - "el participante tiene o puede abrir una billetera compatible con Open Payments [fuera del taller]"
+      - "va a querer autorizar una sola vez el débito periódico de su billetera (E-09)"
+      - "Open Payments permite un permiso de pago saliente recurrente con intervalo (VH-02, por verificar) [fuera del taller]"
+    medicion:
+      estado: "sin_medir"
+      razon: "no hay producto; en la demo se observa en el registro del flujo de pago"
+
+  - id: "IMP-004"                  # PA2
+    actor: "ACT-002"
+    conducta: "ahorra dentro del sistema financiero sin depender de confiar en quien organiza"
+    tipo_cambio: "hacer_distinto"
+    magnitud: "de ahorrar por fuera del sistema confiando en el organizador a ahorrar en una cuenta custodiada por una financiera"
+    direccion: "ayuda"
+    ya_ocurre: true
+    prioridad: "ahora_no"
+    supuestos:
+      - "la custodia por una financiera reduce la desconfianza que hoy frena las natilleras (E-01) [fuera del taller]"
+    medicion:
+      estado: "sin_medir"
+      razon: "no hay producto ni participantes reales"
+
+  - id: "IMP-005"                  # PA3
+    actor: "ACT-002"
+    conducta: "se une a una natillera aunque hoy no lo haría por desconfianza"
+    tipo_cambio: "empezar"
+    magnitud: "de no unirse por desconfianza a unirse a una natillera custodiada"
+    direccion: "ayuda"
+    ya_ocurre: false
+    prioridad: "ahora_no"
+    supuestos:
+      - "la desconfianza en el organizador es la barrera principal para unirse («solo se ingresa con un alto grado de confianza», P2)"
+    medicion:
+      estado: "sin_medir"
+      razon: "solo observable con el producto real"
+
+  - id: "IMP-006"                  # PA4
+    actor: "ACT-002"
+    conducta: "deja de pagar sus cuotas o actividades y desmotiva al grupo"
+    tipo_cambio: "dejar"
+    magnitud: "de pagar a tiempo a quedar en mora, con la utilidad final del grupo reducida"
+    direccion: "obstruye"
+    ya_ocurre: true                # ocurre en las natilleras de hoy (E-01)
+    prioridad: "ahora_no"
+    supuestos:
+      - "el incumplimiento de unos desmotiva al resto y frena que surjan otras natilleras (P2)"
+    medicion:
+      estado: "sin_medir"
+      razon: "no hay producto ni historial de mora"
+
+  - id: "IMP-007"                  # AD1
+    actor: "ACT-003"
+    conducta: "lleva la natillera en un sistema que cobra, registra y reparte solo, en vez de un cuaderno"
+    tipo_cambio: "hacer_distinto"
+    magnitud: "de llevar las cuentas a mano a crear y operar la natillera en el sistema sin tocar el dinero"
+    direccion: "ayuda"
+    ya_ocurre: true                # ya administra natilleras; cambia el cómo
+    prioridad: "ahora"
+    supuestos:
+      - "va a querer ceder el manejo del dinero a cambio de no llevar cuentas [fuera del taller]"
+    medicion:
+      estado: "sin_medir"
+      razon: "no hay producto; en la demo se observa al crear la natillera"
+
+  - id: "IMP-008"                  # AD2
+    actor: "ACT-003"
+    conducta: "crea actividades (rifas, bazares) que suben la utilidad final del grupo"
+    tipo_cambio: "empezar"
+    magnitud: "del administrador pasivo sin actividades a natilleras con actividades registradas en el sistema"
+    direccion: "ayuda"
+    ya_ocurre: false               # el obstructor del taller es el administrador pasivo
+    prioridad: "ahora_no"
+    supuestos:
+      - "sin actividades la utilidad final no es lo bastante interesante para seguir (P2)"
+    medicion:
+      estado: "sin_medir"
+      razon: "solo observable con el producto real"
+
+  - id: "IMP-009"                  # AD3
+    actor: "ACT-003"
+    conducta: "accede directamente al dinero del grupo, como el organizador de la natillera de origen"
+    tipo_cambio: "impedir"
+    magnitud: "de la custodia en manos del organizador a cero acceso directo del administrador al dinero"
+    direccion: "ayuda"             # impedirlo ayuda a la meta
+    ya_ocurre: true                # el riesgo de origen (E-01)
+    prioridad: "ahora_no"
+    supuestos:
+      - "el jurado y los participantes valoran que nadie pueda mover el dinero por fuera de las políticas (P1)"
+    medicion:
+      estado: "sin_medir"
+      razon: "no hay producto"
+
+  - id: "IMP-010"                  # FI1
+    actor: "ACT-004"
+    conducta: "evalúa el riesgo de crédito por el historial de ahorro del participante en la natillera, no solo por el perfil de la persona"
+    tipo_cambio: "hacer_distinto"
+    magnitud: "de evaluar solo por el perfil personal a evaluar por los pagos cumplidos en la natillera (Y pagos, E-15)"
+    direccion: "ayuda"
+    ya_ocurre: true
+    prioridad: "ahora_no"
+    supuestos:
+      - "el ahorro constante predice el pago del crédito («mayor seguridad en prestarle», P2)"
+    medicion:
+      estado: "sin_medir"
+      razon: "no hay financiera identificada ni historial"
+
+  - id: "IMP-011"                  # FI2
+    actor: "ACT-004"
+    conducta: "usa al administrador como operador de una microcomunidad para medir riesgo y originar crédito"
+    tipo_cambio: "hacer_distinto"
+    magnitud: "de captar clientes uno a uno a originar crédito a través de natilleras operadas por administradores"
+    direccion: "ayuda"
+    ya_ocurre: true
+    prioridad: "ahora_no"
+    supuestos:
+      - "una microcomunidad de ahorro es un «cultivo de medidor de riesgo» confiable (P1)"
+    medicion:
+      estado: "sin_medir"
+      razon: "no hay financiera identificada"
+
+  - id: "IMP-012"                  # FI3
+    actor: "ACT-004"
+    conducta: "ofrece la cuenta Natillera: una billetera del grupo con lo aportado por cada participante en cuotas y actividades, y su mora, identificados"
+    tipo_cambio: "empezar"
+    magnitud: "de no ofrecer cuenta colectiva a operar una cuenta Natillera con aportes identificados por participante"
+    direccion: "ayuda"
+    ya_ocurre: false
+    prioridad: "ahora"
+    supuestos:
+      - "una entidad financiera vigilada va a querer custodiar la cuenta colectiva [fuera del taller]"
+    medicion:
+      estado: "sin_medir"
+      razon: "no hay financiera; en la demo se observa en los saldos de la billetera del grupo"
+
+entregables:
+  - id: "ENT-001"
+    nombre: "Cuenta Natillera: billetera del grupo a nombre de la financiera, con aportes identificados por participante (cuenta en árbol, E-04, E-07)"
+    impacto: "IMP-012"
+    tipo: "software"
+    modo: "ganar"
+    prioridad: "ahora"
+  - id: "ENT-002"
+    nombre: "Cobro periódico de la cuota con un permiso de Open Payments otorgado una vez, con periodicidad acelerada para la demo"
+    impacto: "IMP-003"
+    tipo: "software"
+    modo: "ganar"
+    prioridad: "ahora"
+  - id: "ENT-003"
+    nombre: "Chat de Telegram del participante: autoriza el débito y ve su aporte y el total del grupo después de cada pago"
+    impacto: "IMP-003"
+    tipo: "software"
+    modo: "ganar"
+    prioridad: "ahora"
+  - id: "ENT-004"
+    nombre: "Creación de la natillera por el administrador: parámetros, invitaciones y arranque, sin acceso al dinero"
+    impacto: "IMP-007"
+    tipo: "software"
+    modo: "ganar"
+    prioridad: "ahora"
+  - id: "ENT-005"
+    nombre: "Prueba temprana en la Test Wallet del débito recurrente con permiso único (primera hora del viernes)"
+    impacto: "IMP-003"
+    tipo: "software"
+    modo: "aprender"
+    prioridad: "ahora"
+  - id: "ENT-006"
+    nombre: "Pitch de 5 minutos con la demo (obligatorio por las reglas del evento, H-07)"
+    impacto: "IMP-002"
+    tipo: "actividad_negocio"
+    modo: "ganar"
+    prioridad: "ahora"             # obligatorio; cuelga de J2 (AHORA-NO): ver brief
+
+hito:
+  camino_mas_corto:
+    impactos: ["IMP-007", "IMP-003", "IMP-012"]
+    entregables: ["ENT-001", "ENT-002", "ENT-003", "ENT-004", "ENT-005"]
+  presupuesto_aprendizaje: >-
+    Uno de los cinco entregables del hito (ENT-005) es aprendizaje puro: la
+    primera hora del viernes verifica en la Test Wallet que Open Payments
+    permite el débito recurrente con un permiso otorgado una vez. Si no lo
+    permite, el cobro se rediseña antes de invertir las ocho horas restantes.
+
+convergencia:
+  tecnica: "dot_voting"
+
+# El equipo inscrito tiene más integrantes, pero según el proponente las dos
+# personas presentes «toman toda la desicion en este punto»: el decisor está
+# en la sala. Los demás integrantes conocen el corte antes del viernes.
+acuerdo:
+  alcanzado: true
+  roles_que_acordaron:
+    - "Proponente — negocio y producto (decisor)"
+    - "Integrante del equipo de la hackathon"
+  disenso: []
+  nadie_disintio: true             # preguntado en el taller y otra vez tras ver el mapa
+
+destino:
+  tipo: "mapa_gobernante"
+  confirmado_por_rol: "Proponente — negocio y producto (decisor)"
+  fecha: "2026-10-14"
+  mapa_se_descarta: false
+
+checkpoints:
+  - fecha: "2026-10-16"
+    que_se_revisa: >-
+      11:30, al cerrar ENT-005: ¿la Test Wallet permite el débito recurrente
+      con un permiso otorgado una vez (supuesto de IMP-003)? Si no, se
+      rediseña el cobro antes de seguir.
+  - fecha: "2026-10-16"
+    que_se_revisa: >-
+      15:00, después del almuerzo (agregado por el equipo a partir de su
+      sospecha de tiempo y alcance): ¿los cinco entregables van a tiempo
+      para el cierre del sábado a las 11:00? Si no, se recorta el chat de
+      Telegram (ENT-003) antes que el cobro real.
+  - fecha: "2026-10-17"
+    que_se_revisa: >-
+      11:00, cierre de entrega: ¿hay entrega válida con el flujo de pago
+      completo (solicitud, autorización, ejecución y finalización) y pagos
+      reales? Es el mínimo aceptable (etapa 1) y el centinela de la demo de
+      humo.
+  - fecha: "2026-10-17"
+    que_se_revisa: >-
+      16:30, anuncio de ganadores: etapa alcanzada (1, 2 o 3) contra el
+      objetivo 3; si no se llegó, se contrasta con la sospecha del equipo
+      (tiempo y alcance) y con la tensión aceptada (J1/J2 en ahora-no).

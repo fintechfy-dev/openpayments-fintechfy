@@ -1,0 +1,25 @@
+{
+  "name": "integracion-natillera-credito-pagado-limpiar-deuda",
+  "description": "BRG-025 (direct, regla key) — Crédito saldado: deuda 0. Si llega con la participación ya EN_LIQUIDACION se rechaza por estado (ya liquidó). Regla natillera-credito-ahorro -> natillera-participacion de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-credito-ahorro",
+      "sourceEvent": "CreditoPagado",
+      "targetTemplate": "natillera-participacion",
+      "targetTrigger": "ActualizarDeudaPrestamo",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "ParticipacionId": "participacionId"
+        },
+        "cardinality": "one"
+      },
+      "parameterMapping": {
+        "currentDate": "CurrentDate",
+        "deudaPrestamoEnMora": "DeudaPrestamoEnMora"
+      }
+    }
+  ]
+}

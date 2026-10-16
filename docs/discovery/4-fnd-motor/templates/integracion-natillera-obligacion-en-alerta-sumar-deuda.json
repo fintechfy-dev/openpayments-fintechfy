@@ -1,0 +1,25 @@
+{
+  "name": "integracion-natillera-obligacion-en-alerta-sumar-deuda",
+  "description": "BRG-018 (direct, regla key) — La deuda vencida de la actividad se suma a la participación (para descontarla en la liquidación). Regla natillera-obligacion-actividad -> natillera-participacion de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-obligacion-actividad",
+      "sourceEvent": "ObligacionEnAlerta",
+      "targetTemplate": "natillera-participacion",
+      "targetTrigger": "ActualizarDeudaActividades",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "ParticipacionId": "participacionId"
+        },
+        "cardinality": "one"
+      },
+      "parameterMapping": {
+        "currentDate": "CurrentDate",
+        "deudaObligacion": "DeltaDeudaActividades"
+      }
+    }
+  ]
+}

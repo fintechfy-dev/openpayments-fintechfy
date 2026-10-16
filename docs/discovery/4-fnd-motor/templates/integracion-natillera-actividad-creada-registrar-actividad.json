@@ -1,0 +1,28 @@
+{
+  "name": "integracion-natillera-actividad-creada-registrar-actividad",
+  "description": "BRG-015 (broadcast, regla key) — Cada participación de la natillera recibe la actividad y crea su obligación (cascada a BRG-014). Regla natillera-actividad -> natillera-participacion de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-actividad",
+      "sourceEvent": "ActividadCreada",
+      "targetTemplate": "natillera-participacion",
+      "targetTrigger": "RegistrarActividad",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "NatilleraId": "natilleraId"
+        },
+        "cardinality": "many"
+      },
+      "parameterMapping": {
+        "actividadId": "ActividadId",
+        "castigoMoraDiario": "CastigoMoraDiario",
+        "currentDate": "CurrentDate",
+        "fechaPago": "FechaPago",
+        "valor": "ValorActividad"
+      }
+    }
+  ]
+}

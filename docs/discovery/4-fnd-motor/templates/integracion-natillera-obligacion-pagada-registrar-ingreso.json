@@ -1,0 +1,26 @@
+{
+  "name": "integracion-natillera-obligacion-pagada-registrar-ingreso",
+  "description": "BRG-017 (direct, regla key) — El dinero cobrado (valor + castigo) entra a la cuenta de la natillera, sin contar para el cupo (E2). Regla natillera-obligacion-actividad -> natillera-cuenta de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-obligacion-actividad",
+      "sourceEvent": "ObligacionPagada",
+      "targetTemplate": "natillera-cuenta",
+      "targetTrigger": "RegistrarIngresoActividad",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "NatilleraId": "natilleraId"
+        },
+        "cardinality": "one"
+      },
+      "parameterMapping": {
+        "actividadId": "ActividadId",
+        "currentDate": "CurrentDate",
+        "montoCobrado": "MontoIngreso"
+      }
+    }
+  ]
+}

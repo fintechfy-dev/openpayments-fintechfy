@@ -1,0 +1,894 @@
+{
+  "name": "natillera-obligacion-actividad",
+  "description": "CONT-004 · La cuenta por pagar de un participante en una actividad (rifa, bazar, compartir), con castigo diario (E-11). Nace por regla (BRG-014). Natillera 2.0 (FND-20261015-natillera-2)",
+  "version": "1.0.0",
+  "conceptDefinitions": [
+    {
+      "name": "NatilleraId",
+      "dataType": "Text",
+      "description": "La natillera",
+      "category": "Custom",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "ParticipacionId",
+      "dataType": "Text",
+      "description": "Quién debe (identidad con ActividadId, BRG-014)",
+      "category": "Custom",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "ActividadId",
+      "dataType": "Text",
+      "description": "De qué actividad",
+      "category": "Custom",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "ValorObligacion",
+      "dataType": "Currency",
+      "description": "Valor por participante",
+      "category": "Payment",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "CastigoMoraDiario",
+      "dataType": "Percentage",
+      "description": "Castigo diario tras FechaPago (E-11)",
+      "category": "Rate",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "FechaPago",
+      "dataType": "Date",
+      "description": "Hasta cuándo se paga sin castigo",
+      "category": "Time",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "WalletParticipante",
+      "dataType": "Text",
+      "description": "Billetera de la que se cobra",
+      "category": "Custom",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "EstadoObligacion",
+      "dataType": "Integer",
+      "description": "Máquina de la obligación: 0=PENDIENTE · 1=ALERTA · 2=PAGADA · 3=DESCONTADA",
+      "category": "Status",
+      "initialization": "Zero"
+    },
+    {
+      "name": "DeudaObligacion",
+      "dataType": "Currency",
+      "description": "Valor vencido sin pagar",
+      "category": "Payment",
+      "initialization": "Zero"
+    },
+    {
+      "name": "CastigoAcumulado",
+      "dataType": "Currency",
+      "description": "Castigo causado",
+      "category": "Interest",
+      "initialization": "Zero"
+    },
+    {
+      "name": "FechaActual",
+      "dataType": "Date",
+      "description": "Fecha del último trigger",
+      "category": "Time",
+      "initialization": "Explicit"
+    },
+    {
+      "name": "FechaUltimoCastigo",
+      "dataType": "Date",
+      "description": "Hasta cuándo se causó el castigo",
+      "category": "Time",
+      "initialization": "Explicit"
+    },
+    {
+      "name": "DiasDeCastigo",
+      "dataType": "Integer",
+      "description": "Días a causar en este trigger",
+      "category": "Custom",
+      "initialization": "Zero"
+    },
+    {
+      "name": "CastigoDelDia",
+      "dataType": "Currency",
+      "description": "Castigo causado en este trigger",
+      "category": "Calculated",
+      "initialization": "Zero"
+    }
+  ],
+  "stateMachines": {
+    "EstadoObligacion": {
+      "concept": "EstadoObligacion",
+      "states": {
+        "PENDIENTE": 0,
+        "ALERTA": 1,
+        "PAGADA": 2,
+        "DESCONTADA": 3
+      },
+      "initialState": "PENDIENTE",
+      "transitions": [
+        {
+          "from": "PENDIENTE",
+          "to": "ALERTA",
+          "label": "[CobroFallido | VencerSinPago] Sin fondos o vencida"
+        },
+        {
+          "from": "PENDIENTE",
+          "to": "PAGADA",
+          "label": "[CobroConfirmado] Pagó a tiempo"
+        },
+        {
+          "from": "PENDIENTE",
+          "to": "DESCONTADA",
+          "label": "[DescontarEnLiquidacion] Cobrada de su parte"
+        },
+        {
+          "from": "ALERTA",
+          "to": "PAGADA",
+          "label": "[CobroConfirmado] Pagó valor + castigo"
+        },
+        {
+          "from": "ALERTA",
+          "to": "DESCONTADA",
+          "label": "[DescontarEnLiquidacion] Cobrada de su parte"
+        }
+      ]
+    }
+  },
+  "triggers": [
+    {
+      "name": "CrearObligacion",
+      "type": "creation"
+    },
+    {
+      "name": "AutorizarPago",
+      "type": "external"
+    },
+    {
+      "name": "CobroConfirmado",
+      "type": "external",
+      "visibility": "system",
+      "parameters": [
+        {
+          "name": "MontoCobrado",
+          "dataType": "Currency",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "name": "CobroFallido",
+      "type": "external",
+      "visibility": "system",
+      "parameters": [
+        {
+          "name": "Motivo",
+          "dataType": "Text",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "name": "VencerSinPago",
+      "type": "scheduled",
+      "visibility": "private",
+      "schedule": {
+        "cron": "0 6 * * *"
+      }
+    },
+    {
+      "name": "CausarCastigoDiario",
+      "type": "scheduled",
+      "visibility": "private",
+      "schedule": {
+        "cron": "0 6 * * *"
+      }
+    },
+    {
+      "name": "DescontarEnLiquidacion",
+      "type": "external",
+      "visibility": "private"
+    }
+  ],
+  "functions": [
+    {
+      "name": "CrearObligacion",
+      "description": "BRG-014: la cuenta por pagar del participante en la actividad (E-11).",
+      "trigger": "CrearObligacion",
+      "steps": [
+        {
+          "type": "Crear",
+          "concept": "NatilleraId",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "NatilleraId"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "ParticipacionId",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "ParticipacionId"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "ActividadId",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "ActividadId"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "ValorObligacion",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "ValorObligacion"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "CastigoMoraDiario",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "CastigoMoraDiario"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "FechaPago",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "FechaPago"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "WalletParticipante",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "WalletParticipante"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "FechaActual",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "CurrentDate"
+          }
+        }
+      ]
+    },
+    {
+      "name": "AutorizarPago",
+      "description": "El participante autoriza el cobro por Telegram; la llamada «cobro-obligacion» lo debita.",
+      "trigger": "AutorizarPago",
+      "requiredStates": {
+        "EstadoObligacion": [
+          "PENDIENTE",
+          "ALERTA"
+        ]
+      },
+      "steps": [
+        {
+          "type": "EmitirEvento",
+          "eventType": "CobroObligacionSolicitado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "participacionId": {
+              "type": "Concept",
+              "concept": "ParticipacionId"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "monto": {
+              "type": "Add",
+              "left": {
+                "type": "Concept",
+                "concept": "ValorObligacion"
+              },
+              "right": {
+                "type": "Concept",
+                "concept": "CastigoAcumulado"
+              }
+            },
+            "walletParticipante": {
+              "type": "Concept",
+              "concept": "WalletParticipante"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CobroConfirmado",
+      "description": "Pagó a tiempo (BRG-016/017).",
+      "trigger": "CobroConfirmado",
+      "requiredStates": {
+        "EstadoObligacion": [
+          "PENDIENTE"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "Equals",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoCobrado"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "ValorObligacion"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "EstadoObligacion",
+          "expression": {
+            "type": "Constant",
+            "value": 2,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ObligacionPagada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "participacionId": {
+              "type": "Concept",
+              "concept": "ParticipacionId"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "valor": {
+              "type": "Concept",
+              "concept": "ValorObligacion"
+            },
+            "montoCobrado": {
+              "type": "Parameter",
+              "parameter": "MontoCobrado"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CobroConfirmadoEnAlerta",
+      "description": "Pagó valor + castigo (BRG-016/017/020).",
+      "trigger": "CobroConfirmado",
+      "requiredStates": {
+        "EstadoObligacion": [
+          "ALERTA"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThanOrEqual",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoCobrado"
+          },
+          "right": {
+            "type": "Add",
+            "left": {
+              "type": "Concept",
+              "concept": "ValorObligacion"
+            },
+            "right": {
+              "type": "Concept",
+              "concept": "CastigoAcumulado"
+            }
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "EstadoObligacion",
+          "expression": {
+            "type": "Constant",
+            "value": 2,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ObligacionPagada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "participacionId": {
+              "type": "Concept",
+              "concept": "ParticipacionId"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "valor": {
+              "type": "Concept",
+              "concept": "ValorObligacion"
+            },
+            "montoCobrado": {
+              "type": "Parameter",
+              "parameter": "MontoCobrado"
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "DeudaObligacionSaldada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "participacionId": {
+              "type": "Concept",
+              "concept": "ParticipacionId"
+            },
+            "deudaSaldada": {
+              "type": "Add",
+              "left": {
+                "type": "Concept",
+                "concept": "DeudaObligacion"
+              },
+              "right": {
+                "type": "Concept",
+                "concept": "CastigoAcumulado"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CobroFallidoEnAlerta",
+      "description": "Otro intento fallido estando en ALERTA: solo aviso (C2).",
+      "trigger": "CobroFallido",
+      "requiredStates": {
+        "EstadoObligacion": [
+          "ALERTA"
+        ]
+      },
+      "steps": [
+        {
+          "type": "EmitirEvento",
+          "eventType": "CobroObligacionFallo",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "participacionId": {
+              "type": "Concept",
+              "concept": "ParticipacionId"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "motivo": {
+              "type": "Parameter",
+              "parameter": "Motivo"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CobroFallido",
+      "description": "Sin fondos: queda en ALERTA (BRG-018).",
+      "trigger": "CobroFallido",
+      "requiredStates": {
+        "EstadoObligacion": [
+          "PENDIENTE"
+        ]
+      },
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "EstadoObligacion",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "DeudaObligacion",
+          "expression": {
+            "type": "Concept",
+            "concept": "ValorObligacion"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "FechaUltimoCastigo",
+          "expression": {
+            "type": "Concept",
+            "concept": "FechaPago"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ObligacionEnAlerta",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "participacionId": {
+              "type": "Concept",
+              "concept": "ParticipacionId"
+            },
+            "deudaObligacion": {
+              "type": "Concept",
+              "concept": "ValorObligacion"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "VencerSinPago",
+      "description": "Pasó FechaPago sin pagar (BRG-018).",
+      "trigger": "VencerSinPago",
+      "requiredStates": {
+        "EstadoObligacion": [
+          "PENDIENTE"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "CurrentDate"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "FechaPago"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "EstadoObligacion",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "DeudaObligacion",
+          "expression": {
+            "type": "Concept",
+            "concept": "ValorObligacion"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "FechaUltimoCastigo",
+          "expression": {
+            "type": "Concept",
+            "concept": "FechaPago"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ObligacionEnAlerta",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "participacionId": {
+              "type": "Concept",
+              "concept": "ParticipacionId"
+            },
+            "deudaObligacion": {
+              "type": "Concept",
+              "concept": "ValorObligacion"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CausarCastigoDiario",
+      "description": "Castigo de los días vencidos y recordatorio (BRG-019).",
+      "trigger": "CausarCastigoDiario",
+      "requiredStates": {
+        "EstadoObligacion": [
+          "ALERTA"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Concept",
+            "concept": "DeudaObligacion"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 0,
+            "valueType": "currency"
+          }
+        },
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "CurrentDate"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "FechaPago"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "FechaActual",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "CurrentDate"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "DiasDeCastigo",
+          "expression": {
+            "type": "Max",
+            "left": {
+              "type": "DaysBetween",
+              "startDateConcept": "FechaUltimoCastigo",
+              "endDateConcept": "FechaActual"
+            },
+            "right": {
+              "type": "Constant",
+              "value": 0,
+              "valueType": "integer"
+            }
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "CastigoDelDia",
+          "expression": {
+            "type": "Round",
+            "operand": {
+              "type": "Multiply",
+              "left": {
+                "type": "Multiply",
+                "left": {
+                  "type": "Concept",
+                  "concept": "ValorObligacion"
+                },
+                "right": {
+                  "type": "Concept",
+                  "concept": "CastigoMoraDiario"
+                }
+              },
+              "right": {
+                "type": "Concept",
+                "concept": "DiasDeCastigo"
+              }
+            },
+            "decimals": 2
+          }
+        },
+        {
+          "type": "Acumular",
+          "concept": "CastigoAcumulado",
+          "expression": {
+            "type": "Concept",
+            "concept": "CastigoDelDia"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "FechaUltimoCastigo",
+          "expression": {
+            "type": "Concept",
+            "concept": "FechaActual"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "RecordatorioObligacion",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "participacionId": {
+              "type": "Concept",
+              "concept": "ParticipacionId"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "deudaObligacion": {
+              "type": "Concept",
+              "concept": "DeudaObligacion"
+            },
+            "castigoAcumulado": {
+              "type": "Concept",
+              "concept": "CastigoAcumulado"
+            },
+            "total": {
+              "type": "Add",
+              "left": {
+                "type": "Concept",
+                "concept": "DeudaObligacion"
+              },
+              "right": {
+                "type": "Concept",
+                "concept": "CastigoAcumulado"
+              }
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "DeudaObligacionActualizada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "participacionId": {
+              "type": "Concept",
+              "concept": "ParticipacionId"
+            },
+            "castigoDelDia": {
+              "type": "Concept",
+              "concept": "CastigoDelDia"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "DescontarEnLiquidacion",
+      "description": "BRG-013: se cobró de su parte en la liquidación.",
+      "trigger": "DescontarEnLiquidacion",
+      "requiredStates": {
+        "EstadoObligacion": [
+          "PENDIENTE",
+          "ALERTA"
+        ]
+      },
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "EstadoObligacion",
+          "expression": {
+            "type": "Constant",
+            "value": 3,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ObligacionDescontada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "participacionId": {
+              "type": "Concept",
+              "concept": "ParticipacionId"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "monto": {
+              "type": "Add",
+              "left": {
+                "type": "Concept",
+                "concept": "DeudaObligacion"
+              },
+              "right": {
+                "type": "Concept",
+                "concept": "CastigoAcumulado"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "llamadas": [
+    {
+      "id": "cobro-obligacion",
+      "nombre": "Cobro de la obligación de actividad",
+      "evento": "CobroObligacionSolicitado",
+      "api": {
+        "id": "open-payments",
+        "operacion": "cobrar"
+      },
+      "peticion": {
+        "cuerpo": {
+          "walletOrigen": {
+            "payload": "walletParticipante"
+          },
+          "monto": {
+            "payload": "monto"
+          },
+          "referencia": {
+            "payload": "actividadId"
+          }
+        }
+      },
+      "extraccion": {
+        "version": 1,
+        "variables": [
+          {
+            "nombre": "MontoCobrado",
+            "tipo": "currency",
+            "ruta": "monto"
+          }
+        ]
+      },
+      "respuesta": {
+        "trigger": "CobroConfirmado",
+        "triggerFallo": "CobroFallido",
+        "parametroMotivo": "Motivo"
+      }
+    }
+  ],
+  "avisos": [
+    {
+      "evento": "RecordatorioObligacion",
+      "destino": "bot-natillera"
+    },
+    {
+      "evento": "CobroObligacionFallo",
+      "destino": "bot-natillera"
+    }
+  ]
+}

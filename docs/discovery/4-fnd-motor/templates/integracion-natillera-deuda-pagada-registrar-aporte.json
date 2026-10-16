@@ -1,0 +1,26 @@
+{
+  "name": "integracion-natillera-deuda-pagada-registrar-aporte",
+  "description": "BRG-005 (direct, regla key) — Deuda + mora pagadas entran al pozo: la mora se reparte entre todos en la liquidación. Regla natillera-participacion -> natillera-cuenta de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-participacion",
+      "sourceEvent": "DeudaPagada",
+      "targetTemplate": "natillera-cuenta",
+      "targetTrigger": "RegistrarAporte",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "NatilleraId": "natilleraId"
+        },
+        "cardinality": "one"
+      },
+      "parameterMapping": {
+        "currentDate": "CurrentDate",
+        "monto": "MontoAporte",
+        "participacionId": "ParticipacionId"
+      }
+    }
+  ]
+}

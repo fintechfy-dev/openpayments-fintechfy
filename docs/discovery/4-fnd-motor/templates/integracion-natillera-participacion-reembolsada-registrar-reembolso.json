@@ -1,0 +1,26 @@
+{
+  "name": "integracion-natillera-participacion-reembolsada-registrar-reembolso",
+  "description": "BRG-007 (direct, regla key) — Cierra la ida y vuelta del reembolso; la natillera cierra cuando reportan todas y el saldo queda en 0 (H2). Regla natillera-participacion -> natillera-cuenta de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-participacion",
+      "sourceEvent": "ParticipacionReembolsada",
+      "targetTemplate": "natillera-cuenta",
+      "targetTrigger": "RegistrarReembolso",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "NatilleraId": "natilleraId"
+        },
+        "cardinality": "one"
+      },
+      "parameterMapping": {
+        "currentDate": "CurrentDate",
+        "monto": "MontoReembolso",
+        "participacionId": "ParticipacionId"
+      }
+    }
+  ]
+}

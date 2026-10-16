@@ -1,0 +1,25 @@
+{
+  "name": "integracion-natillera-natillera-iniciada-cobrar-primera-cuota",
+  "description": "BRG-002 (broadcast, regla key) — El calendario es de la natillera (E1): al iniciar, cada participación de ESA natillera pide la cuota del periodo 1. Las que no validaron se rechazan por estado: nunca se cobra sin permiso. Regla natillera-cuenta -> natillera-participacion de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-cuenta",
+      "sourceEvent": "NatilleraIniciada",
+      "targetTemplate": "natillera-participacion",
+      "targetTrigger": "CobrarCuota",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "NatilleraId": "natilleraId"
+        },
+        "cardinality": "many"
+      },
+      "parameterMapping": {
+        "currentDate": "CurrentDate",
+        "periodo": "Periodo"
+      }
+    }
+  ]
+}

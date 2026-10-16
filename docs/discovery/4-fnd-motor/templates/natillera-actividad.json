@@ -1,0 +1,1030 @@
+{
+  "name": "natillera-actividad",
+  "description": "CONT-005 · Actividad especial (rifa, bazar, compartir): recaudo, premio al ganador indicado por el administrador o todo al acumulado (E-11). Natillera 2.0 (FND-20261015-natillera-2)",
+  "version": "1.0.0",
+  "conceptDefinitions": [
+    {
+      "name": "ActividadId",
+      "dataType": "Text",
+      "description": "Llave de la actividad",
+      "category": "Custom",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "NatilleraId",
+      "dataType": "Text",
+      "description": "La natillera (E-11: solo con la natillera ACTIVA, lo valida el bot)",
+      "category": "Custom",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "Descripcion",
+      "dataType": "Text",
+      "description": "Rifa, bazar, compartir…",
+      "category": "Custom",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "ValorPorParticipante",
+      "dataType": "Currency",
+      "description": "Lo que paga cada participante",
+      "category": "Payment",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "Premio",
+      "dataType": "Currency",
+      "description": "0 = sin premio (bazar, compartir); si hay, menor que valor × participantes (E-11)",
+      "category": "Payment",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "NumeroParticipantes",
+      "dataType": "Integer",
+      "description": "Participantes de la natillera al crearla",
+      "category": "Custom",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "CastigoMoraDiario",
+      "dataType": "Percentage",
+      "description": "Castigo diario de la obligación (E-11)",
+      "category": "Rate",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "FechaActividad",
+      "dataType": "Date",
+      "description": "Día de la actividad (sorteo, bazar)",
+      "category": "Time",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "FechaPago",
+      "dataType": "Date",
+      "description": "Hasta cuándo se paga (antes de la fecha final de la natillera, E-11)",
+      "category": "Time",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "EstadoActividad",
+      "dataType": "Integer",
+      "description": "Máquina de la actividad: 0=RECAUDANDO · 1=PREMIO_PARCIAL · 2=ACUMULADA · 3=PREMIO_PAGADO",
+      "category": "Status",
+      "initialization": "Zero"
+    },
+    {
+      "name": "Recaudado",
+      "dataType": "Currency",
+      "description": "Valor de las obligaciones pagadas (sin castigo)",
+      "category": "Payment",
+      "initialization": "Zero"
+    },
+    {
+      "name": "PremioPagado",
+      "dataType": "Currency",
+      "description": "Lo que ya se le ordenó al ganador",
+      "category": "Payment",
+      "initialization": "Zero"
+    },
+    {
+      "name": "RestoPremio",
+      "dataType": "Currency",
+      "description": "Lo que se le ordena al ganador en este recaudo",
+      "category": "Calculated",
+      "initialization": "Zero"
+    },
+    {
+      "name": "GanadorParticipacionId",
+      "dataType": "Text",
+      "description": "Ganador indicado por el administrador",
+      "category": "Custom",
+      "initialization": "Explicit"
+    },
+    {
+      "name": "WalletGanador",
+      "dataType": "Text",
+      "description": "Billetera del ganador",
+      "category": "Custom",
+      "initialization": "Explicit"
+    }
+  ],
+  "stateMachines": {
+    "EstadoActividad": {
+      "concept": "EstadoActividad",
+      "states": {
+        "RECAUDANDO": 0,
+        "PREMIO_PARCIAL": 1,
+        "ACUMULADA": 2,
+        "PREMIO_PAGADO": 3
+      },
+      "initialState": "RECAUDANDO",
+      "transitions": [
+        {
+          "from": "RECAUDANDO",
+          "to": "ACUMULADA",
+          "label": "[CerrarSinPremioOSinGanador | CerrarEnLiquidacion] Al acumulado"
+        },
+        {
+          "from": "RECAUDANDO",
+          "to": "PREMIO_PAGADO",
+          "label": "[IndicarGanador] Alcanza para el premio"
+        },
+        {
+          "from": "RECAUDANDO",
+          "to": "PREMIO_PARCIAL",
+          "label": "[IndicarGanador] Se paga lo recaudado"
+        },
+        {
+          "from": "PREMIO_PARCIAL",
+          "to": "PREMIO_PAGADO",
+          "label": "[RegistrarRecaudo | CerrarEnLiquidacion] Completo, o cerrado en la liquidación"
+        }
+      ]
+    }
+  },
+  "triggers": [
+    {
+      "name": "CrearActividad",
+      "type": "creation"
+    },
+    {
+      "name": "RegistrarRecaudo",
+      "type": "external",
+      "visibility": "private",
+      "parameters": [
+        {
+          "name": "ParticipacionId",
+          "dataType": "Text",
+          "isRequired": true
+        },
+        {
+          "name": "MontoRecaudo",
+          "dataType": "Currency",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "name": "CerrarSinPremioOSinGanador",
+      "type": "external"
+    },
+    {
+      "name": "IndicarGanador",
+      "type": "external",
+      "parameters": [
+        {
+          "name": "GanadorParticipacionId",
+          "dataType": "Text",
+          "isRequired": true
+        },
+        {
+          "name": "WalletGanador",
+          "dataType": "Text",
+          "isRequired": true
+        },
+        {
+          "name": "GanadorConfirmado",
+          "dataType": "Integer",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "name": "CerrarEnLiquidacion",
+      "type": "external",
+      "visibility": "private"
+    }
+  ],
+  "functions": [
+    {
+      "name": "CrearActividad",
+      "description": "El administrador crea la actividad; BRG-015 le crea a cada participante su obligación.",
+      "trigger": "CrearActividad",
+      "preconditions": [
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "ValorPorParticipante"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 0,
+            "valueType": "currency"
+          }
+        },
+        {
+          "type": "LessThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "Premio"
+          },
+          "right": {
+            "type": "Multiply",
+            "left": {
+              "type": "Parameter",
+              "parameter": "ValorPorParticipante"
+            },
+            "right": {
+              "type": "Parameter",
+              "parameter": "NumeroParticipantes"
+            }
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Crear",
+          "concept": "ActividadId",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "ActividadId"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "NatilleraId",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "NatilleraId"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "Descripcion",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "Descripcion"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "ValorPorParticipante",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "ValorPorParticipante"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "Premio",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "Premio"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "NumeroParticipantes",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "NumeroParticipantes"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "CastigoMoraDiario",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "CastigoMoraDiario"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "FechaActividad",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "FechaActividad"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "FechaPago",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "FechaPago"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ActividadCreada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "valor": {
+              "type": "Concept",
+              "concept": "ValorPorParticipante"
+            },
+            "castigoMoraDiario": {
+              "type": "Concept",
+              "concept": "CastigoMoraDiario"
+            },
+            "fechaPago": {
+              "type": "Concept",
+              "concept": "FechaPago"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CompletarPremio",
+      "description": "Este recaudo completa el premio.",
+      "trigger": "RegistrarRecaudo",
+      "requiredStates": {
+        "EstadoActividad": [
+          "PREMIO_PARCIAL"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThanOrEqual",
+          "left": {
+            "type": "Add",
+            "left": {
+              "type": "Concept",
+              "concept": "PremioPagado"
+            },
+            "right": {
+              "type": "Parameter",
+              "parameter": "MontoRecaudo"
+            }
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "Premio"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Acumular",
+          "concept": "Recaudado",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "MontoRecaudo"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "RestoPremio",
+          "expression": {
+            "type": "Min",
+            "left": {
+              "type": "Parameter",
+              "parameter": "MontoRecaudo"
+            },
+            "right": {
+              "type": "Subtract",
+              "left": {
+                "type": "Concept",
+                "concept": "Premio"
+              },
+              "right": {
+                "type": "Concept",
+                "concept": "PremioPagado"
+              }
+            }
+          }
+        },
+        {
+          "type": "Acumular",
+          "concept": "PremioPagado",
+          "expression": {
+            "type": "Concept",
+            "concept": "RestoPremio"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "RestoPremioOrdenado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "ganadorParticipacionId": {
+              "type": "Concept",
+              "concept": "GanadorParticipacionId"
+            },
+            "monto": {
+              "type": "Concept",
+              "concept": "RestoPremio"
+            },
+            "walletGanador": {
+              "type": "Concept",
+              "concept": "WalletGanador"
+            }
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "EstadoActividad",
+          "expression": {
+            "type": "Constant",
+            "value": 3,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "PremioCompletado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "premio": {
+              "type": "Concept",
+              "concept": "Premio"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RegistrarRecaudoParaPremio",
+      "description": "BRG-016 + BRG-022: el recaudo va al ganador.",
+      "trigger": "RegistrarRecaudo",
+      "requiredStates": {
+        "EstadoActividad": [
+          "PREMIO_PARCIAL"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoRecaudo"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 0,
+            "valueType": "currency"
+          }
+        },
+        {
+          "type": "LessThan",
+          "left": {
+            "type": "Add",
+            "left": {
+              "type": "Concept",
+              "concept": "PremioPagado"
+            },
+            "right": {
+              "type": "Parameter",
+              "parameter": "MontoRecaudo"
+            }
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "Premio"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Acumular",
+          "concept": "Recaudado",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "MontoRecaudo"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "RestoPremio",
+          "expression": {
+            "type": "Min",
+            "left": {
+              "type": "Parameter",
+              "parameter": "MontoRecaudo"
+            },
+            "right": {
+              "type": "Subtract",
+              "left": {
+                "type": "Concept",
+                "concept": "Premio"
+              },
+              "right": {
+                "type": "Concept",
+                "concept": "PremioPagado"
+              }
+            }
+          }
+        },
+        {
+          "type": "Acumular",
+          "concept": "PremioPagado",
+          "expression": {
+            "type": "Concept",
+            "concept": "RestoPremio"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "RestoPremioOrdenado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "ganadorParticipacionId": {
+              "type": "Concept",
+              "concept": "GanadorParticipacionId"
+            },
+            "monto": {
+              "type": "Concept",
+              "concept": "RestoPremio"
+            },
+            "walletGanador": {
+              "type": "Concept",
+              "concept": "WalletGanador"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RegistrarRecaudo",
+      "description": "BRG-016: una obligación pagada.",
+      "trigger": "RegistrarRecaudo",
+      "requiredStates": {
+        "EstadoActividad": [
+          "RECAUDANDO"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoRecaudo"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 0,
+            "valueType": "currency"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Acumular",
+          "concept": "Recaudado",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "MontoRecaudo"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "RecaudoRegistrado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "recaudado": {
+              "type": "Concept",
+              "concept": "Recaudado"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CerrarSinPremioOSinGanador",
+      "description": "Sin premio o sin ganador: todo al acumulado.",
+      "trigger": "CerrarSinPremioOSinGanador",
+      "requiredStates": {
+        "EstadoActividad": [
+          "RECAUDANDO"
+        ]
+      },
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "EstadoActividad",
+          "expression": {
+            "type": "Constant",
+            "value": 2,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ActividadAcumulada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "recaudado": {
+              "type": "Concept",
+              "concept": "Recaudado"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "IndicarGanadorConPremioCompleto",
+      "description": "«Indica y ordena; el sistema paga»: alcanza para el premio.",
+      "trigger": "IndicarGanador",
+      "requiredStates": {
+        "EstadoActividad": [
+          "RECAUDANDO"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Concept",
+            "concept": "Premio"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 0,
+            "valueType": "currency"
+          }
+        },
+        {
+          "type": "Equals",
+          "left": {
+            "type": "Parameter",
+            "parameter": "GanadorConfirmado"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "GreaterThanOrEqual",
+          "left": {
+            "type": "Concept",
+            "concept": "Recaudado"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "Premio"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "GanadorParticipacionId",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "GanadorParticipacionId"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "WalletGanador",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "WalletGanador"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "EstadoActividad",
+          "expression": {
+            "type": "Constant",
+            "value": 3,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "PremioPagado",
+          "expression": {
+            "type": "Concept",
+            "concept": "Premio"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "PremioOrdenado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "ganadorParticipacionId": {
+              "type": "Concept",
+              "concept": "GanadorParticipacionId"
+            },
+            "monto": {
+              "type": "Concept",
+              "concept": "Premio"
+            },
+            "walletGanador": {
+              "type": "Concept",
+              "concept": "WalletGanador"
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "PremioCompletado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "premio": {
+              "type": "Concept",
+              "concept": "Premio"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "IndicarGanadorConPremioParcial",
+      "description": "No alcanza: se paga lo recaudado y el resto con cada recaudo.",
+      "trigger": "IndicarGanador",
+      "requiredStates": {
+        "EstadoActividad": [
+          "RECAUDANDO"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Concept",
+            "concept": "Premio"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 0,
+            "valueType": "currency"
+          }
+        },
+        {
+          "type": "Equals",
+          "left": {
+            "type": "Parameter",
+            "parameter": "GanadorConfirmado"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Concept",
+            "concept": "Recaudado"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 0,
+            "valueType": "currency"
+          }
+        },
+        {
+          "type": "LessThan",
+          "left": {
+            "type": "Concept",
+            "concept": "Recaudado"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "Premio"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "GanadorParticipacionId",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "GanadorParticipacionId"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "WalletGanador",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "WalletGanador"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "EstadoActividad",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "PremioPagado",
+          "expression": {
+            "type": "Concept",
+            "concept": "Recaudado"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "PremioOrdenado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "ganadorParticipacionId": {
+              "type": "Concept",
+              "concept": "GanadorParticipacionId"
+            },
+            "monto": {
+              "type": "Concept",
+              "concept": "Recaudado"
+            },
+            "walletGanador": {
+              "type": "Concept",
+              "concept": "WalletGanador"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AcumularEnLiquidacion",
+      "description": "BRG-026 (E7): sin ganador al liquidar → acumulado.",
+      "trigger": "CerrarEnLiquidacion",
+      "requiredStates": {
+        "EstadoActividad": [
+          "RECAUDANDO"
+        ]
+      },
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "EstadoActividad",
+          "expression": {
+            "type": "Constant",
+            "value": 2,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ActividadAcumulada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "recaudado": {
+              "type": "Concept",
+              "concept": "Recaudado"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CerrarPremioEnLiquidacion",
+      "description": "BRG-026 (E7): el premio parcial queda en lo pagado.",
+      "trigger": "CerrarEnLiquidacion",
+      "requiredStates": {
+        "EstadoActividad": [
+          "PREMIO_PARCIAL"
+        ]
+      },
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "EstadoActividad",
+          "expression": {
+            "type": "Constant",
+            "value": 3,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "PremioCerradoEnLiquidacion",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "actividadId": {
+              "type": "Concept",
+              "concept": "ActividadId"
+            },
+            "ganadorParticipacionId": {
+              "type": "Concept",
+              "concept": "GanadorParticipacionId"
+            },
+            "premioPagado": {
+              "type": "Concept",
+              "concept": "PremioPagado"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "avisos": [
+    {
+      "evento": "ActividadAcumulada",
+      "destino": "bot-natillera"
+    },
+    {
+      "evento": "PremioCompletado",
+      "destino": "bot-natillera"
+    },
+    {
+      "evento": "PremioCerradoEnLiquidacion",
+      "destino": "bot-natillera"
+    }
+  ]
+}

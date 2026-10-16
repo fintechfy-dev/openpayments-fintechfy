@@ -1,0 +1,25 @@
+{
+  "name": "integracion-natillera-deuda-prestamo-reportada-actualizar-deuda",
+  "description": "BRG-023 (direct, regla key) — La financiera informa el valor por descontar del participante en mora de préstamo (documento maestro). Regla natillera-credito-ahorro -> natillera-participacion de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-credito-ahorro",
+      "sourceEvent": "DeudaPrestamoReportada",
+      "targetTemplate": "natillera-participacion",
+      "targetTrigger": "ActualizarDeudaPrestamo",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "ParticipacionId": "participacionId"
+        },
+        "cardinality": "one"
+      },
+      "parameterMapping": {
+        "currentDate": "CurrentDate",
+        "deudaPrestamoEnMora": "DeudaPrestamoEnMora"
+      }
+    }
+  ]
+}

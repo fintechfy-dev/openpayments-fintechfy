@@ -1,0 +1,25 @@
+{
+  "name": "integracion-natillera-credito-al-dia-limpiar-deuda",
+  "description": "BRG-024 (direct, regla key) — Al ponerse al día, la deuda de préstamo de la participación vuelve a 0. Regla natillera-credito-ahorro -> natillera-participacion de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-credito-ahorro",
+      "sourceEvent": "CreditoAlDia",
+      "targetTemplate": "natillera-participacion",
+      "targetTrigger": "ActualizarDeudaPrestamo",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "ParticipacionId": "participacionId"
+        },
+        "cardinality": "one"
+      },
+      "parameterMapping": {
+        "currentDate": "CurrentDate",
+        "deudaPrestamoEnMora": "DeudaPrestamoEnMora"
+      }
+    }
+  ]
+}

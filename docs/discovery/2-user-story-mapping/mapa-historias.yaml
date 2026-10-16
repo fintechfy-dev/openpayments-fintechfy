@@ -1,0 +1,618 @@
+# ============================================================================
+# mapa-historias.yaml — Natillera 2.0 (USMD-20261014-natillera-2)
+#
+# El mapa crece por fases. Estado: Fase 1 (Marco). Las secciones de
+# esqueleto, historias, rebanadas y veredicto se agregan al correr su fase.
+# Validar con:  python user-story-mapping-discovery/tools/usmd_lint.py <sesion>
+#
+# Aguas abajo de IMD-20261014-natillera-2 (excavación confirmada por el
+# usuario; lectura de sólo-lectura del mapa de IMD, con procedencia).
+#
+# Atribución: la práctica de User Story Mapping fue creada y nombrada por Jeff
+# Patton (jpattonassociates.com). Las fuentes no son CC y ninguna respalda ni
+# avala este trabajo. Ver ../../ATRIBUCION.md.
+# ============================================================================
+
+version: "1.0"
+mapa_id: "USM-001"
+nombre: "Natillera 2.0 — recorrido de la natillera y rebanada de la hackathon"
+arquetipo: "USM-VERDE"
+fecha: "2026-10-14"
+tipo_mapa: "despues"            # producto nuevo: se mapea el recorrido propuesto
+
+decision:
+  pendiente: >-
+    qué rebanada del recorrido de la natillera se construye en las 9 horas de
+    la hackathon de Open Payments para lograr AD1, PA1 y FI3 de IMD, y qué
+    queda para las rebanadas siguientes
+  quien_rol: "Proponente — negocio y producto (decisor)"
+  fecha_limite: "2026-10-16"
+
+# Taller: las dos personas que deciden por el equipo armaron marco, esqueleto
+# y rebanado; el resto del equipo de la hackathon leyó el esqueleto y el
+# cuerpo en la página compartida y estuvo en el cierre («estamos todo el
+# equipo y todos acuerdan»).
+modo: "taller"
+asistentes:
+  - rol: "Proponente — negocio y producto (decisor)"
+  - rol: "Integrante del equipo de la hackathon"
+  - rol: "Resto del equipo de la hackathon"
+
+# El objetivo es la meta de hito de IMD, tal cual (elección del equipo:
+# «Solo la hackathon»). El recorrido se mapea completo, de la creación del
+# grupo a la liquidación de diciembre; la rebanada 1 lo cruza en flaco.
+objetivo:
+  enunciado: >-
+    que el jurado de la hackathon de Open Payments Medellín lleve nuestra
+    propuesta a la ronda final y la premie por su aporte a la inclusión
+    financiera
+  horizonte: "2026-10-17 (fin de la hackathon)"
+  meta_origen:
+    tipo: "imd"
+    ref: "impact-mapping-discovery/sessions/IMD-20261014-natillera-2/mapa.yaml#meta_hito"
+
+# El jurado no es usuario: mira la demo, no camina el recorrido.
+usuarios:
+  - id: "USR-001"
+    rol: "Participante de la natillera que ahorra para tener su dinero en diciembre"   # ACT-002 de IMD
+    prioridad: "ahora"
+  - id: "USR-002"
+    rol: "Administrador de la natillera (tesorero)"                                   # ACT-003 de IMD
+    prioridad: "ahora"
+  - id: "USR-003"
+    rol: "Operador de la financiera que custodia y presta"                            # de ACT-004 de IMD
+    prioridad: "ahora_no"
+
+evidencia:
+  - id: "EVI-001"
+    tipo: "otro"
+    ref: "C:/Users/WILLI/Downloads/Natillera 2.pdf (resumido como E-01..E-16 en impact-mapping-discovery/sessions/IMD-20261014-natillera-2/fuentes.md)"
+    nota: "documento de la iniciativa: parámetros, estados, invitación, validación de billetera, cobro, mora, actividades, premios, préstamos y liquidación"
+  - id: "EVI-002"
+    tipo: "mapa_imd"
+    ref: "impact-mapping-discovery/sessions/IMD-20261014-natillera-2/mapa.yaml"
+    nota: "meta de hito, actores ACT-002/003/004, impactos del corte IMP-007/003/012 (anclas de outcome) y entregables ENT-001..006 (solo contexto)"
+  - id: "EVI-003"
+    tipo: "otro"
+    ref: "impact-mapping-discovery/sessions/IMD-20261014-natillera-2/taller-crudo.md#el-río"
+    nota: "los dos ríos del participante que dibujaron P1 y P2, personas que han estado en natilleras reales"
+  - id: "EVI-004"
+    tipo: "otro"
+    ref: "impact-mapping-discovery/sessions/IMD-20261014-natillera-2/fuentes.md#lo-que-establece-la-hackathon"
+    nota: "reglas del evento H-01..H-10: 9 horas de construcción, flujo de pago completo obligatorio en la demo, 5 minutos de pitch"
+
+# ---------------------------------------------------------------------------
+# FASE 2 — EL ESQUELETO. Cosecha: los dos ríos del taller IMD (EVI-003),
+# completados con el PDF (EVI-001), cada paso con su fuente en comentario.
+# Leído por el equipo el 2026-10-14 con «luego»: completo, con tres notas
+# (pasos 3, 7 y 14). El administrador también ahorra: camina los pasos del
+# participante desde el 6.
+# ---------------------------------------------------------------------------
+esqueleto:
+  actividades:
+    - { id: "ACT-001", nombre: "armar la natillera",        orden: 1 }
+    - { id: "ACT-002", nombre: "unirse a la natillera",     orden: 2 }
+    - { id: "ACT-003", nombre: "ahorrar cada periodo",      orden: 3 }
+    - { id: "ACT-004", nombre: "participar en actividades", orden: 4 }
+    - { id: "ACT-005", nombre: "pedir un préstamo",         orden: 5 }
+    - { id: "ACT-006", nombre: "recibir la liquidación",    orden: 6 }
+  pasos:
+    # EVI-001 E-05
+    - { id: "PAS-001", actividad: "ACT-001", orden: 1, nombre: "se registra y lo validan", usuarios: ["USR-002"], dolor: null }
+    # EVI-001 E-06
+    - { id: "PAS-002", actividad: "ACT-001", orden: 2, nombre: "define las reglas de la natillera", usuarios: ["USR-002"], dolor: null }
+    # EVI-001 E-08 + río P2 · nota del equipo: por Telegram, con el nombre de usuario
+    - { id: "PAS-003", actividad: "ACT-001", orden: 3, nombre: "invita a su grupo por Telegram", usuarios: ["USR-002"], dolor: null }
+    # río P2 paso 1 · nota del equipo (Telegram)
+    - { id: "PAS-004", actividad: "ACT-002", orden: 1, nombre: "recibe la invitación por Telegram", usuarios: ["USR-001"], dolor: null }
+    # río P2 paso 2
+    - { id: "PAS-005", actividad: "ACT-002", orden: 2, nombre: "acepta la invitación", usuarios: ["USR-001"], dolor: null }
+    # río P2 paso 3 + EVI-001 E-09
+    - { id: "PAS-006", actividad: "ACT-002", orden: 3, nombre: "da sus datos y su billetera", usuarios: ["USR-001", "USR-002"], dolor: null }
+    # EVI-001 E-09 · nota del equipo: automático con las capacidades de Interledger
+    - { id: "PAS-007", actividad: "ACT-002", orden: 4, nombre: "autoriza el cobro automático de la cuota", usuarios: ["USR-001", "USR-002"], dolor: null }
+    # EVI-001 E-10
+    - { id: "PAS-008", actividad: "ACT-003", orden: 1, nombre: "ve arrancar la natillera", usuarios: ["USR-001", "USR-002"], dolor: null }
+    # río P1 «periodicamente ahorrar» + río P2 4a
+    - { id: "PAS-009", actividad: "ACT-003", orden: 2, nombre: "paga la cuota del periodo", usuarios: ["USR-001", "USR-002"], dolor: null }
+    # taller IMD, P1: «acceso transversal y transparente»
+    - { id: "PAS-010", actividad: "ACT-003", orden: 3, nombre: "mira su aporte y el del grupo", usuarios: ["USR-001", "USR-002"], dolor: null }
+    # río P1 «estar al dia» + EVI-001 E-12
+    - { id: "PAS-011", actividad: "ACT-003", orden: 4, nombre: "se pone al día si se atrasó", usuarios: ["USR-001", "USR-002"], dolor: null }
+    # EVI-001 E-11 + río P2 4b
+    - { id: "PAS-012", actividad: "ACT-004", orden: 1, nombre: "crea una actividad", usuarios: ["USR-002"], dolor: null }
+    # río P2 4b + EVI-001 E-13
+    - { id: "PAS-013", actividad: "ACT-004", orden: 2, nombre: "paga su parte de la actividad", usuarios: ["USR-001", "USR-002"], dolor: null }
+    # EVI-001 E-14 · nota del equipo: el administrador sabe quién gana, indica y ordena; el pago lo ejecuta la natillera
+    - { id: "PAS-014", actividad: "ACT-004", orden: 3, nombre: "indica al ganador y ordena el premio", usuarios: ["USR-002"], dolor: null }
+    # río P1 + río P2 4c + EVI-001 E-15
+    - { id: "PAS-015", actividad: "ACT-005", orden: 1, nombre: "pide un préstamo a la financiera", usuarios: ["USR-001", "USR-002"], dolor: null }
+    # río P1 último + río P2 5 + EVI-001 E-16
+    - { id: "PAS-016", actividad: "ACT-006", orden: 1, nombre: "recibe su liquidación en diciembre", usuarios: ["USR-001", "USR-002"], dolor: null }
+
+# ---------------------------------------------------------------------------
+# FASE 3 — LAS HISTORIAS Y EL RECORRIDO. Tarjetas aceptadas por el equipo el
+# 2026-10-14 («todo bien», «aceptamos», «esta bien»). El código del borrador
+# publicado (T01..T37, R01..R06) va en comentario. Las R* las propuso el
+# facilitador al caminar el mapa y el equipo las aceptó; R02 descansa en un
+# supuesto por verificar (SUP-003).
+# ---------------------------------------------------------------------------
+historias:
+  - id: "HIS-001"   # T01
+    paso: "PAS-001"
+    nombre: "verificación de identidad"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 1
+    origen: "excavada"
+    fuente: "EVI-001 — E-05"
+    rebanada: "REB-003"
+  - id: "HIS-002"   # T02
+    paso: "PAS-001"
+    nombre: "revisión financiera pequeña"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 2
+    origen: "excavada"
+    fuente: "EVI-001 — E-05"
+    rebanada: "REB-003"
+  - id: "HIS-003"   # T03
+    paso: "PAS-002"
+    nombre: "billetera del grupo creada"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 1
+    origen: "excavada"
+    fuente: "EVI-001 — E-07"
+    rebanada: "REB-001"
+  - id: "HIS-004"   # T04
+    paso: "PAS-002"
+    nombre: "nombre único de natillera"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 2
+    origen: "excavada"
+    fuente: "EVI-001 — E-06"
+    rebanada: "REB-003"
+  - id: "HIS-005"   # T05
+    paso: "PAS-002"
+    nombre: "cuota dentro de límites"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 3
+    origen: "excavada"
+    fuente: "EVI-001 — E-06"
+    rebanada: "REB-001"
+  - id: "HIS-006"   # T06
+    paso: "PAS-002"
+    nombre: "periodicidad y fechas válidas"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 4
+    origen: "excavada"
+    fuente: "EVI-001 — E-06"
+    rebanada: "REB-001"
+  - id: "HIS-007"   # T07
+    paso: "PAS-002"
+    nombre: "porcentaje de mora diario"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 5
+    origen: "excavada"
+    fuente: "EVI-001 — E-06"
+    rebanada: "REB-003"
+  - id: "HIS-008"   # T08 · nota del equipo en la lectura del esqueleto (paso 3)
+    paso: "PAS-003"
+    nombre: "invita por usuario Telegram"
+    tipo: "variante"
+    usuario: "USR-002"
+    prioridad_vertical: 1
+    origen: "taller"
+    fuente: null
+    rebanada: "REB-003"
+  - id: "HIS-009"   # T09
+    paso: "PAS-003"
+    nombre: "invita por correo o celular"
+    tipo: "variante"
+    usuario: "USR-002"
+    prioridad_vertical: 2
+    origen: "excavada"
+    fuente: "EVI-001 — E-08"
+    rebanada: null
+  - id: "HIS-010"   # T10
+    paso: "PAS-003"
+    nombre: "ve respuestas de invitados"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 3
+    origen: "excavada"
+    fuente: "EVI-001 — E-08"
+    rebanada: "REB-003"
+  - id: "HIS-011"   # R01 · propuesta del facilitador en el recorrido, aceptada por el equipo
+    paso: "PAS-004"
+    nombre: "sabe quién guarda el dinero"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 1
+    origen: "taller"
+    fuente: null
+    rebanada: "REB-003"
+  - id: "HIS-012"   # R02 · propuesta del facilitador en el recorrido, aceptada por el equipo
+    paso: "PAS-004"
+    nombre: "invitación por enlace compartido"
+    tipo: "variante"
+    usuario: "USR-001"
+    prioridad_vertical: 2
+    origen: "taller"
+    fuente: null
+    rebanada: "REB-001"
+  - id: "HIS-013"   # T11
+    paso: "PAS-005"
+    nombre: "rechaza la invitación"
+    tipo: "excepcion"
+    usuario: "USR-001"
+    prioridad_vertical: 1
+    origen: "excavada"
+    fuente: "EVI-001 — E-08"
+    rebanada: "REB-003"
+  - id: "HIS-014"   # T12
+    paso: "PAS-006"
+    nombre: "valida billetera con 1 peso"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 1
+    origen: "excavada"
+    fuente: "EVI-001 — E-09"
+    rebanada: "REB-003"
+  - id: "HIS-015"   # T13
+    paso: "PAS-006"
+    nombre: "datos personales básicos"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 2
+    origen: "excavada"
+    fuente: "EVI-001 — E-09"
+    rebanada: "REB-003"
+  - id: "HIS-016"   # R03 · propuesta del facilitador en el recorrido, aceptada por el equipo
+    paso: "PAS-006"
+    nombre: "reintenta validar su billetera"
+    tipo: "recuperacion"
+    usuario: "USR-001"
+    prioridad_vertical: 3
+    origen: "taller"
+    fuente: null
+    rebanada: "REB-003"
+  - id: "HIS-017"   # T14 · nota del equipo en la lectura del esqueleto (paso 7)
+    paso: "PAS-007"
+    nombre: "cobro automático por Interledger"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 1
+    origen: "taller"
+    fuente: null
+    rebanada: "REB-001"
+  - id: "HIS-018"   # T15
+    paso: "PAS-007"
+    nombre: "acepta monto y periodicidad"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 2
+    origen: "excavada"
+    fuente: "EVI-001 — E-09"
+    rebanada: "REB-001"
+  - id: "HIS-019"   # T16
+    paso: "PAS-008"
+    nombre: "arranca con cupo mínimo"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 1
+    origen: "excavada"
+    fuente: "EVI-001 — E-10"
+    rebanada: "REB-001"
+  - id: "HIS-020"   # T17
+    paso: "PAS-008"
+    nombre: "primera cuota cobrada a todos"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 2
+    origen: "excavada"
+    fuente: "EVI-001 — E-10"
+    rebanada: "REB-001"
+  - id: "HIS-021"   # T18
+    paso: "PAS-008"
+    nombre: "cupo incompleto: devolución"
+    tipo: "excepcion"
+    usuario: "USR-001"
+    prioridad_vertical: 3
+    origen: "excavada"
+    fuente: "EVI-001 — E-10"
+    rebanada: "REB-003"
+  - id: "HIS-022"   # R04 · propuesta del facilitador en el recorrido, aceptada por el equipo
+    paso: "PAS-008"
+    nombre: "ve quién falta validar"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 4
+    origen: "taller"
+    fuente: null
+    rebanada: "REB-003"
+  - id: "HIS-023"   # T19
+    paso: "PAS-009"
+    nombre: "débito automático de cuota"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 1
+    origen: "excavada"
+    fuente: "EVI-001 — E-12"
+    rebanada: "REB-001"
+  - id: "HIS-024"   # T20
+    paso: "PAS-009"
+    nombre: "sin fondos: queda en mora"
+    tipo: "excepcion"
+    usuario: "USR-001"
+    prioridad_vertical: 2
+    origen: "excavada"
+    fuente: "EVI-001 — E-12"
+    rebanada: "REB-003"
+  - id: "HIS-025"   # T21
+    paso: "PAS-010"
+    nombre: "ve su aporte acumulado"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 1
+    origen: "excavada"
+    fuente: "EVI-002 — IMP-003 (PA1) del mapa IMD"
+    rebanada: "REB-001"
+  - id: "HIS-026"   # T22
+    paso: "PAS-010"
+    nombre: "ve total de la natillera"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 2
+    origen: "excavada"
+    fuente: "EVI-002 — IMP-003 e IMP-012 del mapa IMD"
+    rebanada: "REB-001"
+  - id: "HIS-027"   # R05 · propuesta del facilitador en el recorrido, aceptada por el equipo
+    paso: "PAS-010"
+    nombre: "estimado de su liquidación"
+    tipo: "deleite"
+    usuario: "USR-001"
+    prioridad_vertical: 3
+    origen: "taller"
+    fuente: null
+    rebanada: null
+  - id: "HIS-028"   # T23
+    paso: "PAS-011"
+    nombre: "recordatorio diario con mora"
+    tipo: "recuperacion"
+    usuario: "USR-001"
+    prioridad_vertical: 1
+    origen: "excavada"
+    fuente: "EVI-001 — E-12"
+    rebanada: "REB-003"
+  - id: "HIS-029"   # T24
+    paso: "PAS-011"
+    nombre: "avisa: ya tengo el dinero"
+    tipo: "recuperacion"
+    usuario: "USR-001"
+    prioridad_vertical: 2
+    origen: "excavada"
+    fuente: "EVI-001 — E-12"
+    rebanada: "REB-003"
+  - id: "HIS-030"   # T25
+    paso: "PAS-012"
+    nombre: "actividad con valor y premio"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 1
+    origen: "excavada"
+    fuente: "EVI-001 — E-11"
+    rebanada: "REB-003"
+  - id: "HIS-031"   # T26
+    paso: "PAS-012"
+    nombre: "castigo de mora de actividad"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 2
+    origen: "excavada"
+    fuente: "EVI-001 — E-11"
+    rebanada: "REB-003"
+  - id: "HIS-032"   # T27
+    paso: "PAS-013"
+    nombre: "da permiso de cobro"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 1
+    origen: "excavada"
+    fuente: "EVI-001 — E-13"
+    rebanada: "REB-003"
+  - id: "HIS-033"   # T28
+    paso: "PAS-013"
+    nombre: "sin fondos: queda en alerta"
+    tipo: "excepcion"
+    usuario: "USR-001"
+    prioridad_vertical: 2
+    origen: "excavada"
+    fuente: "EVI-001 — E-13"
+    rebanada: "REB-003"
+  - id: "HIS-034"   # T29
+    paso: "PAS-014"
+    nombre: "avisa el ganador a todos"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 1
+    origen: "excavada"
+    fuente: "EVI-001 — E-14"
+    rebanada: "REB-003"
+  - id: "HIS-035"   # T30 · EVI-001 E-14 + aclaración del equipo (paso 14: indica y ordena; la natillera paga)
+    paso: "PAS-014"
+    nombre: "premio nunca supera lo recaudado"
+    tipo: "detalle"
+    usuario: "USR-002"
+    prioridad_vertical: 2
+    origen: "taller"
+    fuente: null
+    rebanada: "REB-003"
+  - id: "HIS-036"   # T31
+    paso: "PAS-014"
+    nombre: "recaudo incompleto: pago parcial"
+    tipo: "excepcion"
+    usuario: "USR-002"
+    prioridad_vertical: 3
+    origen: "excavada"
+    fuente: "EVI-001 — E-14"
+    rebanada: "REB-003"
+  - id: "HIS-037"   # T32 · nota del equipo en la lectura del esqueleto (paso 14)
+    paso: "PAS-014"
+    nombre: "nadie gana: queda acumulado"
+    tipo: "excepcion"
+    usuario: "USR-002"
+    prioridad_vertical: 4
+    origen: "taller"
+    fuente: null
+    rebanada: "REB-003"
+  - id: "HIS-038"   # R06 · propuesta del facilitador en el recorrido, aceptada por el equipo
+    paso: "PAS-014"
+    nombre: "confirma ganador antes de pagar"
+    tipo: "recuperacion"
+    usuario: "USR-002"
+    prioridad_vertical: 5
+    origen: "taller"
+    fuente: null
+    rebanada: "REB-003"
+  - id: "HIS-039"   # T33
+    paso: "PAS-015"
+    nombre: "préstamo tras Y pagos"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 1
+    origen: "excavada"
+    fuente: "EVI-001 — E-15"
+    rebanada: "REB-002"
+  - id: "HIS-040"   # T34
+    paso: "PAS-015"
+    nombre: "préstamo impago: descuento final"
+    tipo: "excepcion"
+    usuario: "USR-001"
+    prioridad_vertical: 2
+    origen: "excavada"
+    fuente: "EVI-001 — E-15 y E-16"
+    rebanada: "REB-002"
+  - id: "HIS-041"   # T35
+    paso: "PAS-016"
+    nombre: "reparto con descuentos de mora"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 1
+    origen: "excavada"
+    fuente: "EVI-001 — E-16"
+    rebanada: "REB-003"
+  - id: "HIS-042"   # T36
+    paso: "PAS-016"
+    nombre: "pago a su billetera personal"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 2
+    origen: "excavada"
+    fuente: "EVI-001 — E-16"
+    rebanada: "REB-001"
+  - id: "HIS-043"   # T37
+    paso: "PAS-016"
+    nombre: "cobranza en el último periodo"
+    tipo: "detalle"
+    usuario: "USR-001"
+    prioridad_vertical: 3
+    origen: "excavada"
+    fuente: "EVI-001 — E-15"
+    rebanada: "REB-003"
+
+huerfanas: []                  # no hay backlog importado: nada quedó sin paso
+
+recorrido:
+  corrido: true
+  hallazgos: 6
+  nota: >-
+    El facilitador caminó el mapa con los zapatos del participante y del
+    administrador con las cuatro preguntas (qué sigue, qué error, qué
+    confunde, qué información falta) y propuso seis tarjetas (R01..R06 =
+    HIS-011, HIS-012, HIS-016, HIS-022, HIS-027, HIS-038); el equipo las revisó en la página publicada y las aceptó.
+
+supuestos_riesgos:
+  - { id: "SUP-001", enunciado: "Open Payments permite el cobro recurrente con una sola autorización del participante (VH-02 de IMD; prueba temprana ENT-005)", historias: ["HIS-017", "HIS-023"], estado: "vivo" }
+  - { id: "SUP-002", enunciado: "Cada participante tiene o puede abrir una billetera compatible con Open Payments (supuesto de IMP-003 en IMD)", historias: ["HIS-014", "HIS-016"], estado: "vivo" }
+  - { id: "SUP-003", enunciado: "El bot de Telegram puede invitar a alguien por su nombre de usuario; por verificar: un bot solo escribe a quien le escribió primero", historias: ["HIS-008"], estado: "vivo" }   # R02 (HIS-012) es la salida que no depende del supuesto
+  - { id: "SUP-004", enunciado: "La Test Wallet maneja la moneda en que se define la natillera (VH-03 de IMD)", historias: ["HIS-003", "HIS-005"], estado: "vivo" }
+  - { id: "SUP-005", enunciado: "Una financiera vigilada acepta custodiar la cuenta del grupo (supuesto de IMP-012 en IMD)", historias: ["HIS-003"], estado: "vivo" }
+
+# ---------------------------------------------------------------------------
+# FASE 4 — LAS REBANADAS. Outcome escrito antes que el alcance (respuestas
+# del equipo el 2026-10-14: «A · Ciclo completo en flaco», «Ganar, con prueba
+# temprana», «Enlace compartido», «el credito queda para el final por si
+# tenemos tiempo para hacerlo» = al final de la hackathon). Las 9 horas son
+# una restricción del evento, no una decisión del mapa.
+# ---------------------------------------------------------------------------
+rebanado_tecnica: "outcome_first"
+rebanadas:
+  - id: "REB-001"
+    nombre: "Primera natillera de punta a punta"
+    orden: 1
+    proposito: "ganar"            # con prueba temprana de SUP-001/003/004 en la primera hora del viernes
+    outcome:
+      enunciado: >-
+        un grupo de demostración arma su natillera, cada participante
+        (incluido el administrador) autoriza una sola vez el cobro, ve cobrada
+        su cuota real con su aporte y el total del grupo a la vista y, con el
+        tiempo acelerado, recibe su liquidación en su billetera
+      usuarios_objetivo: ["USR-001", "USR-002"]
+      medicion:
+        estado: "sin_medir"
+        razon: "se observa por primera vez en la demo del 2026-10-17, en el registro del flujo de pago; no hay dato previo"
+    actividades_excluidas:
+      - { actividad: "ACT-004", razon: "las actividades especiales no están en el corte acordado en IMD (AD2 quedó ahora-no); van en la rebanada 3" }
+      - { actividad: "ACT-005", razon: "el préstamo lo otorga la financiera y es la rebanada 2, opcional al final de la hackathon si sobra tiempo" }
+  - id: "REB-002"
+    nombre: "Crédito desde el ahorro"
+    orden: 2
+    proposito: "ganar"            # opcional dentro de la hackathon: solo si REB-001 está lista y sobra tiempo
+    outcome:
+      enunciado: >-
+        un participante con pagos cumplidos pide un préstamo a la financiera y,
+        si no lo paga, el saldo pendiente se le descuenta en la liquidación
+      usuarios_objetivo: ["USR-001"]
+      medicion:
+        estado: "sin_medir"
+        razon: "no hay financiera identificada ni historial de pagos; en la hackathon sería simulado"
+    actividades_excluidas: []
+  - id: "REB-003"
+    nombre: "La natillera completa"
+    orden: 3
+    proposito: "ganar"
+    outcome:
+      enunciado: >-
+        el grupo vive la natillera completa: validaciones e invitaciones por
+        Telegram, mora con recordatorios, actividades con premio y liquidación
+        con descuentos
+      usuarios_objetivo: ["USR-001", "USR-002"]
+      medicion:
+        estado: "sin_medir"
+        razon: "después del evento; requiere participantes reales"
+    actividades_excluidas: []
+
+# ---------------------------------------------------------------------------
+# FASE 5 — EL VEREDICTO. Agregar `destino` cierra el mapa.
+# ---------------------------------------------------------------------------
+acuerdo:
+  alcanzado: true
+  roles_que_acordaron:
+    - "Proponente — negocio y producto (decisor)"
+    - "Integrante del equipo de la hackathon"
+    - "Resto del equipo de la hackathon"
+  disenso: []
+  nadie_disintio: true             # «estamos todo el equipo y todos acuerdan»
+
+destino:
+  tipo: "backlog_bdd"
+  confirmado_por_rol: "Proponente — negocio y producto (decisor)"
+  fecha: "2026-10-14"
+  dueno_mapa_vivo: null
+  mapa_se_descarta: false

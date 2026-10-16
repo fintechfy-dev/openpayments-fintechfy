@@ -1,0 +1,103 @@
+# ============================================================================
+# bdd-seed.yaml — USMD → BDD 2.0 · Natillera 2.0 · rebanada REB-001
+#
+# Emitido por usmd-bridge el 2026-10-14 con: mapa CERRADO y MAPA BIEN FORMADO
+# (usmd_lint.py --json), acuerdo alcanzado sin disenso, destino backlog_bdd
+# confirmado por el proponente y confirmación explícita del usuario ante la
+# vista previa («Sí, emitir y seguir a BDD»).
+#
+# LA REGLA DEL SEED: todo campo es una sugerencia, no una decisión. BDD 2.0
+# corre sus compuertas completas. Los huecos declarados son deliberados.
+# NO viaja tide_constraint: el apetito es verdad única de SUD; el límite de
+# 9 horas del evento viaja como riesgo conocido, no como techo.
+#
+# Atribución: la práctica de User Story Mapping es de Jeff Patton
+# (jpattonassociates.com); nada de esto está avalado ni respaldado por él ni
+# por las fuentes del canon.
+# ============================================================================
+
+seed_meta:
+  source_framework: "USMD"
+  source_session: "USMD-20261014-natillera-2"
+  mapa_ref: "user-story-mapping-discovery/sessions/USMD-20261014-natillera-2/mapa-historias.yaml"
+  rebanada: "REB-001"
+  generated_at: "2026-10-14T19:50:51-05:00"
+  acuerdo_alcanzado: true
+  roles_que_acordaron:
+    - "Proponente — negocio y producto (decisor)"
+    - "Integrante del equipo de la hackathon"
+    - "Resto del equipo de la hackathon"
+  aguas_arriba: "impact-mapping-discovery/sessions/IMD-20261014-natillera-2 (mapa gobernante; corte AD1/PA1/FI3)"
+
+project_context:
+  problem_statement: >-
+    Que el jurado de la hackathon de Open Payments Medellín (16 y 17 de
+    octubre de 2026) lleve la propuesta a la ronda final y la premie por su
+    aporte a la inclusión financiera. El problema de fondo: en la natillera
+    tradicional un organizador del grupo guarda el dinero y hubo casos de
+    autopréstamo o robo; por desconfianza, hoy se hacen menos natilleras.
+    Natillera 2.0 quiere conservar la familiaridad del ahorro en grupo
+    quitando el riesgo de custodia.
+  business_outcome: >-
+    Un grupo de demostración arma su natillera, cada participante (incluido el
+    administrador) autoriza una sola vez el cobro, ve cobrada su cuota real con
+    su aporte y el total del grupo a la vista y, con el tiempo acelerado,
+    recibe su liquidación en su billetera.
+  nugget: >-
+    Un grupo de familiares o amigos ahorra junto para diciembre sin que nadie
+    pueda tocar el dinero del grupo, viendo siempre lo suyo y lo de todos.
+
+epics_seed:
+  - epic_hint: "armar la natillera"
+    mapa_ref: "mapa-historias.yaml#ACT-001"
+    story_seeds:
+      - "Como Administrador de la natillera (tesorero), quiero billetera del grupo creada (paso: define las reglas de la natillera)"
+      - "Como Administrador de la natillera (tesorero), quiero cuota dentro de límites (paso: define las reglas de la natillera)"
+      - "Como Administrador de la natillera (tesorero), quiero periodicidad y fechas válidas (paso: define las reglas de la natillera)"
+  - epic_hint: "unirse a la natillera"
+    mapa_ref: "mapa-historias.yaml#ACT-002"
+    story_seeds:
+      - "Como Participante de la natillera que ahorra para tener su dinero en diciembre, quiero invitación por enlace compartido (paso: recibe la invitación por Telegram)"
+      - "Como Participante de la natillera que ahorra para tener su dinero en diciembre, quiero cobro automático por Interledger (paso: autoriza el cobro automático de la cuota)"
+      - "Como Participante de la natillera que ahorra para tener su dinero en diciembre, quiero acepta monto y periodicidad (paso: autoriza el cobro automático de la cuota)"
+  - epic_hint: "ahorrar cada periodo"
+    mapa_ref: "mapa-historias.yaml#ACT-003"
+    story_seeds:
+      - "Como Administrador de la natillera (tesorero), quiero arranca con cupo mínimo (paso: ve arrancar la natillera)"
+      - "Como Participante de la natillera que ahorra para tener su dinero en diciembre, quiero primera cuota cobrada a todos (paso: ve arrancar la natillera)"
+      - "Como Participante de la natillera que ahorra para tener su dinero en diciembre, quiero débito automático de cuota (paso: paga la cuota del periodo)"
+      - "Como Participante de la natillera que ahorra para tener su dinero en diciembre, quiero ve su aporte acumulado (paso: mira su aporte y el del grupo)"
+      - "Como Participante de la natillera que ahorra para tener su dinero en diciembre, quiero ve total de la natillera (paso: mira su aporte y el del grupo)"
+  - epic_hint: "recibir la liquidación"
+    mapa_ref: "mapa-historias.yaml#ACT-006"
+    story_seeds:
+      - "Como Participante de la natillera que ahorra para tener su dinero en diciembre, quiero pago a su billetera personal (paso: recibe su liquidación en diciembre)"
+
+out_of_scope:
+  - "ACT-004 participar en actividades: no está en el corte acordado en IMD (AD2 quedó ahora-no); va en REB-003"
+  - "ACT-005 pedir un préstamo: es REB-002 «Crédito desde el ahorro», opcional al final de la hackathon solo si sobra tiempo; lo otorga la financiera"
+  - "REB-003 «La natillera completa» (27 historias): validación de identidad y revisión financiera, invitación por usuario de Telegram, validación de billetera con 1 peso, rechazo de invitación, devolución por cupo incompleto, mora con recordatorios y «ya tengo el dinero», actividades y premios, liquidación con descuentos"
+  - "Futuro declarado, sin rebanada: invitación por correo o celular; estimado de liquidación"
+
+known_risks:
+  - "SUP-001: Open Payments permite el cobro recurrente con una sola autorización del participante (por verificar en la primera hora del viernes, ENT-005 de IMD)"
+  - "SUP-004: la Test Wallet maneja la moneda en que se define la natillera"
+  - "SUP-005: una financiera vigilada acepta custodiar la cuenta del grupo (en la hackathon es simulada)"
+  - "La rebanada tiene que construirse en las 9 horas del evento (viernes 10:30–17:30 con pausa y sábado 08:00–11:00); restricción externa, no apetito"
+  - "VH-01 de IMD: si se construye sobre el motor propio, puede chocar con la regla «todo el código debe desarrollarse dentro de los dos días»; consulta pendiente a la organización"
+
+acceptance_anchor: >-
+  Un grupo de demostración arma su natillera, cada participante (incluido el
+  administrador) autoriza una sola vez el cobro, ve cobrada su cuota real con
+  su aporte y el total del grupo a la vista y, con el tiempo acelerado, recibe
+  su liquidación en su billetera.
+
+eje_de_corte_sugerido: "segmento_de_actor"
+
+huecos_declarados:
+  - "redaccion Como/Quiero/Para completa con beneficio (Fase 2, INVEST)"
+  - "criterios de aceptacion SMART (Fase 3)"
+  - "analisis de completitud de las 10 areas (Fase 4)"
+  - "Gherkin (Fase 5)"
+  - "VUIFED, riesgo 5D y calculo de MVP (Fase 1 los computa, jamas este seed)"
+  - "capa TESIS si se quiere: falsadores e instrumentacion son de /bdd-tesis"

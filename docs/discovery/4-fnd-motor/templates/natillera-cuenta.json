@@ -1,0 +1,2495 @@
+{
+  "name": "natillera-cuenta",
+  "description": "CONT-001 · La cuenta colectiva de la natillera (custodia de la financiera). Cuenta validados, arranca por cupo, lleva el calendario de cobros, suma por deltas y liquida en dos rondas hasta quedar en 0. Natillera 2.0 (FND-20261015-natillera-2)",
+  "version": "1.0.0",
+  "conceptDefinitions": [
+    {
+      "name": "NatilleraId",
+      "dataType": "Text",
+      "description": "Llave de negocio de la natillera (inmutable): la usan todas las reglas que le hablan",
+      "category": "Custom",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "NombreNatillera",
+      "dataType": "Text",
+      "description": "Nombre único que ve el grupo (E-06)",
+      "category": "Custom",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "ValorCuota",
+      "dataType": "Currency",
+      "description": "Cuota de cada periodo (E-06; mínimos y máximos del sistema los valida el bot)",
+      "category": "Payment",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "FechaInicio",
+      "dataType": "Date",
+      "description": "Primer cobro (E-06: máximo a un mes; lo valida el bot)",
+      "category": "Time",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "FechaFinal",
+      "dataType": "Date",
+      "description": "Liquidación (E-06: máximo a un año; lo valida el bot)",
+      "category": "Time",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "PeriodicidadMeses",
+      "dataType": "Integer",
+      "description": "Meses entre cobros (1 = mensual)",
+      "category": "Time",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "CupoMinimo",
+      "dataType": "Integer",
+      "description": "Participantes que deben pagar la primera cuota para que arranque (N, V-01)",
+      "category": "Custom",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "PorcentajeMoraDiaria",
+      "dataType": "Percentage",
+      "description": "Mora diaria sobre la deuda de cuotas (E-06)",
+      "category": "Rate",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "DiasEsperaCupo",
+      "dataType": "Integer",
+      "description": "Días que se espera el cupo después del primer cobro (X, V-01)",
+      "category": "Time",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "PagosParaPrestamo",
+      "dataType": "Integer",
+      "description": "Pagos previos para habilitar el préstamo (Y, V-01)",
+      "category": "Custom",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "MultiploPrestamo",
+      "dataType": "Integer",
+      "description": "Tope del préstamo en cuotas (N × cuota, E-15)",
+      "category": "Custom",
+      "initialization": "Parameter"
+    },
+    {
+      "name": "Moneda",
+      "dataType": "Text",
+      "description": "Moneda digital de la natillera (E-06); por omisión COP, la del testnet de Open Payments",
+      "category": "Custom",
+      "initialization": "Explicit"
+    },
+    {
+      "name": "NumeroCuotas",
+      "dataType": "Integer",
+      "description": "Cuotas entre FechaInicio y FechaFinal según la periodicidad (BDD: rango + periodicidad)",
+      "category": "Calculated",
+      "initialization": "Explicit"
+    },
+    {
+      "name": "EstadoNatillera",
+      "dataType": "Integer",
+      "description": "Máquina de la natillera: 0=CREADA · 1=INICIADA · 2=ACTIVA · 3=LIQUIDANDO · 4=REEMBOLSANDO · 5=CERRADA · 6=CERRADA_SIN_CUPO",
+      "category": "Status",
+      "initialization": "Zero"
+    },
+    {
+      "name": "ParticipantesValidados",
+      "dataType": "Integer",
+      "description": "Participaciones con billetera autorizada (BRG-001)",
+      "category": "Custom",
+      "initialization": "Zero"
+    },
+    {
+      "name": "PagosPrimeraCuota",
+      "dataType": "Integer",
+      "description": "Primeras cuotas pagadas mientras la natillera está INICIADA (cupo)",
+      "category": "Custom",
+      "initialization": "Zero"
+    },
+    {
+      "name": "PeriodoActual",
+      "dataType": "Integer",
+      "description": "Último periodo de cobro abierto (1 al iniciar)",
+      "category": "Custom",
+      "initialization": "Zero"
+    },
+    {
+      "name": "FechaProximoCobro",
+      "dataType": "Date",
+      "description": "Fecha del siguiente periodo de cobro",
+      "category": "Time",
+      "initialization": "Explicit"
+    },
+    {
+      "name": "FechaLimiteCupo",
+      "dataType": "Date",
+      "description": "FechaInicio + DiasEsperaCupo: pasada esta fecha sin cupo, se reembolsa",
+      "category": "Time",
+      "initialization": "Explicit"
+    },
+    {
+      "name": "SaldoNatillera",
+      "dataType": "Currency",
+      "description": "Dinero del grupo en la cuenta de la natillera (custodia de la financiera)",
+      "category": "Capital",
+      "initialization": "Zero"
+    },
+    {
+      "name": "PremiosEnTransito",
+      "dataType": "Currency",
+      "description": "Premios ordenados cuyo pago aún no confirma el riel",
+      "category": "Payment",
+      "initialization": "Zero"
+    },
+    {
+      "name": "PartePorParticipante",
+      "dataType": "Currency",
+      "description": "Ronda 1: saldo / validados, al centavo hacia abajo",
+      "category": "Calculated",
+      "initialization": "Zero"
+    },
+    {
+      "name": "PartesReportadas",
+      "dataType": "Integer",
+      "description": "Participaciones que ya calcularon su parte",
+      "category": "Custom",
+      "initialization": "Zero"
+    },
+    {
+      "name": "SumaPartesNetas",
+      "dataType": "Currency",
+      "description": "Suma de las partes netas reportadas",
+      "category": "Calculated",
+      "initialization": "Zero"
+    },
+    {
+      "name": "UltimaParticipacionReportada",
+      "dataType": "Text",
+      "description": "Quien absorbe el residuo de centavos («El último en reportar»)",
+      "category": "Custom",
+      "initialization": "Explicit"
+    },
+    {
+      "name": "SobranteTotal",
+      "dataType": "Currency",
+      "description": "Ronda 2: lo que quedó tras las partes netas (deudas descontadas a los morosos)",
+      "category": "Calculated",
+      "initialization": "Zero"
+    },
+    {
+      "name": "SobrantePorParticipante",
+      "dataType": "Currency",
+      "description": "Sobrante / validados, al centavo hacia abajo",
+      "category": "Calculated",
+      "initialization": "Zero"
+    },
+    {
+      "name": "Residuo",
+      "dataType": "Currency",
+      "description": "Centavos que no alcanzan para todos: van a UltimaParticipacionReportada",
+      "category": "Calculated",
+      "initialization": "Zero"
+    },
+    {
+      "name": "PagosLiquidacion",
+      "dataType": "Integer",
+      "description": "Pagos de liquidación confirmados",
+      "category": "Custom",
+      "initialization": "Zero"
+    },
+    {
+      "name": "ReembolsosConfirmados",
+      "dataType": "Integer",
+      "description": "Reembolsos confirmados (incluye los de 0 de quien nunca pagó)",
+      "category": "Custom",
+      "initialization": "Zero"
+    },
+    {
+      "name": "FechaCierre",
+      "dataType": "Date",
+      "description": "Fecha en que la cuenta quedó en 0",
+      "category": "Time",
+      "initialization": "Explicit"
+    }
+  ],
+  "stateMachines": {
+    "EstadoNatillera": {
+      "concept": "EstadoNatillera",
+      "states": {
+        "CREADA": 0,
+        "INICIADA": 1,
+        "ACTIVA": 2,
+        "LIQUIDANDO": 3,
+        "REEMBOLSANDO": 4,
+        "CERRADA": 5,
+        "CERRADA_SIN_CUPO": 6
+      },
+      "initialState": "CREADA",
+      "transitions": [
+        {
+          "from": "CREADA",
+          "to": "INICIADA",
+          "label": "[Iniciar] FechaInicio con el cupo de validados"
+        },
+        {
+          "from": "INICIADA",
+          "to": "ACTIVA",
+          "label": "[RegistrarAporte] La primera cuota que completa el cupo"
+        },
+        {
+          "from": "INICIADA",
+          "to": "REEMBOLSANDO",
+          "label": "[VerificarCupo] Pasó la espera sin cupo"
+        },
+        {
+          "from": "ACTIVA",
+          "to": "LIQUIDANDO",
+          "label": "[IniciarLiquidacion] Llegó FechaFinal"
+        },
+        {
+          "from": "LIQUIDANDO",
+          "to": "CERRADA",
+          "label": "[RegistrarPagoLiquidacion] El último pago deja la cuenta en 0"
+        },
+        {
+          "from": "REEMBOLSANDO",
+          "to": "CERRADA_SIN_CUPO",
+          "label": "[RegistrarReembolso] El último reembolso deja la cuenta en 0"
+        }
+      ]
+    }
+  },
+  "triggers": [
+    {
+      "name": "CrearNatillera",
+      "type": "creation"
+    },
+    {
+      "name": "RegistrarValidado",
+      "type": "external",
+      "visibility": "private",
+      "parameters": [
+        {
+          "name": "ParticipacionId",
+          "dataType": "Text",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "name": "Iniciar",
+      "type": "scheduled",
+      "visibility": "private",
+      "schedule": {
+        "cron": "0 6 * * *"
+      }
+    },
+    {
+      "name": "RegistrarAporte",
+      "type": "external",
+      "visibility": "private",
+      "parameters": [
+        {
+          "name": "ParticipacionId",
+          "dataType": "Text",
+          "isRequired": true
+        },
+        {
+          "name": "MontoAporte",
+          "dataType": "Currency",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "name": "RegistrarIngresoActividad",
+      "type": "external",
+      "visibility": "private",
+      "parameters": [
+        {
+          "name": "ActividadId",
+          "dataType": "Text",
+          "isRequired": true
+        },
+        {
+          "name": "MontoIngreso",
+          "dataType": "Currency",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "name": "VerificarCupo",
+      "type": "scheduled",
+      "visibility": "private",
+      "schedule": {
+        "cron": "0 6 * * *"
+      }
+    },
+    {
+      "name": "AbrirPeriodo",
+      "type": "scheduled",
+      "visibility": "private",
+      "schedule": {
+        "cron": "0 6 * * *"
+      }
+    },
+    {
+      "name": "RegistrarSalidaPremio",
+      "type": "external",
+      "visibility": "private",
+      "parameters": [
+        {
+          "name": "ActividadId",
+          "dataType": "Text",
+          "isRequired": true
+        },
+        {
+          "name": "MontoPremio",
+          "dataType": "Currency",
+          "isRequired": true
+        },
+        {
+          "name": "GanadorParticipacionId",
+          "dataType": "Text",
+          "isRequired": true
+        },
+        {
+          "name": "WalletGanador",
+          "dataType": "Text",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "name": "PagoPremioConfirmado",
+      "type": "external",
+      "visibility": "system",
+      "parameters": [
+        {
+          "name": "MontoPagado",
+          "dataType": "Currency",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "name": "PagoPremioFallido",
+      "type": "external",
+      "visibility": "system",
+      "parameters": [
+        {
+          "name": "Motivo",
+          "dataType": "Text",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "name": "ReintentarPagoPremio",
+      "type": "external",
+      "parameters": [
+        {
+          "name": "ActividadId",
+          "dataType": "Text",
+          "isRequired": true
+        },
+        {
+          "name": "MontoPremio",
+          "dataType": "Currency",
+          "isRequired": true
+        },
+        {
+          "name": "GanadorParticipacionId",
+          "dataType": "Text",
+          "isRequired": true
+        },
+        {
+          "name": "WalletGanador",
+          "dataType": "Text",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "name": "IniciarLiquidacion",
+      "type": "scheduled",
+      "visibility": "private",
+      "schedule": {
+        "cron": "0 6 * * *"
+      }
+    },
+    {
+      "name": "RegistrarParteCalculada",
+      "type": "external",
+      "visibility": "private",
+      "parameters": [
+        {
+          "name": "ParticipacionId",
+          "dataType": "Text",
+          "isRequired": true
+        },
+        {
+          "name": "ParteNeta",
+          "dataType": "Currency",
+          "isRequired": true
+        },
+        {
+          "name": "MontoDescuentoPrestamo",
+          "dataType": "Currency",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "name": "RegistrarPagoLiquidacion",
+      "type": "external",
+      "visibility": "private",
+      "parameters": [
+        {
+          "name": "ParticipacionId",
+          "dataType": "Text",
+          "isRequired": true
+        },
+        {
+          "name": "MontoPagado",
+          "dataType": "Currency",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "name": "RegistrarReembolso",
+      "type": "external",
+      "visibility": "private",
+      "parameters": [
+        {
+          "name": "ParticipacionId",
+          "dataType": "Text",
+          "isRequired": true
+        },
+        {
+          "name": "MontoReembolso",
+          "dataType": "Currency",
+          "isRequired": true
+        }
+      ]
+    }
+  ],
+  "functions": [
+    {
+      "name": "CrearNatillera",
+      "description": "Nace CREADA con sus reglas; calcula cuántas cuotas caben en el rango.",
+      "trigger": "CrearNatillera",
+      "preconditions": [
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "ValorCuota"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 0,
+            "valueType": "currency"
+          }
+        },
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "CupoMinimo"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 0,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "FechaFinal"
+          },
+          "right": {
+            "type": "Parameter",
+            "parameter": "FechaInicio"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Crear",
+          "concept": "NatilleraId",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "NatilleraId"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "NombreNatillera",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "NombreNatillera"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "ValorCuota",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "ValorCuota"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "FechaInicio",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "FechaInicio"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "FechaFinal",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "FechaFinal"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "PeriodicidadMeses",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "PeriodicidadMeses"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "CupoMinimo",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "CupoMinimo"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "PorcentajeMoraDiaria",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "PorcentajeMoraDiaria"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "DiasEsperaCupo",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "DiasEsperaCupo"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "PagosParaPrestamo",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "PagosParaPrestamo"
+          }
+        },
+        {
+          "type": "Crear",
+          "concept": "MultiploPrestamo",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "MultiploPrestamo"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "Moneda",
+          "expression": {
+            "type": "ParameterOrDefault",
+            "parameter": "Moneda",
+            "default": "COP",
+            "valueType": "text"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "NumeroCuotas",
+          "expression": {
+            "type": "Add",
+            "left": {
+              "type": "Floor",
+              "operand": {
+                "type": "Divide",
+                "left": {
+                  "type": "Subtract",
+                  "left": {
+                    "type": "Subtract",
+                    "left": {
+                      "type": "Add",
+                      "left": {
+                        "type": "Multiply",
+                        "left": {
+                          "type": "Year",
+                          "dateConcept": "FechaFinal"
+                        },
+                        "right": {
+                          "type": "Constant",
+                          "value": 12,
+                          "valueType": "integer"
+                        }
+                      },
+                      "right": {
+                        "type": "Month",
+                        "dateConcept": "FechaFinal"
+                      }
+                    },
+                    "right": {
+                      "type": "Add",
+                      "left": {
+                        "type": "Multiply",
+                        "left": {
+                          "type": "Year",
+                          "dateConcept": "FechaInicio"
+                        },
+                        "right": {
+                          "type": "Constant",
+                          "value": 12,
+                          "valueType": "integer"
+                        }
+                      },
+                      "right": {
+                        "type": "Month",
+                        "dateConcept": "FechaInicio"
+                      }
+                    }
+                  },
+                  "right": {
+                    "type": "Conditional",
+                    "condition": {
+                      "type": "LessThan",
+                      "left": {
+                        "type": "Day",
+                        "dateConcept": "FechaFinal"
+                      },
+                      "right": {
+                        "type": "Day",
+                        "dateConcept": "FechaInicio"
+                      }
+                    },
+                    "trueValue": {
+                      "type": "Constant",
+                      "value": 1,
+                      "valueType": "integer"
+                    },
+                    "falseValue": {
+                      "type": "Constant",
+                      "value": 0,
+                      "valueType": "integer"
+                    }
+                  }
+                },
+                "right": {
+                  "type": "Concept",
+                  "concept": "PeriodicidadMeses"
+                }
+              }
+            },
+            "right": {
+              "type": "Constant",
+              "value": 1,
+              "valueType": "integer"
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "NatilleraCreada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "cuota": {
+              "type": "Concept",
+              "concept": "ValorCuota"
+            },
+            "numeroCuotas": {
+              "type": "Concept",
+              "concept": "NumeroCuotas"
+            },
+            "cupoMinimo": {
+              "type": "Concept",
+              "concept": "CupoMinimo"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RegistrarValidado",
+      "description": "BRG-001: una participación autorizó su billetera.",
+      "trigger": "RegistrarValidado",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "CREADA"
+        ]
+      },
+      "steps": [
+        {
+          "type": "Incrementar",
+          "concept": "ParticipantesValidados",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ParticipanteValidadoRegistrado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "participantesValidados": {
+              "type": "Concept",
+              "concept": "ParticipantesValidados"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Iniciar",
+      "description": "Llega FechaInicio con el cupo de validados: abre el periodo 1 (BRG-002 pide la primera cuota).",
+      "trigger": "Iniciar",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "CREADA"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThanOrEqual",
+          "left": {
+            "type": "Concept",
+            "concept": "ParticipantesValidados"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "CupoMinimo"
+          }
+        },
+        {
+          "type": "Not",
+          "operand": {
+            "type": "LessThan",
+            "left": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "right": {
+              "type": "Concept",
+              "concept": "FechaInicio"
+            }
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "EstadoNatillera",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "PeriodoActual",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "FechaLimiteCupo",
+          "expression": {
+            "type": "AddDays",
+            "dateConcept": "FechaInicio",
+            "daysExpression": {
+              "type": "Concept",
+              "concept": "DiasEsperaCupo"
+            }
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "FechaProximoCobro",
+          "expression": {
+            "type": "AddMonths",
+            "dateConcept": "FechaInicio",
+            "monthsExpression": {
+              "type": "Multiply",
+              "left": {
+                "type": "Concept",
+                "concept": "PeriodoActual"
+              },
+              "right": {
+                "type": "Concept",
+                "concept": "PeriodicidadMeses"
+              }
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "NatilleraIniciada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "periodo": {
+              "type": "Concept",
+              "concept": "PeriodoActual"
+            },
+            "fechaPrimerCobro": {
+              "type": "Concept",
+              "concept": "FechaInicio"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RegistrarAporte",
+      "description": "Cuota, deuda o mora pagada con la natillera ACTIVA.",
+      "trigger": "RegistrarAporte",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "ACTIVA"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoAporte"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 0,
+            "valueType": "currency"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Acumular",
+          "concept": "SaldoNatillera",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "MontoAporte"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "AporteRegistrado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "participacionId": {
+              "type": "Parameter",
+              "parameter": "ParticipacionId"
+            },
+            "monto": {
+              "type": "Parameter",
+              "parameter": "MontoAporte"
+            },
+            "saldoNatillera": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RegistrarAporteCompletaCupo",
+      "description": "La primera cuota que completa el cupo: la natillera queda ACTIVA.",
+      "trigger": "RegistrarAporte",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "INICIADA"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThanOrEqual",
+          "left": {
+            "type": "Add",
+            "left": {
+              "type": "Concept",
+              "concept": "PagosPrimeraCuota"
+            },
+            "right": {
+              "type": "Constant",
+              "value": 1,
+              "valueType": "integer"
+            }
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "CupoMinimo"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Acumular",
+          "concept": "SaldoNatillera",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "MontoAporte"
+          }
+        },
+        {
+          "type": "Incrementar",
+          "concept": "PagosPrimeraCuota",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "EstadoNatillera",
+          "expression": {
+            "type": "Constant",
+            "value": 2,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "AporteRegistrado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "participacionId": {
+              "type": "Parameter",
+              "parameter": "ParticipacionId"
+            },
+            "monto": {
+              "type": "Parameter",
+              "parameter": "MontoAporte"
+            },
+            "saldoNatillera": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "NatilleraActivada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RegistrarAporteSinCupo",
+      "description": "Primera cuota pagada; el cupo aún no se completa.",
+      "trigger": "RegistrarAporte",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "INICIADA"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "LessThan",
+          "left": {
+            "type": "Add",
+            "left": {
+              "type": "Concept",
+              "concept": "PagosPrimeraCuota"
+            },
+            "right": {
+              "type": "Constant",
+              "value": 1,
+              "valueType": "integer"
+            }
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "CupoMinimo"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Acumular",
+          "concept": "SaldoNatillera",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "MontoAporte"
+          }
+        },
+        {
+          "type": "Incrementar",
+          "concept": "PagosPrimeraCuota",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "AporteRegistrado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "participacionId": {
+              "type": "Parameter",
+              "parameter": "ParticipacionId"
+            },
+            "monto": {
+              "type": "Parameter",
+              "parameter": "MontoAporte"
+            },
+            "saldoNatillera": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RegistrarIngresoActividad",
+      "description": "BRG-017: dinero de una actividad; entra a la cuenta, NO cuenta para el cupo (E2).",
+      "trigger": "RegistrarIngresoActividad",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "INICIADA",
+          "ACTIVA"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoIngreso"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 0,
+            "valueType": "currency"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Acumular",
+          "concept": "SaldoNatillera",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "MontoIngreso"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "IngresoActividadRegistrado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "actividadId": {
+              "type": "Parameter",
+              "parameter": "ActividadId"
+            },
+            "monto": {
+              "type": "Parameter",
+              "parameter": "MontoIngreso"
+            },
+            "saldoNatillera": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "VerificarCupo",
+      "description": "Pasó la espera sin cupo: se devuelve todo (BRG-006).",
+      "trigger": "VerificarCupo",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "INICIADA"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "CurrentDate"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "FechaLimiteCupo"
+          }
+        },
+        {
+          "type": "LessThan",
+          "left": {
+            "type": "Concept",
+            "concept": "PagosPrimeraCuota"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "CupoMinimo"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "EstadoNatillera",
+          "expression": {
+            "type": "Constant",
+            "value": 4,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ReembolsoIniciado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AbrirPeriodo",
+      "description": "El calendario es de la natillera (E1): abre el siguiente periodo y BRG-003 pide la cuota.",
+      "trigger": "AbrirPeriodo",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "ACTIVA"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "LessThan",
+          "left": {
+            "type": "Concept",
+            "concept": "PeriodoActual"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "NumeroCuotas"
+          }
+        },
+        {
+          "type": "Not",
+          "operand": {
+            "type": "LessThan",
+            "left": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "right": {
+              "type": "Concept",
+              "concept": "FechaProximoCobro"
+            }
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Incrementar",
+          "concept": "PeriodoActual",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "FechaProximoCobro",
+          "expression": {
+            "type": "AddMonths",
+            "dateConcept": "FechaInicio",
+            "monthsExpression": {
+              "type": "Multiply",
+              "left": {
+                "type": "Concept",
+                "concept": "PeriodoActual"
+              },
+              "right": {
+                "type": "Concept",
+                "concept": "PeriodicidadMeses"
+              }
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "PeriodoAbierto",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "periodo": {
+              "type": "Concept",
+              "concept": "PeriodoActual"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RegistrarSalidaPremio",
+      "description": "BRG-021/022: el premio sale de la cuenta; la llamada «pago-premio» le paga al ganador.",
+      "trigger": "RegistrarSalidaPremio",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "ACTIVA"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoPremio"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 0,
+            "valueType": "currency"
+          }
+        },
+        {
+          "type": "LessThanOrEqual",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoPremio"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "SaldoNatillera"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "SaldoNatillera",
+          "expression": {
+            "type": "Subtract",
+            "left": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            },
+            "right": {
+              "type": "Parameter",
+              "parameter": "MontoPremio"
+            }
+          }
+        },
+        {
+          "type": "Acumular",
+          "concept": "PremiosEnTransito",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "MontoPremio"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "SalidaPremioRegistrada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "saldoNatillera": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            },
+            "actividadId": {
+              "type": "Parameter",
+              "parameter": "ActividadId"
+            },
+            "ganadorParticipacionId": {
+              "type": "Parameter",
+              "parameter": "GanadorParticipacionId"
+            },
+            "walletGanador": {
+              "type": "Parameter",
+              "parameter": "WalletGanador"
+            },
+            "monto": {
+              "type": "Parameter",
+              "parameter": "MontoPremio"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "PagoPremioConfirmado",
+      "description": "El riel confirmó el pago al ganador.",
+      "trigger": "PagoPremioConfirmado",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "ACTIVA"
+        ]
+      },
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "PremiosEnTransito",
+          "expression": {
+            "type": "Max",
+            "left": {
+              "type": "Subtract",
+              "left": {
+                "type": "Concept",
+                "concept": "PremiosEnTransito"
+              },
+              "right": {
+                "type": "Parameter",
+                "parameter": "MontoPagado"
+              }
+            },
+            "right": {
+              "type": "Constant",
+              "value": 0,
+              "valueType": "currency"
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "PremioPagadoAlGanador",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "monto": {
+              "type": "Parameter",
+              "parameter": "MontoPagado"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "PagoPremioFallido",
+      "description": "El riel no pudo pagar: se avisa al administrador; el dinero queda en tránsito.",
+      "trigger": "PagoPremioFallido",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "ACTIVA"
+        ]
+      },
+      "steps": [
+        {
+          "type": "EmitirEvento",
+          "eventType": "PagoPremioFallo",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "motivo": {
+              "type": "Parameter",
+              "parameter": "Motivo"
+            },
+            "premiosEnTransito": {
+              "type": "Concept",
+              "concept": "PremiosEnTransito"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ReintentarPagoPremio",
+      "description": "El administrador reintenta un premio en tránsito.",
+      "trigger": "ReintentarPagoPremio",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "ACTIVA"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "GreaterThan",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoPremio"
+          },
+          "right": {
+            "type": "Constant",
+            "value": 0,
+            "valueType": "currency"
+          }
+        },
+        {
+          "type": "LessThanOrEqual",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoPremio"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "PremiosEnTransito"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "EmitirEvento",
+          "eventType": "PagoPremioReintentado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "actividadId": {
+              "type": "Parameter",
+              "parameter": "ActividadId"
+            },
+            "ganadorParticipacionId": {
+              "type": "Parameter",
+              "parameter": "GanadorParticipacionId"
+            },
+            "walletGanador": {
+              "type": "Parameter",
+              "parameter": "WalletGanador"
+            },
+            "monto": {
+              "type": "Parameter",
+              "parameter": "MontoPremio"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "IniciarLiquidacion",
+      "description": "Llega FechaFinal: ronda 1 (BRG-008) y cierre de actividades (BRG-026).",
+      "trigger": "IniciarLiquidacion",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "ACTIVA"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "Not",
+          "operand": {
+            "type": "LessThan",
+            "left": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "right": {
+              "type": "Concept",
+              "concept": "FechaFinal"
+            }
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Liquidar",
+          "concept": "EstadoNatillera",
+          "expression": {
+            "type": "Constant",
+            "value": 3,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "PartePorParticipante",
+          "expression": {
+            "type": "Multiply",
+            "left": {
+              "type": "Constant",
+              "value": 0.01,
+              "valueType": "currency"
+            },
+            "right": {
+              "type": "Floor",
+              "operand": {
+                "type": "Multiply",
+                "left": {
+                  "type": "Divide",
+                  "left": {
+                    "type": "Concept",
+                    "concept": "SaldoNatillera"
+                  },
+                  "right": {
+                    "type": "Concept",
+                    "concept": "ParticipantesValidados"
+                  }
+                },
+                "right": {
+                  "type": "Constant",
+                  "value": 100,
+                  "valueType": "decimal"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "LiquidacionIniciada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "partePorParticipante": {
+              "type": "Concept",
+              "concept": "PartePorParticipante"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RegistrarUltimaParte",
+      "description": "La última parte: ronda 2, el sobrante para todos y el residuo para uno (BRG-010).",
+      "trigger": "RegistrarParteCalculada",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "LIQUIDANDO"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "Equals",
+          "left": {
+            "type": "Add",
+            "left": {
+              "type": "Concept",
+              "concept": "PartesReportadas"
+            },
+            "right": {
+              "type": "Constant",
+              "value": 1,
+              "valueType": "integer"
+            }
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "ParticipantesValidados"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Incrementar",
+          "concept": "PartesReportadas",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Acumular",
+          "concept": "SumaPartesNetas",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "ParteNeta"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "SaldoNatillera",
+          "expression": {
+            "type": "Subtract",
+            "left": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            },
+            "right": {
+              "type": "Parameter",
+              "parameter": "MontoDescuentoPrestamo"
+            }
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "UltimaParticipacionReportada",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "ParticipacionId"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "SobranteTotal",
+          "expression": {
+            "type": "Subtract",
+            "left": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            },
+            "right": {
+              "type": "Concept",
+              "concept": "SumaPartesNetas"
+            }
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "SobrantePorParticipante",
+          "expression": {
+            "type": "Multiply",
+            "left": {
+              "type": "Constant",
+              "value": 0.01,
+              "valueType": "currency"
+            },
+            "right": {
+              "type": "Floor",
+              "operand": {
+                "type": "Multiply",
+                "left": {
+                  "type": "Divide",
+                  "left": {
+                    "type": "Concept",
+                    "concept": "SobranteTotal"
+                  },
+                  "right": {
+                    "type": "Concept",
+                    "concept": "ParticipantesValidados"
+                  }
+                },
+                "right": {
+                  "type": "Constant",
+                  "value": 100,
+                  "valueType": "decimal"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "Residuo",
+          "expression": {
+            "type": "Subtract",
+            "left": {
+              "type": "Concept",
+              "concept": "SobranteTotal"
+            },
+            "right": {
+              "type": "Multiply",
+              "left": {
+                "type": "Concept",
+                "concept": "SobrantePorParticipante"
+              },
+              "right": {
+                "type": "Concept",
+                "concept": "ParticipantesValidados"
+              }
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ParteCalculadaRegistrada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "partesReportadas": {
+              "type": "Concept",
+              "concept": "PartesReportadas"
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "SobranteCalculado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "sobrantePorParticipante": {
+              "type": "Concept",
+              "concept": "SobrantePorParticipante"
+            },
+            "residuo": {
+              "type": "Concept",
+              "concept": "Residuo"
+            },
+            "participacionResiduo": {
+              "type": "Concept",
+              "concept": "UltimaParticipacionReportada"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RegistrarParteCalculada",
+      "description": "BRG-009: una parte más; el descuento del préstamo sale de la cuenta (E3).",
+      "trigger": "RegistrarParteCalculada",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "LIQUIDANDO"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "LessThan",
+          "left": {
+            "type": "Add",
+            "left": {
+              "type": "Concept",
+              "concept": "PartesReportadas"
+            },
+            "right": {
+              "type": "Constant",
+              "value": 1,
+              "valueType": "integer"
+            }
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "ParticipantesValidados"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Incrementar",
+          "concept": "PartesReportadas",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Acumular",
+          "concept": "SumaPartesNetas",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "ParteNeta"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "SaldoNatillera",
+          "expression": {
+            "type": "Subtract",
+            "left": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            },
+            "right": {
+              "type": "Parameter",
+              "parameter": "MontoDescuentoPrestamo"
+            }
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "UltimaParticipacionReportada",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "ParticipacionId"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ParteCalculadaRegistrada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "partesReportadas": {
+              "type": "Concept",
+              "concept": "PartesReportadas"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CerrarNatillera",
+      "description": "El último pago deja la cuenta en 0: «la financiera queda en ceros».",
+      "trigger": "RegistrarPagoLiquidacion",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "LIQUIDANDO"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "Equals",
+          "left": {
+            "type": "Add",
+            "left": {
+              "type": "Concept",
+              "concept": "PagosLiquidacion"
+            },
+            "right": {
+              "type": "Constant",
+              "value": 1,
+              "valueType": "integer"
+            }
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "ParticipantesValidados"
+          }
+        },
+        {
+          "type": "Equals",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoPagado"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "SaldoNatillera"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Incrementar",
+          "concept": "PagosLiquidacion",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "SaldoNatillera",
+          "expression": {
+            "type": "Subtract",
+            "left": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            },
+            "right": {
+              "type": "Parameter",
+              "parameter": "MontoPagado"
+            }
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "EstadoNatillera",
+          "expression": {
+            "type": "Constant",
+            "value": 5,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "FechaCierre",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "CurrentDate"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "PagoLiquidacionRegistrado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "participacionId": {
+              "type": "Parameter",
+              "parameter": "ParticipacionId"
+            },
+            "monto": {
+              "type": "Parameter",
+              "parameter": "MontoPagado"
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "NatilleraCerrada",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "fechaCierre": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RegistrarPagoLiquidacion",
+      "description": "BRG-011: un pago de liquidación confirmado.",
+      "trigger": "RegistrarPagoLiquidacion",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "LIQUIDANDO"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "LessThan",
+          "left": {
+            "type": "Add",
+            "left": {
+              "type": "Concept",
+              "concept": "PagosLiquidacion"
+            },
+            "right": {
+              "type": "Constant",
+              "value": 1,
+              "valueType": "integer"
+            }
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "ParticipantesValidados"
+          }
+        },
+        {
+          "type": "LessThanOrEqual",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoPagado"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "SaldoNatillera"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Incrementar",
+          "concept": "PagosLiquidacion",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "SaldoNatillera",
+          "expression": {
+            "type": "Subtract",
+            "left": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            },
+            "right": {
+              "type": "Parameter",
+              "parameter": "MontoPagado"
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "PagoLiquidacionRegistrado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "participacionId": {
+              "type": "Parameter",
+              "parameter": "ParticipacionId"
+            },
+            "monto": {
+              "type": "Parameter",
+              "parameter": "MontoPagado"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CerrarSinCupo",
+      "description": "El último reembolso deja la cuenta en 0.",
+      "trigger": "RegistrarReembolso",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "REEMBOLSANDO"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "Equals",
+          "left": {
+            "type": "Add",
+            "left": {
+              "type": "Concept",
+              "concept": "ReembolsosConfirmados"
+            },
+            "right": {
+              "type": "Constant",
+              "value": 1,
+              "valueType": "integer"
+            }
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "ParticipantesValidados"
+          }
+        },
+        {
+          "type": "Equals",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoReembolso"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "SaldoNatillera"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Incrementar",
+          "concept": "ReembolsosConfirmados",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "SaldoNatillera",
+          "expression": {
+            "type": "Subtract",
+            "left": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            },
+            "right": {
+              "type": "Parameter",
+              "parameter": "MontoReembolso"
+            }
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "EstadoNatillera",
+          "expression": {
+            "type": "Constant",
+            "value": 6,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "FechaCierre",
+          "expression": {
+            "type": "Parameter",
+            "parameter": "CurrentDate"
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ReembolsoRegistrado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "participacionId": {
+              "type": "Parameter",
+              "parameter": "ParticipacionId"
+            },
+            "monto": {
+              "type": "Parameter",
+              "parameter": "MontoReembolso"
+            },
+            "saldoNatillera": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "NatilleraCerradaSinCupo",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "fechaCierre": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RegistrarReembolso",
+      "description": "BRG-007: un reembolso confirmado (o uno de 0 de quien nunca pagó).",
+      "trigger": "RegistrarReembolso",
+      "requiredStates": {
+        "EstadoNatillera": [
+          "REEMBOLSANDO"
+        ]
+      },
+      "preconditions": [
+        {
+          "type": "LessThan",
+          "left": {
+            "type": "Add",
+            "left": {
+              "type": "Concept",
+              "concept": "ReembolsosConfirmados"
+            },
+            "right": {
+              "type": "Constant",
+              "value": 1,
+              "valueType": "integer"
+            }
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "ParticipantesValidados"
+          }
+        },
+        {
+          "type": "LessThanOrEqual",
+          "left": {
+            "type": "Parameter",
+            "parameter": "MontoReembolso"
+          },
+          "right": {
+            "type": "Concept",
+            "concept": "SaldoNatillera"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "type": "Incrementar",
+          "concept": "ReembolsosConfirmados",
+          "expression": {
+            "type": "Constant",
+            "value": 1,
+            "valueType": "integer"
+          }
+        },
+        {
+          "type": "Liquidar",
+          "concept": "SaldoNatillera",
+          "expression": {
+            "type": "Subtract",
+            "left": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            },
+            "right": {
+              "type": "Parameter",
+              "parameter": "MontoReembolso"
+            }
+          }
+        },
+        {
+          "type": "EmitirEvento",
+          "eventType": "ReembolsoRegistrado",
+          "payload": {
+            "currentDate": {
+              "type": "Parameter",
+              "parameter": "CurrentDate"
+            },
+            "natilleraId": {
+              "type": "Concept",
+              "concept": "NatilleraId"
+            },
+            "participacionId": {
+              "type": "Parameter",
+              "parameter": "ParticipacionId"
+            },
+            "monto": {
+              "type": "Parameter",
+              "parameter": "MontoReembolso"
+            },
+            "saldoNatillera": {
+              "type": "Concept",
+              "concept": "SaldoNatillera"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "llamadas": [
+    {
+      "id": "pago-premio",
+      "nombre": "Pago del premio al ganador",
+      "evento": "SalidaPremioRegistrada",
+      "api": {
+        "id": "open-payments",
+        "operacion": "pagar"
+      },
+      "peticion": {
+        "cuerpo": {
+          "walletDestino": {
+            "payload": "walletGanador"
+          },
+          "monto": {
+            "payload": "monto"
+          },
+          "referencia": {
+            "payload": "actividadId"
+          },
+          "origen": {
+            "payload": "natilleraId"
+          }
+        }
+      },
+      "extraccion": {
+        "version": 1,
+        "variables": [
+          {
+            "nombre": "MontoPagado",
+            "tipo": "currency",
+            "ruta": "monto"
+          }
+        ]
+      },
+      "respuesta": {
+        "trigger": "PagoPremioConfirmado",
+        "triggerFallo": "PagoPremioFallido",
+        "parametroMotivo": "Motivo"
+      }
+    },
+    {
+      "id": "reintento-pago-premio",
+      "nombre": "Reintento del pago del premio",
+      "evento": "PagoPremioReintentado",
+      "api": {
+        "id": "open-payments",
+        "operacion": "pagar"
+      },
+      "peticion": {
+        "cuerpo": {
+          "walletDestino": {
+            "payload": "walletGanador"
+          },
+          "monto": {
+            "payload": "monto"
+          },
+          "referencia": {
+            "payload": "actividadId"
+          },
+          "origen": {
+            "payload": "natilleraId"
+          }
+        }
+      },
+      "extraccion": {
+        "version": 1,
+        "variables": [
+          {
+            "nombre": "MontoPagado",
+            "tipo": "currency",
+            "ruta": "monto"
+          }
+        ]
+      },
+      "respuesta": {
+        "trigger": "PagoPremioConfirmado",
+        "triggerFallo": "PagoPremioFallido",
+        "parametroMotivo": "Motivo"
+      }
+    }
+  ],
+  "avisos": [
+    {
+      "evento": "NatilleraActivada",
+      "destino": "bot-natillera"
+    },
+    {
+      "evento": "NatilleraCerradaSinCupo",
+      "destino": "bot-natillera"
+    },
+    {
+      "evento": "NatilleraCerrada",
+      "destino": "bot-natillera"
+    },
+    {
+      "evento": "PremioPagadoAlGanador",
+      "destino": "bot-natillera"
+    },
+    {
+      "evento": "PagoPremioFallo",
+      "destino": "bot-natillera"
+    }
+  ]
+}

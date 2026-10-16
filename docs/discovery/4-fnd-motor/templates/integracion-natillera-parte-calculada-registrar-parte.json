@@ -1,0 +1,27 @@
+{
+  "name": "integracion-natillera-parte-calculada-registrar-parte",
+  "description": "BRG-009 (direct, regla key) — El descuento del préstamo viaja en el mismo evento (E3): la natillera lo resta del saldo antes de calcular el sobrante. Regla natillera-participacion -> natillera-cuenta de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-participacion",
+      "sourceEvent": "ParteCalculada",
+      "targetTemplate": "natillera-cuenta",
+      "targetTrigger": "RegistrarParteCalculada",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "NatilleraId": "natilleraId"
+        },
+        "cardinality": "one"
+      },
+      "parameterMapping": {
+        "currentDate": "CurrentDate",
+        "montoDescuentoPrestamo": "MontoDescuentoPrestamo",
+        "parteNeta": "ParteNeta",
+        "participacionId": "ParticipacionId"
+      }
+    }
+  ]
+}

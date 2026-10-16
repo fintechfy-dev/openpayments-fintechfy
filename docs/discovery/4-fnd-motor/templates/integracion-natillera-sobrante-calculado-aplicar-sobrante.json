@@ -1,0 +1,27 @@
+{
+  "name": "integracion-natillera-sobrante-calculado-aplicar-sobrante",
+  "description": "BRG-010 (broadcast, regla key) — Ronda 2: lo descontado a los morosos se reparte entre todos. El residuo de centavos lo absorbe UNA participación (la del último reporte): la suma de los pagos es el saldo exacto (patrón split del open-payments-lab). Regla natillera-cuenta -> natillera-participacion de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-cuenta",
+      "sourceEvent": "SobranteCalculado",
+      "targetTemplate": "natillera-participacion",
+      "targetTrigger": "AplicarSobrante",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "NatilleraId": "natilleraId"
+        },
+        "cardinality": "many"
+      },
+      "parameterMapping": {
+        "currentDate": "CurrentDate",
+        "participacionResiduo": "ParticipacionResiduo",
+        "residuo": "Residuo",
+        "sobrantePorParticipante": "SobrantePorParticipante"
+      }
+    }
+  ]
+}

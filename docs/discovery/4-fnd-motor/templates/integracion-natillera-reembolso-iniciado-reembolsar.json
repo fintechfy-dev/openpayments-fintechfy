@@ -1,0 +1,24 @@
+{
+  "name": "integracion-natillera-reembolso-iniciado-reembolsar",
+  "description": "BRG-006 (broadcast, regla key) — Sin cupo: cada participación devuelve lo aportado; la que no aportó cierra en 0 sin llamar al riel (H3). Regla natillera-cuenta -> natillera-participacion de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-cuenta",
+      "sourceEvent": "ReembolsoIniciado",
+      "targetTemplate": "natillera-participacion",
+      "targetTrigger": "Reembolsar",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "NatilleraId": "natilleraId"
+        },
+        "cardinality": "many"
+      },
+      "parameterMapping": {
+        "currentDate": "CurrentDate"
+      }
+    }
+  ]
+}

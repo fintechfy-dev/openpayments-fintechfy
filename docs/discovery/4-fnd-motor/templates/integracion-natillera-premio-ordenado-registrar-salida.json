@@ -1,0 +1,28 @@
+{
+  "name": "integracion-natillera-premio-ordenado-registrar-salida",
+  "description": "BRG-021 (direct, regla key) — «Indica y ordena; el sistema paga»: la natillera resta el premio y su llamada paga al ganador. Regla natillera-actividad -> natillera-cuenta de Natillera 2.0 (FND-20261015-natillera-2).",
+  "version": "1.0.0",
+  "contractType": "integration",
+  "subscriptions": [
+    {
+      "sourceTemplate": "natillera-actividad",
+      "sourceEvent": "PremioOrdenado",
+      "targetTemplate": "natillera-cuenta",
+      "targetTrigger": "RegistrarSalidaPremio",
+      "resolution": {
+        "mode": "key",
+        "match": {
+          "NatilleraId": "natilleraId"
+        },
+        "cardinality": "one"
+      },
+      "parameterMapping": {
+        "actividadId": "ActividadId",
+        "currentDate": "CurrentDate",
+        "ganadorParticipacionId": "GanadorParticipacionId",
+        "monto": "MontoPremio",
+        "walletGanador": "WalletGanador"
+      }
+    }
+  ]
+}
