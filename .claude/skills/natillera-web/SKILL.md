@@ -1,11 +1,13 @@
 ---
 name: natillera-web
-description: Cómo construir y cambiar la web de Natillera 2.0 (carpeta web/, Next.js + TypeScript) con buenas prácticas - estructura, capa de datos del servicio externo, componentes de servidor, diseño responsive desde móvil, accesibilidad, seguridad de la X-Api-Key, pruebas y verificación. Úsala siempre que toques algo dentro de web/, agregues una pantalla (natilleras, solicitudes de crédito, registro de pagos para el jurado, bitácora), conectes la web al servicio externo, arregles un error de la web o revises un PR del frente Web, aunque el pedido no diga "Next.js".
+description: Cómo construir y cambiar la web de Natillera 2.0 (carpeta web/, Next.js + TypeScript) con buenas prácticas - estructura, capa de datos del servicio externo, rutas del backend (índice, avisos, Mini App), componentes de servidor, diseño responsive desde móvil, accesibilidad, seguridad del token y las llaves, pruebas y verificación. Úsala siempre que toques algo dentro de web/, agregues una pantalla (natilleras, solicitudes de crédito, registro de pagos para el jurado, bitácora) o una ruta del backend, conectes la web al servicio externo, arregles un error de la web o revises un PR del frente Web, aunque el pedido no diga "Next.js". El código de Open Payments de la web no lo escribe: es de la skill natillera-open-payments y lo escribe el equipo.
 ---
 
 # Web de Natillera 2.0
 
-La web es para **la financiera y el administrador**: gestionar natilleras, aprobar créditos, ver el registro de pagos que se le muestra al jurado y la bitácora. No mueve dinero: pide y muestra. Las reglas de dinero las aplica el servicio externo de lógica financiera, y los pagos los hace el servicio de pagos.
+La web es para **la financiera y el administrador**: gestionar natilleras, aprobar créditos, ver el registro de pagos que se le muestra al jurado y la bitácora. Las reglas de dinero las aplica el servicio externo de lógica financiera.
+
+Desde el 16 de octubre la web es además el **backend** del sistema: guarda el índice que le manda el bot, recibe los avisos de staging, le da sus datos a la Mini App y tiene los pagos de Open Payments. Qué integrar y con qué campos está en `web/INTEGRACION.md`; los pagos, en `pagos/README.md`. **El código de Open Payments (`src/lib/open-payments/`, `src/app/api/open-payments/`, `src/app/api/permisos/`) lo escribe el equipo a mano**: la guardia de edición niega que Claude lo escriba (`.claude/rules/ia-y-prompts.md`).
 
 Junto con esta skill usa `natillera-design-system`: todo lo visual sale de ahí.
 
@@ -34,9 +36,13 @@ web/src/
     pagos/                US-007-RPT registro de pagos para el jurado
     bitacora/             US-012-AUD bitácora del administrador
     api/                  route handlers que la página consulta desde el navegador (polling)
+    api/indice/, api/avisos/, api/mini-app/   rutas de máquina del backend (bot, staging, Mini App)
+    api/open-payments/, api/permisos/         pagos y permisos: los escribe el equipo a mano
   components/             piezas reutilizables en React sobre las clases nt- del design system
   lib/natillera.ts        formatoCOP, ESTADOS e íconos: el mismo comportamiento que design-system/components/bundle.js
   lib/servicio/           la ÚNICA puerta al servicio externo (tipos, datos de prueba, cliente HTTP)
+  lib/open-payments/      la ÚNICA puerta a Open Payments: la escribe el equipo a mano
+  lib/pagos.ts            lógica de la pantalla del registro de pagos (no es Open Payments)
   styles/app.css          solo el layout de la app; los componentes vienen de bundle.css
   styles/ds/              copia generada de tokens.css, bundle.css y fuentes (no se edita ni se sube)
 ```
@@ -45,7 +51,7 @@ Una pantalla nueva = una carpeta en `app/` con `page.tsx`, y si hace falta `load
 
 ## Datos: siempre por `lib/servicio`
 
-El contrato con el servicio externo se define en el issue #5. Mientras tanto, `lib/servicio` responde con datos de prueba que tienen la forma esperada. Cuando exista el contrato, se cambia solo `lib/servicio/http.ts`; las pantallas no se enteran.
+El contrato con el servicio externo (staging, versión 0.2.0) está en `web/INTEGRACION.md` (issue #5). Sin conexión, `lib/servicio` responde con datos de prueba que tienen la forma esperada. Para conectarse se cambia solo `lib/servicio/http.ts` (token como `Authorization: Bearer` y rutas `/api/contracts/...`); las pantallas no se enteran.
 
 - En el servidor importa desde `@/lib/servicio` (`listarNatilleras()`, `obtenerNatillera(id)`, `listarSolicitudesCredito()`, `listarPagos()`, `listarBitacora()`, `responderSolicitud(...)`). Nunca hagas `fetch` al servicio externo desde una página o un componente.
 - En un componente `"use client"` importa solo **tipos y constantes** desde `@/lib/servicio/tipos` (por ejemplo `Pago`, `ETAPAS`). `@/lib/servicio` es solo de servidor: importarlo desde el cliente rompe el build a propósito.
@@ -59,10 +65,11 @@ Todo lo que está en `app/(panel)/` exige sesión: `financiera` ve todo y respon
 - En cada página, Server Action y route handler nuevos del panel: `await requerirSesion()` (o `obtenerSesion()` en acciones y API, que devuelven un error en vez de redirigir). El layout y el `proxy` no bastan: una Server Action se puede llamar directo por HTTP.
 - Los criterios de acceso viven **una sola vez** en `src/lib/sesion/acceso.ts` (`puedeVerNatillera`, `puedeResponderCreditos`). Para filtrar pagos o bitácora usa `natillerasVisibles(sesion)`. No escribas `sesion.rol === "financiera"` suelto en una pantalla.
 - Una natillera ajena responde `notFound()`, igual que una inexistente.
+- Las rutas de máquina (`/api/open-payments/*`, `/api/indice/*`, `/api/mini-app/*`, y `/api/avisos` y `/api/permisos` con y sin subruta) no usan sesión: se protegen con su llave (`X-Api-Key`), la firma de los avisos o los datos de Telegram, y se excluyen en `src/proxy.ts`. La vuelta del permiso es pública.
 
-## Seguridad: la llave no sale del servidor
+## Seguridad: las llaves no salen del servidor
 
-El repo es público y la web llama a un servicio con `X-Api-Key`.
+El repo es público y la web guarda varias llaves: el token de staging (`SERVICIO_API_KEY`, que va como `Authorization: Bearer`), las llaves con que la llaman el bot y staging, el secreto de firma de los avisos y la llave privada de Open Payments. Compara llaves y firmas en tiempo constante.
 
 - `lib/servicio/index.ts` empieza con `import "server-only"`: si alguien lo importa desde un componente de cliente, el build falla. No lo quites.
 - Las variables con la llave **nunca** llevan prefijo `NEXT_PUBLIC_`; ese prefijo las mete en el JavaScript del navegador.

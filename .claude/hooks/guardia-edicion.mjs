@@ -7,11 +7,13 @@ const { tool_input: e = {} } = entrada();
 const ruta = rutaDelRepo(e.file_path ?? e.notebook_path);
 if (!ruta) process.exit(0);
 
-// La documentación de pagos/ (README, notas) sí se puede tocar; el código no.
-if (ruta.startsWith("pagos/") && !ruta.endsWith(".md")) {
+// El código de Open Payments lo escribe el equipo a mano. Desde el 16 de octubre vive en el backend de la web
+// (módulo y rutas); pagos/ guarda la especificación. La documentación (.md) sí se puede tocar; el código no.
+const CODIGO_A_MANO = ["pagos/", "web/src/lib/open-payments/", "web/src/app/api/open-payments/", "web/src/app/api/permisos/"];
+if (CODIGO_A_MANO.some((p) => ruta.startsWith(p)) && !ruta.endsWith(".md")) {
   negar(
     "PreToolUse",
-    `${ruta}: el código de pagos/ lo escribe el equipo a mano (los mentores lo revisan línea por línea; .claude/rules/ia-y-prompts.md). Explica o sugiere el cambio en el chat para que la persona lo escriba.`,
+    `${ruta}: el código de Open Payments lo escribe el equipo a mano (los mentores lo revisan línea por línea; .claude/rules/ia-y-prompts.md). Explica o sugiere el cambio en el chat para que la persona lo escriba.`,
   );
 }
 
