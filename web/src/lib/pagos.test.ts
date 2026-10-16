@@ -101,7 +101,8 @@ describe("pagos recién terminados (lo que se anuncia)", () => {
 
 describe("hora exacta", () => {
   it("incluye segundos y usa la hora de Bogotá", () => {
-    expect(horaExacta("2026-10-15T14:00:06Z")).toBe("9:00:06 a. m.");
-    expect(horaExacta("2026-10-15T20:30:45Z")).toBe("3:30:45 p. m.");
+    // Espacios indivisibles: la hora no se parte en dos líneas.
+    expect(horaExacta("2026-10-15T14:00:06Z").replace(/\u00a0/g, " ")).toBe("9:00:06 a. m.");
+    expect(horaExacta("2026-10-15T20:30:45Z").replace(/\u00a0/g, " ")).toBe("3:30:45 p. m.");
   });
 });

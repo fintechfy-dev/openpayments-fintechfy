@@ -88,7 +88,7 @@ export default async function Natilleras() {
               {natilleras.map((n) => (
                 <tr key={n.id}>
                   <td className="nt-tabla__principal" data-etiqueta="">
-                    <Link href={`/natilleras/${n.id}`} className="natilleras-enlace">
+                    <Link href={`/natilleras/${encodeURIComponent(n.id)}`} className="natilleras-enlace">
                       {n.nombre}
                     </Link>
                   </td>

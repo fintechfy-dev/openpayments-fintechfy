@@ -15,7 +15,7 @@ import {
   NOMBRE_ETAPA,
   TEXTO_ESTADO_ETAPA,
   TEXTO_DIRECCION,
-  TEXTO_TIPO,
+  textoTipo,
   anunciarPago,
   contarPagos,
   contarPorFiltro,
@@ -224,7 +224,7 @@ export function RegistroPagos({ inicial, leidoEn: leidoInicial }: Props) {
                           </td>
                           <td data-etiqueta="Tipo">
                             <div className="registro__celda">
-                              <span>{TEXTO_TIPO[pago.tipo]}</span>
+                              <span>{textoTipo(pago.tipo)}</span>
                               <span className="registro__secundario">{TEXTO_DIRECCION[pago.direccion]}</span>
                             </div>
                           </td>

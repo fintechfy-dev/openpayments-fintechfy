@@ -22,7 +22,7 @@ La página usa el [design system](../design-system/): carga `design-system/token
 
 ## Cómo correrlo
 
-Next.js + TypeScript. Necesita Node 20.9 o más reciente.
+Next.js + TypeScript. Necesita Node 22 o más reciente.
 
 ```bash
 cd web

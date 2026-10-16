@@ -1,6 +1,7 @@
 // Lógica pura para mostrar pagos: nombres de etapas, textos, conteos, filtros y detección de cambios.
 // Solo importa tipos y constantes de @/lib/servicio/tipos: se puede usar en el cliente y en el servidor.
 
+import { ampm } from "@/lib/fechas";
 import { formatoCOP, type NombreIcono } from "@/lib/natillera";
 import { ETAPAS, type EstadoEtapa, type EtapaPago, type NombreEtapa, type Pago, type TipoPago } from "@/lib/servicio/tipos";
 
@@ -32,6 +33,11 @@ export const TEXTO_TIPO: Record<TipoPago, string> = {
   desembolso: "Desembolso de préstamo",
   reembolso: "Reembolso",
 };
+
+/** El tipo en palabras; si el servicio externo manda uno nuevo, "Pago" en vez de romper la pantalla. */
+export function textoTipo(tipo: TipoPago | string): string {
+  return (TEXTO_TIPO as Record<string, string>)[tipo] ?? "Pago";
+}
 
 export const TEXTO_DIRECCION: Record<Pago["direccion"], string> = {
   entrante: "Entra a la natillera",
@@ -126,7 +132,7 @@ export function pagosRecienTerminados(antes: Pago[], despues: Pago[]): Pago[] {
 
 /** "Pago completado: cuota de Marta Restrepo por $50.000." */
 export function anunciarPago(pago: Pago): string {
-  const que = `${TEXTO_TIPO[pago.tipo].toLowerCase()} de ${pago.participanteNombre} por ${formatoCOP(pago.monto)}`;
+  const que = `${textoTipo(pago.tipo).toLowerCase()} de ${pago.participanteNombre} por ${formatoCOP(pago.monto)}`;
   if (pago.estado === "fallido") {
     const etapa = etapaFallida(pago);
     const donde = etapa ? ` en ${NOMBRE_ETAPA[etapa.nombre]}` : "";
@@ -145,9 +151,5 @@ const fmtHoraExacta = new Intl.DateTimeFormat("es-CO", {
 
 /** "9:00:06 a. m." en hora de Bogotá: la hora exacta de cada etapa. */
 export function horaExacta(iso: string): string {
-  return fmtHoraExacta
-    .format(new Date(iso))
-    .replace(/\s/g, " ")
-    .replace(/a\.?\s?m\.?/i, "a. m.")
-    .replace(/p\.?\s?m\.?/i, "p. m.");
+  return ampm(fmtHoraExacta.format(new Date(iso)));
 }

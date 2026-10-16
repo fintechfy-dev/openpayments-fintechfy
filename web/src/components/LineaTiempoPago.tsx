@@ -1,5 +1,5 @@
 import { formatoFechaHora } from "@/lib/fechas";
-import { ICONO_ETAPA, NOMBRE_ETAPA, TEXTO_DIRECCION, TEXTO_ESTADO_ETAPA, TEXTO_TIPO, describirEtapas, etapasOrdenadas, horaExacta } from "@/lib/pagos";
+import { ICONO_ETAPA, NOMBRE_ETAPA, TEXTO_DIRECCION, TEXTO_ESTADO_ETAPA, textoTipo, describirEtapas, etapasOrdenadas, horaExacta } from "@/lib/pagos";
 import type { EstadoEtapa, Pago } from "@/lib/servicio/tipos";
 import { Badge } from "./Badge";
 import { Dinero } from "./Dinero";
@@ -34,10 +34,10 @@ interface Props {
 export function LineaTiempoPago({ pago, nivelTitulo = 3, id }: Props) {
   const Titulo = nivelTitulo === 2 ? "h2" : "h3";
   return (
-    <section className="nt-card linea-pago" id={id} aria-label={`Línea de tiempo: ${TEXTO_TIPO[pago.tipo]} de ${pago.participanteNombre}`}>
+    <section className="nt-card linea-pago" id={id} aria-label={`Línea de tiempo: ${textoTipo(pago.tipo)} de ${pago.participanteNombre}`}>
       <div className="nt-card__cabeza">
         <Titulo className="nt-card__titulo">
-          {TEXTO_TIPO[pago.tipo]} · {pago.participanteNombre}
+          {textoTipo(pago.tipo)} · {pago.participanteNombre}
         </Titulo>
         <Badge tipo="pago" estado={pago.estado} />
       </div>

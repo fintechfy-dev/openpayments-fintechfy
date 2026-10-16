@@ -9,7 +9,7 @@ const fmtHora = new Intl.DateTimeFormat("es-CO", { hour: "numeric", minute: "2-d
 const NBSP = "\u00a0";
 
 /** Normaliza "a. m."/"p. m." y une la hora con espacios indivisibles: "1:20 p. m." nunca se parte en dos líneas. */
-function ampm(texto: string): string {
+export function ampm(texto: string): string {
   return texto
     .replace(/\s/g, " ")
     .replace(/a\.?\s?m\.?/i, "a. m.")
