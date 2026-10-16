@@ -6,14 +6,29 @@ Lo único del sistema que habla con Open Payments, y lo que más mira el jurado:
 
 ## Lo que pide el servicio externo
 
-Contrato en [`open-payments.api.json`](../docs/discovery/4-logica-financiera/apis/open-payments.api.json). Autenticación con el encabezado `X-Api-Key`.
+Contrato en [`open-payments.api.json`](../docs/discovery/4-logica-financiera/apis/open-payments.api.json), verificado el 16 de octubre contra lo que hay en staging. Autenticación con el encabezado `X-Api-Key`. El cuerpo es JSON con estos campos exactos:
 
-| Operación | Ruta | Qué hace |
-|---|---|---|
-| cobrar-cuota | `POST /cobrar-cuota` | Cobra la cuota del periodo con el permiso recurrente del participante |
-| cobrar | `POST /cobrar` | Cobra deuda más mora u obligaciones de actividades con el mismo permiso |
-| pagar | `POST /pagar` | Paga desde la cuenta de la natillera a una billetera (premio, liquidación) |
-| desembolsar | `POST /desembolsar` | Desembolsa un préstamo a la billetera del participante |
+| Cuando | Ruta | Llega | Responder 2xx con |
+|---|---|---|---|
+| Cuota del periodo | `POST /cobrar-cuota` | `grantId`, `walletOrigen`, `monto`, `referencia` (participación), `periodo` | `{ "periodo": n, "monto": m }` |
+| Deuda más mora | `POST /cobrar` | `grantId`, `walletOrigen`, `monto`, `referencia` (participación) | `{ "monto": m }` |
+| Parte de una actividad | `POST /cobrar` | `walletOrigen`, `monto`, `referencia` (actividad). **Sin `grantId`** | `{ "monto": m }` |
+| Premio de una actividad | `POST /pagar` | `walletDestino`, `monto`, `referencia` (actividad), `origen` (natillera) | `{ "monto": m }` |
+| Liquidación o reembolso | `POST /pagar` | `walletDestino`, `monto`, `referencia` (participación). **Sin `origen`** | `{ "monto": m }` |
+| Préstamo | `POST /desembolsar` | `walletDestino`, `monto` (capital), `referencia` (crédito) | `{ "monto": m }` |
+
+**Reglas que pone el servicio externo:**
+
+- Cualquier respuesta que no sea 2xx, o ninguna respuesta en 30 segundos, cuenta como pago fallido; el motivo le llega al participante.
+- Si falla, **reintenta a los 2, 10 y 60 segundos**. El servicio tiene que ser idempotente: la misma `referencia` (con el mismo `periodo` en las cuotas) nunca cobra dos veces (US-007-BCK).
+- El servicio tiene que tener una **URL pública HTTPS** alcanzable desde staging. En staging esa URL hoy es un ejemplo (`natillera-bff.example`) y hay que configurarla (ver [integración](../integracion/README.md), diferencia 6).
+
+**Dos huecos que resuelve este servicio:**
+
+- La parte de una actividad llega sin `grantId`: se busca el permiso del participante por su `walletOrigen`.
+- La liquidación y el reembolso llegan sin `origen`: el servicio tiene que saber de qué billetera del grupo sale el pago. Para la demo alcanza con una sola billetera del grupo. Los préstamos salen de la billetera de la financiera.
+
+**El registro para el jurado** (las cuatro etapas: solicitud, autorización, ejecución y finalización) vive aquí, porque el servicio externo solo ve la solicitud y el resultado. La pantalla `/pagos` de la web lo lee a través del puente.
 
 ## Lo que necesita el bot
 
