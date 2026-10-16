@@ -16,8 +16,29 @@ Variables nuevas en `telegram/.env` (en `.env.example` sin valores):
 |---|---|---|
 | `SERVICIO_EXTERNO_URL` | URL de staging | Willy |
 | `SERVICIO_EXTERNO_TOKEN` | Token de acceso (JWT de la organización) | Willy |
+| `DIAS_ESPERA_CUPO`, `PAGOS_PARA_PRESTAMO`, `MULTIPLO_PRESTAMO` | Reglas que el bot pone al crear cada natillera (US-001-CFG) | El equipo |
 | `WEB_INDICE_URL` y `WEB_INDICE_API_KEY` | Dónde avisarle a la web y con qué llave | Johan |
-| `WEBHOOK_SECRET` | Secreto de los avisos; sale una sola vez al registrarlos | Lo genera staging |
+| `AVISOS_PUERTO` | Solo para avisos por webhook: puerto local detrás de un túnel https. Se registra con `npm run registrar-avisos -- https://<túnel>/avisos`, que guarda un secreto por evento en `telegram/data/avisos-secretos.json`. Sin puerto, el bot usa el flujo en vivo | El equipo |
+
+**Contrastado con el OpenAPI del ecosistema** (`GET /api/ecosystems/FND-20261015-natillera-2/openapi`, 16 de octubre):
+
+- **El token debe ser un JWT de Clerk con la organización activa.** Uno con `org_role: null` lee, pero toda escritura (crear contratos, ejecutar acciones) responde **403**.
+- **La entrega de un webhook trae solo los datos del evento, sin su nombre**, y hay eventos con los mismos campos (`AutorizacionRechazada` y `CobroDeudaFallo`). Por eso el bot registra una URL por evento: `/avisos/<Evento>`.
+- **El flujo en vivo manda cascadas** (`cascade_executed`, `cascade_failed`) cuya forma no está documentada; el bot busca adentro los eventos que conoce. Verificarlo con la primera cascada real.
+- **Una acción rechazada** llega como `400` con `detail`, o como `200` con todas sus funciones en `preconditionFailed` y el motivo en `summary`.
+- `total` y `montoMaximoPrestamo` llegan como texto. `PrestamoDesembolsado` trae `participanteId` (el id de Telegram), así que ese aviso sí llega aunque el bot no conozca el `creditoId`.
+
+## Qué ya hace el bot (rama `feature/telegram-5-integracion-staging`)
+
+| Fila | Estado |
+|---|---|
+| 1. Crear natillera | ✅ `src/externo/crear-natillera.js`: contrato, registro en SQLite y aviso 3.1 a la web (3 intentos; si fallan, el cuerpo queda en el log para cargarlo a mano). Solo mensual (#58) |
+| 6. `PagarDeuda` y 8. `AutorizarPago` | ✅ Botones de los avisos de mora y de actividad (`bot/comandos/cobros.js`); solo actúan para quien es dueño de la participación |
+| Sección 2, avisos | ✅ `src/avisos/`: webhook firmado (una URL por evento) o flujo en vivo, y el mensaje de cada evento. **Verificar la forma de la cascada con la primera real** (`avisosDeCascada`) |
+| 2–4. Unirse y autorizar | ⏳ Falta el flujo de unirse (US-004 y US-005). El registro ya tiene la tabla `participaciones` |
+| 5. «Mi natillera» | ⏳ La Mini App no puede llamar a staging (expondría el token): necesita una ruta del bot que valide el `initData` |
+| 7, 9, 10, 12. Actividades | ⏳ Faltan los flujos del administrador |
+| 11 y 3.4. Préstamo | ⏳ Falta el flujo. `PrestamoDesembolsado` ya llega (trae `participanteId`); `DesembolsoFallo` y `CreditoEnMora` solo traen `creditoId`, que el bot no conoce porque el crédito lo crea la web |
 
 Todas las llamadas a staging llevan `Authorization: Bearer <SERVICIO_EXTERNO_TOKEN>` y `Content-Type: application/json`.
 
@@ -72,7 +93,7 @@ Responde `201` con el `contractId`. Una billetera de prueba se ve así: `https:/
 
 Hay dos formas de recibir los avisos:
 
-- **Webhooks**, si el bot tiene una URL pública HTTPS. Se registra una vez con `POST /api/webhooks` y `{ "url": "https://<bot>/avisos", "events": [ ... ] }`. La respuesta trae el `signingSecret` **una sola vez**: va a `WEBHOOK_SECRET`. Cada aviso llega con el encabezado `X-Motor-Signature: t=<unix>,v1=<hmac>`; compara `v1` con el HMAC-SHA256 de `"{t}.{cuerpo}"` usando ese secreto, descarta lo que no coincida y responde 2xx rápido.
+- **Webhooks**, si el bot tiene una URL pública HTTPS. `npm run registrar-avisos -- https://<bot>/avisos` llama a `POST /api/webhooks` una vez por evento, con `{ "url": "https://<bot>/avisos/<Evento>", "events": ["<Evento>"] }`, porque la entrega no trae el nombre del evento. Cada respuesta trae su `signingSecret` **una sola vez**: el script los guarda en `telegram/data/avisos-secretos.json`. Cada aviso llega con el encabezado `X-Motor-Signature: t=<unix>,v1=<hmac>`; compara `v1` con el HMAC-SHA256 de `"{t}.{cuerpo}"` usando ese secreto, descarta lo que no coincida y responde 2xx rápido.
 - **Flujo en vivo**, si el bot corre en una laptop sin URL pública: `GET /api/events/stream` con el mismo token. Llegan las cascadas a medida que ocurren y el bot filtra los eventos que le sirven.
 
 Los avisos traen `natilleraId`, `participacionId`, `actividadId` o `creditoId`, nunca el id de Telegram: el bot lo busca en su SQLite.
