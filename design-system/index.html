@@ -4,17 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Natillera 2.0 · Design system</title>
-<link rel="icon" href="assets/logos/simbolo-pequeno.svg">
+<link rel="icon" href="assets/logos/kit/01_simbolo/marranito_32px.png">
 <link rel="stylesheet" href="tokens/tokens.css">
 <link rel="stylesheet" href="components/bundle.css">
 <style>
   body { margin: 0; background: var(--superficie); color: var(--tinta); }
   header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--borde); }
-  header img { height: 48px; }
-  .logo-oscuro { display: none; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logo-claro { display: none; } :root:not([data-theme="light"]) .logo-oscuro { display: block; } }
+  header img { height: 64px; }
+  .logo-oscuro { display: none; align-items: center; gap: 12px; }
+  .logo-oscuro .nombre { height: 32px; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logo-claro { display: none; } :root:not([data-theme="light"]) .logo-oscuro { display: flex; } }
   :root[data-theme="dark"] .logo-claro { display: none; }
-  :root[data-theme="dark"] .logo-oscuro { display: block; }
+  :root[data-theme="dark"] .logo-oscuro { display: flex; }
   main { padding: 24px; display: grid; gap: 32px; max-width: 1040px; margin: 0 auto; }
   h2 { font: 800 20px/26px var(--font-display); margin: 0 0 8px; }
   iframe { width: 100%; border: 1px solid var(--borde); border-radius: var(--radio-md); background: var(--superficie); }
@@ -22,8 +23,8 @@
 </head>
 <body class="nt">
 <header>
-  <img class="logo-claro" src="assets/logos/logo-horizontal-sin-tagline.svg" alt="Natillera 2.0">
-  <img class="logo-oscuro" src="assets/logos/logo-horizontal-oscuro.svg" alt="Natillera 2.0">
+  <img class="logo-claro" src="assets/logos/kit/03_horizontal/logo_horizontal_640px.png" alt="Natillera 2.0">
+  <span class="logo-oscuro"><img src="assets/logos/kit/01_simbolo/marranito_128px.png" alt=""><img class="nombre" src="assets/logos/kit/06_monocromos/nombre_blanco.png" alt="Natillera 2.0"></span>
   <button class="nt-btn nt-btn--secundario nt-btn--sm" id="tema">Cambiar tema</button>
 </header>
 <main id="galeria"></main>

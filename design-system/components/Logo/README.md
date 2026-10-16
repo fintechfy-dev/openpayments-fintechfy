@@ -1,21 +1,16 @@
 # Logo
 
-El marranito de Natillera 2.0: rosado, contorno verde, ojos sonrientes y la moneda mostaza entrando. Es el logo del equipo, redibujado en vector para que se vea nítido en cualquier tamaño.
+El marranito de Natillera 2.0: rosado, ojos sonrientes, la moneda dorada entrando por la ranura y "Natillera 2.0" con la hojita en la "i". El oficial es el kit original del equipo en `assets/logos/kit/` (PNG); los SVG redibujados quedan solo para cuando haga falta un vector.
 
-## Archivos (grupo de assets **Logos**)
-- `logo-principal.svg`: vertical con tagline. Uso por defecto en portadas, invitaciones y redes.
-- `logo-horizontal.svg` (con tagline) y `logo-horizontal-sin-tagline.svg`: encabezados web, panel del jurado, piezas angostas.
-- `logo-oscuro.svg` y `logo-horizontal-oscuro.svg`: traen su propio fondo verde `#1C4A35`.
-- `logo-mono.svg`, `logo-horizontal-mono.svg`, `simbolo-mono.svg`: una tinta `#2C342F` sobre claro.
-- `logo-alto-contraste.svg`: negro puro sobre blanco, moneda negra; para impresión barata y accesibilidad.
-- `simbolo.svg`: el marranito solo, de 40px en adelante. `simbolo-pequeno.svg`: versión simplificada (sin rayitas, sin sombra, trazo más grueso) para 16–32px y favicon.
-- `avatar-telegram.svg`: foto del bot; exporta a PNG 512×512. Se lee a 40px.
-- `tablero-original.png`: el tablero que entregó el equipo, como referencia.
+## Qué archivo usar
+- **Foto del bot de Telegram:** `kit/05_avatar/avatar_verde_oscuro_512px.png` (Telegram lo escala).
+- **Encabezado web:** `kit/03_horizontal/logo_horizontal_640px.png` desde 320 px de ancho. Más angosto, el marranito (`kit/01_simbolo/marranito_64px.png`) junto al nombre (`kit/04_logotipo/nombre_original_512px.png`).
+- **Sobre fondo oscuro:** el marranito a color con `kit/06_monocromos/nombre_blanco.png`, o las versiones `*_verde_oscuro.png`, que traen su propio fondo.
+- **Favicon y tamaños de 24 a 40 px:** `kit/01_simbolo/marranito_32px.png` y similares, sin texto.
+- **Portadas, invitaciones y diapositivas:** `kit/02_vertical/`.
 
 ## Reglas
-- "Natillera" en verde `#15412C` y "2.0" en mostaza `#E2A431`, mismo tamaño. Sobre oscuro, "Natillera" en `#F2EDE7`.
-- La tagline del logo es "Ahorrar juntos, siempre." Se quita por debajo de 160px de ancho.
+- La tagline del logo es "Ahorrar juntos, siempre.". Se quita por debajo de 320 px de ancho: ahí va el nombre solo.
 - Zona de respeto: el alto de la moneda alrededor de todo el logo.
-- No uses la hojita del tablero original como logo alterno: la marca es solo el marranito.
-- No cambies el rosado del marranito, no le agregues brillos ni degradados, no lo voltees.
-- El mostaza del "2.0" es de logo: como texto de interfaz no da contraste; ahí usa `acento-texto`.
+- No redibujen ni recoloreen el marranito, no le agreguen brillos ni sombras, no lo volteen.
+- El dorado del "2.0" es de logo: como texto de interfaz no da contraste; ahí usen `acento-texto`.

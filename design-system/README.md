@@ -15,7 +15,8 @@ Fuente: el design system del equipo en Claude Design ([artifact](https://claude.
 | [`components/bundle.css`](components/bundle.css) | Estilos de los componentes (prefijo `nt-`) |
 | [`components/bundle.js`](components/bundle.js) | `window.Natillera`: `formatoCOP`, `ESTADOS`, `icono()`, `badge()` |
 | [`components/<Nombre>/`](components/) | Guía (`README.md`) y vista previa (`preview.html`) de cada componente |
-| [`assets/logos/`](assets/logos/) | El marranito en SVG: principal, horizontal, oscuro, mono, alto contraste, símbolo y avatar del bot |
+| [`assets/logos/kit/`](assets/logos/kit/) | **Logo oficial**: el kit original del equipo en PNG (símbolo, vertical, horizontal, nombre, avatar y monocromos). Guía en [`assets/logos/README.md`](assets/logos/README.md) |
+| [`assets/logos/`](assets/logos/) | El redibujo del marranito en SVG, solo para cuando haga falta un vector |
 | [`assets/iconos/`](assets/iconos/) | Set base de íconos de línea |
 | [`fonts/`](fonts/) | Nunito (700, 800, 900) y Atkinson Hyperlegible (400, 700) en woff2 |
 | [`docs/`](docs/) | [Marca](docs/marca.md), [estados del producto](docs/estados.md) y [voz y tono del bot](docs/voz-y-tono.md) |
@@ -38,7 +39,7 @@ Para ver la galería: `python3 -m http.server -d design-system 8080` y abrir <ht
 - El tema oscuro sigue al sistema; se fuerza con `data-theme="dark"` o `data-theme="light"` en `<html>`.
 - Dinero siempre con `Natillera.formatoCOP(valor)`, que da `$100.000`. No usen `Intl.NumberFormat("es-CO")` a secas: mete un espacio después del `$` y a veces no agrupa números de 4 cifras.
 
-**Bot de Telegram:** los textos siguen [voz y tono](docs/voz-y-tono.md). Para las tarjetas-imagen (aporte, bienvenida) usen los colores de `tokens.resolved.json` y la maqueta de `components/TarjetaAporte/preview.html`. El avatar del bot es `assets/logos/avatar-telegram.svg` exportado a PNG de 512×512.
+**Bot de Telegram:** los textos siguen [voz y tono](docs/voz-y-tono.md). Para las tarjetas-imagen (aporte, bienvenida) usen los colores de `tokens.resolved.json` y la maqueta de `components/TarjetaAporte/preview.html`. El avatar del bot es `assets/logos/kit/05_avatar/avatar_verde_oscuro_512px.png`.
 
 ## Principios
 

@@ -4,7 +4,9 @@
 
 La marca es el marranito que diseñó el equipo: rosado, con contorno verde, ojos sonrientes y una moneda mostaza entrando por la ranura. Lo reconoce cualquier persona de cualquier edad sin explicación, viene directo de la tradición que el producto renueva ("romper el marranito") y cuenta la acción central: aportar. Aquí el marranito es de todos y no lo guarda nadie.
 
-Lo que se ajustó del tablero original:
+**Logo oficial: el kit original del equipo** (`assets/logos/kit/`), recortado del archivo del equipo sin redibujar, con la hojita en la "i" y el sombreado del marranito. El redibujo en vector que se describe abajo queda solo para cuando haga falta un SVG.
+
+Lo que se ajustó del tablero original en el redibujo vectorial:
 - **Vector:** todo el sistema está redibujado en SVG (antes era una imagen), con el logotipo convertido a trazos en Nunito Black.
 - **Una sola marca:** la hojita del tablero (arriba a la derecha y en el pie) se retiró; competía con el marranito como segundo logo.
 - **Tamaños pequeños:** `simbolo-pequeno.svg` quita rayitas, sombra y detalles de la cara para leerse a 16–32px; el avatar del bot usa un marranito más grande dentro del círculo.
