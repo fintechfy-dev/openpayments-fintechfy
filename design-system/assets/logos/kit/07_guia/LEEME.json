@@ -1,0 +1,18 @@
+{
+  "marca": "Natillera 2.0",
+  "origen": "Imagen exacta adjunta por el usuario. Extracciones por recorte y reescalado, sin redibujo.",
+  "formatos": [
+    "PNG RGBA"
+  ],
+  "versiones": "Símbolo, vertical, horizontal, nombre, avatar y monocromáticas",
+  "paleta_referencial": {
+    "verde_oscuro": "#06472E",
+    "verde": "#08764A",
+    "crema": "#FFF8EC",
+    "blanco": "#FFFFFF",
+    "texto": "#151515",
+    "mostaza": "#B87900"
+  },
+  "uso": "En 24-40px usar exclusivamente el símbolo. El texto se reserva para anchos mayores de 128px; versión horizontal ideal >=320px.",
+  "nota": "Las variantes monocromáticas cambian únicamente la tinta. Las composiciones horizontales se ensamblan con las mismas formas exactas de la imagen original."
+}

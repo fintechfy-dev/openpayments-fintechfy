@@ -1,0 +1,94 @@
+/* Natillera 2.0 — componentes. Requiere los tokens (tokens.css / natillera-tokens.css). Prefijo: nt- */
+.nt, .nt * { box-sizing: border-box; }
+.nt { font-family: var(--font-body); font-size: 16px; line-height: 24px; color: var(--tinta); -webkit-font-smoothing: antialiased; }
+.nt :focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+.nt-num { font-variant-numeric: tabular-nums; }
+.nt-muted { color: var(--tinta-suave); }
+
+/* Íconos (SVG inline, trazo 2px, heredan color) */
+.nt-ico { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nt-ico--sm { width: 16px; height: 16px; stroke-width: 2.4; }
+.nt-ico--lg { width: 32px; height: 32px; stroke-width: 1.8; }
+
+/* Botones */
+.nt-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--espacio-2); min-height: var(--control-alto); padding: 0 var(--espacio-6); border-radius: var(--radio-pildora); border: 2px solid transparent; font-family: var(--font-display); font-weight: 800; font-size: 17px; line-height: 1; cursor: pointer; text-decoration: none; transition: background-color .15s, border-color .15s; }
+.nt-btn .nt-ico { width: 20px; height: 20px; }
+.nt-btn--primario { background: var(--primario); color: var(--sobre-primario); }
+.nt-btn--primario:hover { background: var(--primario-hover); }
+.nt-btn--secundario { background: var(--superficie-elevada); color: var(--primario-texto); border-color: var(--primario); }
+.nt-btn--secundario:hover { background: var(--primario-suave); }
+.nt-btn--fantasma { background: transparent; color: var(--primario-texto); padding: 0 var(--espacio-4); }
+.nt-btn--fantasma:hover { background: var(--primario-suave); }
+.nt-btn--celebra { background: var(--acento); color: var(--sobre-acento); }
+.nt-btn--sm { min-height: var(--control-alto-sm); padding: 0 var(--espacio-4); font-size: 15px; }
+.nt-btn--bloque { display: flex; width: 100%; }
+.nt-btn:disabled, .nt-btn[aria-disabled="true"] { background: var(--pista); color: var(--tinta-suave); border-color: transparent; cursor: not-allowed; }
+
+/* Tarjetas */
+.nt-card { background: var(--superficie-elevada); color: var(--tinta); border: 1px solid var(--borde); border-radius: var(--radio-lg); padding: var(--espacio-5); box-shadow: var(--sombra-1); }
+.nt-card--destacada { background: var(--primario-suave); border-color: transparent; box-shadow: none; }
+.nt-card--calida { background: var(--secundario-suave); border-color: transparent; box-shadow: none; }
+.nt-card__cabeza { display: flex; align-items: center; justify-content: space-between; gap: var(--espacio-3); margin-bottom: var(--espacio-4); }
+.nt-card__titulo { font-family: var(--font-display); font-weight: 800; font-size: 20px; line-height: 26px; margin: 0; }
+.nt-dato { display: flex; flex-direction: column; gap: 2px; }
+.nt-dato__etiqueta { font-size: 15px; line-height: 20px; font-weight: 700; color: var(--tinta-suave); }
+.nt-dato__valor { font-family: var(--font-display); font-weight: 900; font-size: 36px; line-height: 40px; font-variant-numeric: tabular-nums; color: var(--tinta); }
+.nt-dato__valor--md { font-size: 22px; line-height: 28px; font-weight: 800; }
+.nt-dato__valor--verde { color: var(--primario-texto); }
+
+/* Badges de estado: siempre ícono + palabra */
+.nt-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 8px; border-radius: var(--radio-pildora); font-family: var(--font-body); font-weight: 700; font-size: 13px; line-height: 18px; letter-spacing: .01em; white-space: nowrap; }
+.nt-badge .nt-ico { width: 14px; height: 14px; stroke-width: 2.6; }
+.nt-badge--neutro { background: var(--estado-neutro-fondo); color: var(--estado-neutro-texto); }
+.nt-badge--info { background: var(--estado-info-fondo); color: var(--estado-info-texto); }
+.nt-badge--exito { background: var(--estado-exito-fondo); color: var(--estado-exito-texto); }
+.nt-badge--aviso { background: var(--estado-aviso-fondo); color: var(--estado-aviso-texto); }
+.nt-badge--error { background: var(--estado-error-fondo); color: var(--estado-error-texto); }
+.nt-badge--celebra { background: var(--estado-celebra-fondo); color: var(--estado-celebra-texto); }
+
+/* Tabla */
+.nt-tabla-marco { background: var(--superficie-elevada); border: 1px solid var(--borde); border-radius: var(--radio-md); overflow-x: auto; }
+.nt-tabla { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 20px; }
+.nt-tabla th { text-align: left; font-weight: 700; color: var(--tinta-suave); padding: var(--espacio-3) var(--espacio-4); background: var(--superficie-hundida); border-bottom: 1px solid var(--borde); white-space: nowrap; }
+.nt-tabla td { padding: var(--espacio-3) var(--espacio-4); border-bottom: 1px solid var(--borde); vertical-align: middle; }
+.nt-tabla tr:last-child td { border-bottom: 0; }
+.nt-tabla .nt-tabla__num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nt-tabla .nt-tabla__principal { font-weight: 700; }
+
+/* Progreso del ahorro */
+.nt-progreso { display: flex; flex-direction: column; gap: var(--espacio-2); }
+.nt-progreso__fila { display: flex; justify-content: space-between; align-items: baseline; gap: var(--espacio-3); font-size: 15px; line-height: 20px; font-weight: 700; }
+.nt-progreso__pista { height: 14px; background: var(--pista); border-radius: var(--radio-pildora); overflow: hidden; }
+.nt-progreso__barra { height: 100%; background: var(--primario); border-radius: var(--radio-pildora); }
+.nt-cuotas { display: grid; grid-template-columns: repeat(var(--n, 12), 1fr); gap: 4px; }
+.nt-cuota { height: 12px; border-radius: 4px; background: var(--pista); }
+.nt-cuota--pagada { background: var(--primario); }
+.nt-cuota--mora { background: var(--estado-aviso-texto); }
+.nt-cuota--hoy { background: var(--superficie-elevada); box-shadow: inset 0 0 0 2px var(--primario); }
+
+/* Avisos */
+.nt-aviso { display: flex; gap: var(--espacio-3); align-items: flex-start; padding: var(--espacio-4); border-radius: var(--radio-md); }
+.nt-aviso .nt-ico { margin-top: 0; }
+.nt-aviso__titulo { font-weight: 700; margin: 0; }
+.nt-aviso__texto { margin: 2px 0 0; }
+.nt-aviso--exito { background: var(--estado-exito-fondo); color: var(--estado-exito-texto); }
+.nt-aviso--alerta { background: var(--estado-aviso-fondo); color: var(--estado-aviso-texto); }
+.nt-aviso--error { background: var(--estado-error-fondo); color: var(--estado-error-texto); }
+.nt-aviso--info { background: var(--estado-info-fondo); color: var(--estado-info-texto); }
+
+/* Línea de tiempo de pagos (4 etapas Open Payments) */
+.nt-linea { list-style: none; margin: 0; padding: 0; }
+.nt-linea__paso { position: relative; display: grid; grid-template-columns: 28px 1fr auto; gap: var(--espacio-3); padding-bottom: var(--espacio-5); }
+.nt-linea__paso:last-child { padding-bottom: 0; }
+.nt-linea__paso::before { content: ""; position: absolute; left: 13px; top: 28px; bottom: 0; width: 2px; background: var(--borde-fuerte); }
+.nt-linea__paso:last-child::before { display: none; }
+.nt-linea__paso--hecho::before { background: var(--primario); }
+.nt-linea__marca { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--borde-fuerte); background: var(--superficie-elevada); color: var(--tinta-suave); }
+.nt-linea__marca .nt-ico { width: 16px; height: 16px; stroke-width: 2.8; }
+.nt-linea__paso--hecho .nt-linea__marca { background: var(--primario); border-color: var(--primario); color: var(--sobre-primario); }
+.nt-linea__paso--actual .nt-linea__marca { border-color: var(--estado-info-texto); color: var(--estado-info-texto); background: var(--estado-info-fondo); }
+.nt-linea__paso--fallido .nt-linea__marca { background: var(--estado-error-texto); border-color: var(--estado-error-texto); color: var(--superficie-elevada); }
+.nt-linea__titulo { font-weight: 700; line-height: 28px; }
+.nt-linea__detalle { font-size: 14px; line-height: 20px; color: var(--tinta-suave); }
+.nt-linea__motivo { font-size: 14px; line-height: 20px; color: var(--estado-error-texto); font-weight: 700; }
+.nt-linea__hora { font-size: 14px; line-height: 28px; color: var(--tinta-suave); font-variant-numeric: tabular-nums; }

@@ -1,0 +1,12 @@
+NATILLERA 2.0 · KIT DE LOGOS
+
+Origen: recortes del archivo original adjunto, sin regenerar el marranito ni el lettering.
+01_simbolo: PNG transparentes 24, 32, 40, 48, 64, 96, 128, 256, 512, 1024 px.
+02_vertical: logo vertical en transparente y cuatro fondos.
+03_horizontal: logo horizontal ensamblado de los recortes originales.
+04_logotipo: letras solas en tamaños distintos.
+05_avatar: cuatro fondos y cinco tamaños.
+06_monocromos: una tinta, cinco colores y cuatro presentaciones.
+
+Consejo: en Telegram, usa avatar de 512 px (la app lo escala); en 24–40 px nunca incluyas el texto.
+No todas las variaciones tienen contraste adecuado sobre cualquier fondo: blanco sólo en oscuro y negro/verde oscuro en superficies claras.

@@ -1,0 +1,15 @@
+<!-- @dsCard group="Componentes" height=230 subtitle="Barra continua y cuotas segmentadas" -->
+<style>.pv{padding:24px;background:var(--superficie);color:var(--tinta);font-family:var(--font-body)}.pv h4{margin:0 0 8px;font:700 13px/18px var(--font-body);color:var(--tinta-suave)}</style>
+<div class="pv nt" style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+<div class="nt-progreso"><div class="nt-progreso__fila"><span>Meta del grupo</span><span class="nt-num"><span data-cop="1800000"></span> de <span data-cop="7200000"></span></span></div>
+<div class="nt-progreso__pista" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100" aria-label="Ahorro del grupo 25%"><div class="nt-progreso__barra" style="width:25%"></div></div>
+<span class="nt-muted" style="font-size:14px">25% · faltan 9 cuotas</span></div>
+<div class="nt-progreso"><div class="nt-progreso__fila"><span>Tus cuotas</span><span class="nt-num">3/12 pagadas</span></div><div class="nt-cuotas" style="--n:12" aria-hidden="true"><span class="nt-cuota nt-cuota--pagada"></span><span class="nt-cuota nt-cuota--pagada"></span><span class="nt-cuota nt-cuota--pagada"></span><span class="nt-cuota nt-cuota--hoy"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span></div>
+<span class="nt-muted" style="font-size:14px">Próximo cobro: 15 de noviembre</span></div>
+<div class="nt-progreso"><div class="nt-progreso__fila"><span>Cuotas de Jairo</span><span class="nt-num" style="color:var(--estado-aviso-texto)">2/12 · 1 en mora</span></div><div class="nt-cuotas" style="--n:12" aria-hidden="true"><span class="nt-cuota nt-cuota--pagada"></span><span class="nt-cuota nt-cuota--pagada"></span><span class="nt-cuota nt-cuota--mora"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span></div></div>
+</div>
+<script>
+document.querySelectorAll('[data-i]').forEach(function(e){e.outerHTML=Natillera.icono(e.getAttribute('data-i'),e.className)});
+document.querySelectorAll('[data-b]').forEach(function(e){var p=e.getAttribute('data-b').split('.');e.outerHTML=Natillera.badge(p[0],p[1])});
+document.querySelectorAll('[data-cop]').forEach(function(e){e.textContent=Natillera.formatoCOP(+e.getAttribute('data-cop'))});
+</script>

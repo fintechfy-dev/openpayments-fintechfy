@@ -1,0 +1,24 @@
+<!-- @dsCard group="Piezas aplicadas" height=700 subtitle="Página móvil al volver de la billetera" page -->
+<style>.pv{padding:24px;background:var(--superficie);color:var(--tinta);font-family:var(--font-body)}.pv h4{margin:0 0 8px;font:700 13px/18px var(--font-body);color:var(--tinta-suave)}</style>
+<div class="pv nt" style="display:flex;justify-content:center;background:var(--superficie-hundida)">
+<style>.ac{width:360px;min-height:640px;background:var(--superficie);border-radius:28px;box-shadow:var(--sombra-3);padding:40px 24px 24px;display:flex;flex-direction:column;gap:20px;text-align:center;align-items:center;border:1px solid var(--borde)}
+.ac-ok{width:96px;height:96px;border-radius:50%;background:var(--primario-suave);color:var(--primario-texto);display:grid;place-items:center}.ac-ok .nt-ico{width:52px;height:52px;stroke-width:2}
+.ac h1{margin:0}.ac p{margin:0}.ac-res{width:100%;text-align:left}</style>
+<main class="ac">
+<span style="display:inline-flex;align-items:center;gap:8px"><img src="../../assets/logos/kit/01_simbolo/marranito_64px.png" width="40" height="40" alt=""><img src="../../assets/logos/kit/04_logotipo/nombre_original_512px.png" height="28" alt="Natillera 2.0"></span>
+<div class="ac-ok"><i data-i="check"></i></div>
+<h1 class="titulo-1">¡Listo, Marta!</h1>
+<p class="cuerpo-grande">Autorizaste el cobro de tus cuotas. No tienes que hacer nada más.</p>
+<div class="nt-card ac-res"><div style="display:flex;flex-direction:column;gap:10px;font-size:15px">
+<div style="display:flex;justify-content:space-between"><span class="nt-muted">Natillera</span><b>Los Primos</b></div>
+<div style="display:flex;justify-content:space-between"><span class="nt-muted">Cuota</span><b class="nt-num"><span data-cop="50000"></span> al mes</b></div>
+<div style="display:flex;justify-content:space-between"><span class="nt-muted">Primer cobro</span><b>15 de febrero</b></div>
+</div></div>
+<a class="nt-btn nt-btn--primario nt-btn--bloque" href="#" style="margin-top:auto">Volver a Telegram</a>
+<p class="pequeno nt-muted">Puedes cerrar esta página.</p>
+</main></div>
+<script>
+document.querySelectorAll('[data-i]').forEach(function(e){e.outerHTML=Natillera.icono(e.getAttribute('data-i'),e.className)});
+document.querySelectorAll('[data-b]').forEach(function(e){var p=e.getAttribute('data-b').split('.');e.outerHTML=Natillera.badge(p[0],p[1])});
+document.querySelectorAll('[data-cop]').forEach(function(e){e.textContent=Natillera.formatoCOP(+e.getAttribute('data-cop'))});
+</script>

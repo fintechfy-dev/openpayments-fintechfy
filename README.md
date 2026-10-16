@@ -43,6 +43,10 @@ Las claves de Open Payments y el token del bot van en un archivo `.env` que **nu
 
 En [`docs/discovery/`](docs/discovery/) está el diseño hecho **antes** del evento: el mapa de impacto, el mapa de historias, las historias con sus criterios y escenarios Gherkin, y la especificación funcional de la lógica financiera. Son documentos de diseño; el código de la hackathon se escribe durante el evento en este repositorio. La fuente original es [`docs/fuente/Natillera 2.pdf`](docs/fuente/).
 
+## Design system
+
+En [`design-system/`](design-system/) están la marca (el marranito), los tokens de color y tipografía, los componentes, los íconos y la voz y tono del bot. Toda pieza visual del proyecto parte de ahí: los tokens salen de `design-system/tokens/tokens.json`. Para ver la galería: `python3 -m http.server -d design-system 8080`.
+
 ## Uso de IA
 
 Ver [`AI_USAGE.md`](AI_USAGE.md) y la carpeta [`prompts/`](prompts/).

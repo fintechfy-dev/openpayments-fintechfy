@@ -25,6 +25,8 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 
 | Archivo o componente | Herramienta | Para qué | Cuánta IA |
 |---|---|---|---|
+| `design-system/` (marca, tokens, componentes, voz y tono) | Claude Design; ChatGPT para el logo (_completar modelo_) | Explorar y vectorizar el logo del equipo, definir paleta, tipografía, componentes y guía de mensajes | Mucho |
+| `design-system/tokens/build.mjs`, `design-system/index.html` | Claude Code (Claude Opus) | Generar `tokens.css` desde `tokens.json` y galería local de componentes | Mucho |
 | `telegram/docs/plan-esqueleto.md` | Claude Code (Claude Opus 5.5) | Plan del esqueleto del bot: decisiones, herramientas y pasos; el equipo lo revisó y aprobó antes de ejecutar | Mucho |
 | `telegram/src/` (arranque, `crearBot`, `/start`, logger) | Claude Code (Claude Opus 5.5) | Esqueleto del bot con grammY (#7) | Mucho; probado a mano por el equipo con un bot real |
 | `telegram/src/secretos.js`, guardia de salida y logger que tapa secretos | Claude Code (Claude Opus 5.5) | US-002-SEC (#14): ningún secreto en logs ni en mensajes; `telegram/.env.example` | Mucho; el equipo verificó el arranque con su `.env` |
