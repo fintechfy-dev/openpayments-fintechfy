@@ -2,6 +2,8 @@
 
 Ahorro en grupo sobre Open Payments para la Hackathon de Open Payments Medellín (16 y 17 de octubre de 2026). El plan vigente es `docs/plan-de-trabajo.md`; manda sobre el discovery cuando difieren.
 
+**Antes de cambiar algo, lee [`docs/arquitectura.md`](docs/arquitectura.md)** (las piezas, cómo se hablan y qué está construido) y el `README.md` de la carpeta que vas a tocar. Cada carpeta tiene su `CLAUDE.md`, que se carga solo al trabajar en ella.
+
 ## Reglas de la hackathon
 
 - Todo el código se escribe durante el evento. La lógica financiera es un servicio externo que el proyecto solo llama por API.
@@ -24,6 +26,7 @@ Las reglas del proyecto viven en `.claude/rules/` y Claude Code las carga solas.
 | `revision.md` | Qué busca una revisión y las severidades comunes |
 | `agentes.md` | Cómo se escribe un agente o comando de Claude (frontera, veredicto, `tools` acotado) |
 | `checklist-entrega.md` | En cada commit y PR: `node scripts/revisar-entrega.mjs --rama` y lo que falta de la checklist (`docs/checklist-entrega.md`) |
+| `documentacion.md` | La documentación y la arquitectura cambian en el mismo PR que el código: qué README actualizar según lo que cambie |
 
 ## Cómo se trabaja
 
@@ -37,6 +40,9 @@ GitFlow (`CONTRIBUTING.md`): rama `feature/<frente>-<issue>-<tema>` desde `devel
 | `web/` | Web de la financiera y el administrador (Next.js). Skill: `natillera-web`; agentes `web-implementador`, `web-revisor`, `web-verificador-visual`; comando `/director-web` |
 | `telegram/` | Bot de Telegram (Node + grammY). Skill: `natillera-telegram` |
 | `pagos/`, `integracion/` | Servicio de Open Payments y conexión con el servicio externo. Skill: `natillera-open-payments` (explica y revisa; el código de `pagos/` lo escribe el equipo) |
-| `docs/discovery/` | Historias, criterios y escenarios (`3-bdd/`), reglas de dinero (`4-logica-financiera/`) |
+| `docs/` | Arquitectura, plan de trabajo, checklist de entrega y el discovery congelado (`discovery/3-bdd/` historias y escenarios, `discovery/4-logica-financiera/` reglas de dinero). Índice: `docs/README.md` |
+| `scripts/` | Herramientas del repo: `revisar-entrega.mjs` |
+| `prompts/` | Prompts reales usados para programar (política de IA) |
+| `.claude/` | Reglas, skills, agentes y comandos de Claude. Índice: `.claude/README.md` |
 
 Para cerrar cualquier trabajo (prompts, `AI_USAGE.md`, secretos, pruebas y PR): skill `natillera-pr`.

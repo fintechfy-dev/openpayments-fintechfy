@@ -25,6 +25,7 @@ Las reglas están en `.claude/rules/git-y-entrega.md`, `ia-y-prompts.md`, `secre
 ## 3. Revisa antes de preparar el commit
 
 - **La checklist de entrega:** `node scripts/revisar-entrega.mjs --rama`. Con código 1 (un secreto o un `.env` versionado) no hay commit. Si el cambio cumple o avanza un punto, actualiza su fila y "Lo que falta" en `docs/checklist-entrega.md` en este mismo commit.
+- **La documentación al día** (`.claude/rules/documentacion.md`): si el cambio agrega, borra o mueve archivos, cambia variables, comandos, rutas, contratos, reglas o un flujo entre piezas, actualiza en este mismo PR el README de la carpeta, `docs/arquitectura.md` o `CLAUDE.md` según la tabla de esa regla. Los avisos `[docs]` del script lo señalan.
 - Sin secretos: `git status` (ningún `.env` ni `.env.local`) y `git diff | grep -inE "key|secret|token|password|BEGIN .*PRIVATE"`.
 - Sin archivos generados: `node_modules/`, `.next/`, `web/public/ds/`, `web/src/styles/ds/`, `web/.capturas/`, `telegram/data/`.
 - Pruebas de cada carpeta tocada, y guarda la salida para el PR:
