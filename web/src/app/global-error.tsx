@@ -13,7 +13,7 @@ export default function ErrorGlobal({ error, retry }: { error: Error & { digest?
   }, [error]);
 
   return (
-    <html lang="es">
+    <html lang="es" data-theme="light">
       <body className="nt">
         <main className="app-contenido">
           <div className="pila">
