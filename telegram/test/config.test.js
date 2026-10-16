@@ -63,22 +63,44 @@ test('TEAM_CHAT_ID debe ser un entero, también negativo', () => {
   assert.match(erroresDe({ ...ENV_DE_PRUEBA, TEAM_CHAT_ID: '12a' })[0], /^TEAM_CHAT_ID/);
 });
 
+const EXTERNO = Object.freeze({
+  SERVICIO_EXTERNO_URL: 'https://externo.example',
+  SERVICIO_EXTERNO_TOKEN: 'token-staging',
+  DIAS_ESPERA_CUPO: '5',
+  PAGOS_PARA_PRESTAMO: '1',
+  MULTIPLO_PRESTAMO: '2',
+});
+
 test('las URL de los servicios son opcionales, pero si vienen deben ser http(s)', () => {
-  const config = loadConfig({
-    ...ENV_DE_PRUEBA,
-    EXTERNO_URL: 'https://externo.example',
-    PAGOS_URL: 'http://localhost:3001',
-  });
+  const config = loadConfig({ ...ENV_DE_PRUEBA, ...EXTERNO, PAGOS_URL: 'http://localhost:3001' });
   assert.equal(config.externo.url, 'https://externo.example');
   assert.equal(config.pagosUrl, 'http://localhost:3001');
 
-  const errores = erroresDe({ ...ENV_DE_PRUEBA, EXTERNO_URL: 'ftp://x', PAGOS_URL: 'no es url' });
+  const errores = erroresDe({ ...ENV_DE_PRUEBA, ...EXTERNO, SERVICIO_EXTERNO_URL: 'ftp://x', PAGOS_URL: 'no es url' });
   assert.equal(errores.length, 2);
 });
 
-test('la llave del servicio externo entra a la lista de secretos', () => {
-  const config = loadConfig({ ...ENV_DE_PRUEBA, EXTERNO_API_KEY: 'llave-xyz' });
-  assert.deepEqual([...config.secretos], [TOKEN_DE_PRUEBA, 'llave-xyz']);
+test('con el servicio externo se exigen su token y las reglas del préstamo y del cupo', () => {
+  const errores = erroresDe({ ...ENV_DE_PRUEBA, SERVICIO_EXTERNO_URL: 'https://externo.example' });
+  for (const nombre of ['SERVICIO_EXTERNO_TOKEN', 'DIAS_ESPERA_CUPO', 'PAGOS_PARA_PRESTAMO', 'MULTIPLO_PRESTAMO']) {
+    assert.ok(errores.includes(`Falta la variable ${nombre}.`), `falta el error de ${nombre}`);
+  }
+
+  const config = loadConfig({ ...ENV_DE_PRUEBA, ...EXTERNO });
+  assert.deepEqual({ ...config.reglasServicio }, { diasEsperaCupo: 5, pagosParaPrestamo: 1, multiploPrestamo: 2 });
+  assert.match(erroresDe({ ...ENV_DE_PRUEBA, ...EXTERNO, PAGOS_PARA_PRESTAMO: '0' })[0], /^PAGOS_PARA_PRESTAMO/);
+  assert.match(erroresDe({ ...ENV_DE_PRUEBA, ...EXTERNO, MULTIPLO_PRESTAMO: '1.5' })[0], /^MULTIPLO_PRESTAMO/);
+});
+
+test('el índice de la web pide su llave y el puerto de avisos debe ser válido', () => {
+  assert.deepEqual(erroresDe({ ...ENV_DE_PRUEBA, WEB_INDICE_URL: 'http://localhost:3000' }), ['Falta la variable WEB_INDICE_API_KEY.']);
+  assert.equal(loadConfig({ ...ENV_DE_PRUEBA, AVISOS_PUERTO: '8080' }).avisos.puerto, 8080);
+  assert.match(erroresDe({ ...ENV_DE_PRUEBA, AVISOS_PUERTO: '99999' })[0], /^AVISOS_PUERTO/);
+});
+
+test('el token de staging y la llave de la web entran a la lista de secretos', () => {
+  const config = loadConfig({ ...ENV_DE_PRUEBA, ...EXTERNO, WEB_INDICE_URL: 'http://localhost:3000', WEB_INDICE_API_KEY: 'llave-web' });
+  assert.deepEqual([...config.secretos], [TOKEN_DE_PRUEBA, 'token-staging', 'llave-web']);
 });
 
 test('los mensajes de error nunca incluyen el valor de la variable', () => {

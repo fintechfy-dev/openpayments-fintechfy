@@ -67,7 +67,7 @@ test('crear en el chat de punta a punta con botones termina en el resumen y la v
 
   assert.deepEqual(botones(llamadas.at(-1)), ['f:p:1:10000', 'f:p:1:20000', 'f:p:1:50000', 'f:p:1:100000', 'f:x']);
   await bot.handleUpdate(boton('f:p:1:50000', { messageId: 1001 }));
-  assert.deepEqual(botones(llamadas.at(-1)), ['f:p:2:semanal', 'f:p:2:quincenal', 'f:p:2:mensual', 'f:x']);
+  assert.deepEqual(botones(llamadas.at(-1)), ['f:p:2:mensual', 'f:x']);
   await bot.handleUpdate(boton('f:p:2:mensual', { messageId: 1001 }));
   assert.deepEqual(botones(llamadas.at(-1)), ['f:p:3:2026-10-16', 'f:p:3:2026-10-23', 'f:p:3:2026-11-01', 'f:x']);
   await bot.handleUpdate(boton('f:p:3:2026-11-01', { messageId: 1001 }));

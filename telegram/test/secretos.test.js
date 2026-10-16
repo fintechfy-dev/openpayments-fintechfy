@@ -57,7 +57,7 @@ test('el bot no envía un mensaje que contiene el token', async () => {
 });
 
 test('el bot no envía un mensaje que contiene otro secreto de la lista', async () => {
-  const { bot, llamadas } = crearBotDePrueba({ env: { EXTERNO_API_KEY: 'llave-externa-xyz' } });
+  const { bot, llamadas } = crearBotDePrueba({ env: { WEB_INDICE_URL: 'http://localhost:3000', WEB_INDICE_API_KEY: 'llave-externa-xyz' } });
 
   await assert.rejects(bot.api.sendMessage(100, 'llave: llave-externa-xyz'), SecretoBloqueadoError);
   assert.equal(llamadas.length, 0);
