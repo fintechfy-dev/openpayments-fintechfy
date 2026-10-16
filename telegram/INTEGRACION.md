@@ -35,7 +35,9 @@ Variables nuevas en `telegram/.env` (en `.env.example` sin valores):
 | 1. Crear natillera | ✅ `src/externo/crear-natillera.js`: contrato, registro en SQLite y aviso 3.1 a la web (3 intentos; si fallan, el cuerpo queda en el log para cargarlo a mano). Solo mensual (#58) |
 | 6. `PagarDeuda` y 8. `AutorizarPago` | ✅ Botones de los avisos de mora y de actividad (`bot/comandos/cobros.js`); solo actúan para quien es dueño de la participación |
 | Sección 2, avisos | ✅ `src/avisos/`: webhook firmado (una URL por evento) o flujo en vivo, y el mensaje de cada evento. **Verificar la forma de la cascada con la primera real** (`avisosDeCascada`) |
-| 2–4. Unirse y autorizar | ⏳ Falta el flujo de unirse (US-004 y US-005). El registro ya tiene la tabla `participaciones` |
+| 2 y 3.2. Unirse | ✅ `bot/flujos/unirse.js` y `externo/unirse.js` (rama `feature/telegram-16-unirse`): el enlace `t.me/<bot>?start=<código>` sale al crear la natillera y con `/invitar`; muestra las reglas leídas de staging, pide la billetera y crea `natillera-participacion` (las reglas se copian del estado de la natillera; la mora ya viene en fracción). Avisa a la web y al administrador |
+| 3. `ConfirmarAutorizacion` | ✅ **Con permiso de prueba** (`GrantId` = `grant-prueba-<participación>`), anunciado como tal al participante. Lo reemplaza el permiso real cuando exista el servicio de pagos (#19) |
+| 4. `RechazarAutorizacion` | ⏳ Sin uso todavía: «Ahora no» deja la participación pendiente y se puede autorizar después con el mismo enlace. Lo usará el permiso real cuando la billetera falle |
 | 5. «Mi natillera» | ⏳ La Mini App no puede llamar a staging (expondría el token): necesita una ruta del bot que valide el `initData` |
 | 7, 9, 10, 12. Actividades | ⏳ Faltan los flujos del administrador |
 | 11 y 3.4. Préstamo | ⏳ Falta el flujo. `PrestamoDesembolsado` ya llega (trae `participanteId`); `DesembolsoFallo` y `CreditoEnMora` solo traen `creditoId`, que el bot no conoce porque el crédito lo crea la web |
