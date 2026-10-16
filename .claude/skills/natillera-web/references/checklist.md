@@ -35,7 +35,7 @@
 
 - [ ] Un `<h1>`, encabezados en orden, landmarks (`header`, `nav`, `main`).
 - [ ] Se puede usar solo con teclado y el foco se ve.
-- [ ] Contraste AA en claro y oscuro; nada de texto en `acento` o `secundario`.
+- [ ] Contraste AA; nada de texto en `acento` o `secundario`. La web se ve clara aunque el sistema esté en modo oscuro.
 - [ ] Imágenes con `alt` (o `alt=""` si son decorativas) y `width`/`height`.
 - [ ] Avisos con `role="status"`; `role="alert"` solo para errores.
 
