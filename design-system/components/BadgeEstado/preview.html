@@ -1,0 +1,12 @@
+<!-- @dsCard group="Componentes" height=230 subtitle="Estados de natillera, participante y pago" -->
+<style>.pv{padding:24px;background:var(--superficie);color:var(--tinta);font-family:var(--font-body)}.pv h4{margin:0 0 8px;font:700 13px/18px var(--font-body);color:var(--tinta-suave)}</style>
+<div class="pv nt" style="display:flex;flex-direction:column;gap:14px">
+<div><h4>Natillera</h4><div style="display:flex;flex-wrap:wrap;gap:8px"><span data-b="natillera.creada"></span><span data-b="natillera.iniciada"></span><span data-b="natillera.activa"></span><span data-b="natillera.liquidando"></span><span data-b="natillera.cerrada"></span></div></div>
+<div><h4>Participante</h4><div style="display:flex;flex-wrap:wrap;gap:8px"><span data-b="participante.validado"></span><span data-b="participante.activo"></span><span data-b="participante.en_mora"></span><span data-b="participante.liquidado"></span></div></div>
+<div><h4>Pago</h4><div style="display:flex;flex-wrap:wrap;gap:8px"><span data-b="pago.pendiente"></span><span data-b="pago.autorizado"></span><span data-b="pago.completado"></span><span data-b="pago.fallido"></span></div></div>
+</div>
+<script>
+document.querySelectorAll('[data-i]').forEach(function(e){e.outerHTML=Natillera.icono(e.getAttribute('data-i'),e.className)});
+document.querySelectorAll('[data-b]').forEach(function(e){var p=e.getAttribute('data-b').split('.');e.outerHTML=Natillera.badge(p[0],p[1])});
+document.querySelectorAll('[data-cop]').forEach(function(e){e.textContent=Natillera.formatoCOP(+e.getAttribute('data-cop'))});
+</script>

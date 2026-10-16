@@ -25,7 +25,8 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 
 | Archivo o componente | Herramienta | Para qué | Cuánta IA |
 |---|---|---|---|
-| | | | |
+| `design-system/` (marca, tokens, componentes, voz y tono) | Claude Design; ChatGPT para el logo (_completar modelo_) | Explorar y vectorizar el logo del equipo, definir paleta, tipografía, componentes y guía de mensajes | Mucho |
+| `design-system/tokens/build.mjs`, `design-system/index.html` | Claude Code (Claude Opus) | Generar `tokens.css` desde `tokens.json` y galería local de componentes | Mucho |
 
 ## Servicios externos
 

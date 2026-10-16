@@ -1,0 +1,15 @@
+<!-- @dsCard group="Componentes" height=300 subtitle="Participantes y aportes" -->
+<style>.pv{padding:24px;background:var(--superficie);color:var(--tinta);font-family:var(--font-body)}.pv h4{margin:0 0 8px;font:700 13px/18px var(--font-body);color:var(--tinta-suave)}</style>
+<div class="pv nt"><div class="nt-tabla-marco"><table class="nt-tabla">
+<thead><tr><th>Participante</th><th>Estado</th><th>Cuotas</th><th class="nt-tabla__num">Aporte</th></tr></thead>
+<tbody>
+<tr><td class="nt-tabla__principal">Marta Restrepo</td><td><span data-b="participante.activo"></span></td><td>3/12</td><td class="nt-tabla__num" data-cop="150000"></td></tr>
+<tr><td class="nt-tabla__principal">Don Jairo Gómez</td><td><span data-b="participante.en_mora"></span></td><td>2/12</td><td class="nt-tabla__num" data-cop="100000"></td></tr>
+<tr><td class="nt-tabla__principal">Luisa Fernanda</td><td><span data-b="participante.validado"></span></td><td>0/12</td><td class="nt-tabla__num" data-cop="0"></td></tr>
+<tr><td class="nt-tabla__principal">Total del grupo</td><td></td><td></td><td class="nt-tabla__num" style="font-weight:700" data-cop="1800000"></td></tr>
+</tbody></table></div></div>
+<script>
+document.querySelectorAll('[data-i]').forEach(function(e){e.outerHTML=Natillera.icono(e.getAttribute('data-i'),e.className)});
+document.querySelectorAll('[data-b]').forEach(function(e){var p=e.getAttribute('data-b').split('.');e.outerHTML=Natillera.badge(p[0],p[1])});
+document.querySelectorAll('[data-cop]').forEach(function(e){e.textContent=Natillera.formatoCOP(+e.getAttribute('data-cop'))});
+</script>

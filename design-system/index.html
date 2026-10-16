@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Natillera 2.0 · Design system</title>
+<link rel="icon" href="assets/logos/kit/01_simbolo/marranito_32px.png">
+<link rel="stylesheet" href="tokens/tokens.css">
+<link rel="stylesheet" href="components/bundle.css">
+<style>
+  body { margin: 0; background: var(--superficie); color: var(--tinta); }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--borde); }
+  header img { height: 64px; }
+  .logo-oscuro { display: none; align-items: center; gap: 12px; }
+  .logo-oscuro .nombre { height: 32px; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logo-claro { display: none; } :root:not([data-theme="light"]) .logo-oscuro { display: flex; } }
+  :root[data-theme="dark"] .logo-claro { display: none; }
+  :root[data-theme="dark"] .logo-oscuro { display: flex; }
+  main { padding: 24px; display: grid; gap: 32px; max-width: 1040px; margin: 0 auto; }
+  h2 { font: 800 20px/26px var(--font-display); margin: 0 0 8px; }
+  iframe { width: 100%; border: 1px solid var(--borde); border-radius: var(--radio-md); background: var(--superficie); }
+</style>
+</head>
+<body class="nt">
+<header>
+  <img class="logo-claro" src="assets/logos/kit/03_horizontal/logo_horizontal_640px.png" alt="Natillera 2.0">
+  <span class="logo-oscuro"><img src="assets/logos/kit/01_simbolo/marranito_128px.png" alt=""><img class="nombre" src="assets/logos/kit/06_monocromos/nombre_blanco.png" alt="Natillera 2.0"></span>
+  <button class="nt-btn nt-btn--secundario nt-btn--sm" id="tema">Cambiar tema</button>
+</header>
+<main id="galeria"></main>
+<script>
+  // Galería local: cada componente vive en components/<Nombre>/preview.html como fragmento.
+  // Se abre con un servidor estático (fetch no funciona con file://):
+  //   python3 -m http.server -d design-system 8080   →   http://localhost:8080
+  var COMPONENTES = ["Cover", "Logo", "Iconos", "Boton", "BadgeEstado", "Tarjeta", "Aviso", "Tabla",
+    "ProgresoAhorro", "LineaTiempoPago", "TarjetaAporte", "TarjetaBienvenida", "AutorizacionCompleta",
+    "PanelJurado", "SolicitudesCredito", "TarjetaCredito", "Pitch"];
+  var base = location.href.replace(/[^/]*$/, "");
+  var tema = null;
+
+  function documento(fragmento) {
+    var alto = /height=(\d+)/.exec(fragmento);
+    return { alto: alto ? +alto[1] + 48 : 400, html:
+      '<!doctype html><html lang="es"' + (tema ? ' data-theme="' + tema + '"' : "") + '><head><meta charset="utf-8">' +
+      '<base href="' + base + 'components/x/">' +
+      '<link rel="stylesheet" href="../../tokens/tokens.css"><link rel="stylesheet" href="../bundle.css">' +
+      '<script src="../bundle.js"><\/script><style>body{margin:0;background:var(--superficie)}</style></head><body>' +
+      fragmento + "</body></html>" };
+  }
+
+  function pintar() {
+    var galeria = document.getElementById("galeria");
+    galeria.innerHTML = "";
+    COMPONENTES.forEach(function (nombre) {
+      var seccion = document.createElement("section");
+      seccion.innerHTML = "<h2>" + nombre + "</h2>";
+      galeria.appendChild(seccion);
+      fetch("components/" + nombre + "/preview.html").then(function (r) { return r.text(); }).then(function (txt) {
+        var d = documento(txt);
+        var marco = document.createElement("iframe");
+        marco.title = nombre;
+        marco.height = d.alto;
+        marco.srcdoc = d.html;
+        seccion.appendChild(marco);
+      });
+    });
+  }
+
+  document.getElementById("tema").addEventListener("click", function () {
+    var oscuro = tema ? tema === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    tema = oscuro ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", tema);
+    pintar();
+  });
+  pintar();
+</script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+Set base de íconos: línea de 2px, puntas redondeadas, 24×24, sin relleno, en tinta `#23272D` (un `<img>` no hereda color; para otro color usa la versión inline de `Natillera.icono()` con `currentColor`). cuota, grupo, billetera, candado, calendario, premio, alerta, check.

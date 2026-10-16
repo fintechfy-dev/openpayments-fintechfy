@@ -11,6 +11,10 @@ La página de la financiera y del administrador: gestionar las natilleras, ver l
 | Registro de pagos con sus cuatro etapas (para el jurado) | US-007-RPT | núcleo |
 | Bitácora del administrador | US-012-AUD | recorte 3 |
 
+## Estilos
+
+La página usa el [design system](../design-system/): carga `design-system/tokens/tokens.css`, `design-system/components/bundle.css` y `bundle.js`, y arma las pantallas con los componentes `PanelJurado`, `Tabla`, `BadgeEstado`, `LineaTiempoPago`, `SolicitudesCredito` (#10) y `TarjetaCredito`. Montos siempre con `Natillera.formatoCOP`.
+
 ## Contratos
 
 - **Con el servicio externo de lógica financiera:** todo lo que muestra la página sale de ahí. El contrato se escribe en [`../integracion/README.md`](../integracion/README.md) (#5).

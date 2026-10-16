@@ -1,0 +1,21 @@
+<!-- @dsCard group="Piezas aplicadas" height=470 subtitle="Imagen que envía el bot tras cada cobro" page -->
+<style>.pv{padding:24px;background:var(--superficie);color:var(--tinta);font-family:var(--font-body)}.pv h4{margin:0 0 8px;font:700 13px/18px var(--font-body);color:var(--tinta-suave)}</style>
+<div class="pv nt" style="display:flex;justify-content:center;background:var(--superficie-hundida)">
+<style>.ta{width:540px;background:var(--superficie-elevada);border-radius:var(--radio-lg);box-shadow:var(--sombra-3);overflow:hidden}
+.ta-top{background:var(--primario);color:var(--sobre-primario);padding:20px 24px;display:flex;align-items:center;gap:12px}
+.ta-top img{width:44px;height:44px}.ta-n{font:900 22px/26px var(--font-display);margin:0}.ta-s{font-size:14px;line-height:20px;margin:0;opacity:.92}
+.ta-b{padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:20px}.ta-f{padding:14px 24px;background:var(--secundario-suave);display:flex;gap:10px;align-items:center;font-size:14px;line-height:20px}</style>
+<div class="ta">
+<div class="ta-top"><img src="../../assets/logos/kit/01_simbolo/marranito_128px.png" alt=""><div><p class="ta-n">Natillera Los Primos</p><p class="ta-s">Cuota cobrada · 15 de octubre</p></div></div>
+<div class="ta-b">
+ <div class="nt-dato"><span class="nt-dato__etiqueta">Tu aporte</span><span class="nt-dato__valor" data-cop="150000"></span></div>
+ <div class="nt-dato"><span class="nt-dato__etiqueta">Total del grupo</span><span class="nt-dato__valor nt-dato__valor--verde" data-cop="1800000"></span></div>
+ <div class="nt-progreso" style="grid-column:1/-1"><div class="nt-progreso__fila"><span>Cuotas pagadas</span><span class="nt-num">3/12</span></div><div class="nt-cuotas" style="--n:12" aria-hidden="true"><span class="nt-cuota nt-cuota--pagada"></span><span class="nt-cuota nt-cuota--pagada"></span><span class="nt-cuota nt-cuota--pagada"></span><span class="nt-cuota nt-cuota--hoy"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span><span class="nt-cuota"></span></div></div>
+</div>
+<div class="ta-f"><i data-i="candado" class="nt-ico--sm"></i><span>La plata la guarda <b>Financiera Aliada</b>. Nadie del grupo la puede sacar.</span></div>
+</div></div>
+<script>
+document.querySelectorAll('[data-i]').forEach(function(e){e.outerHTML=Natillera.icono(e.getAttribute('data-i'),e.className)});
+document.querySelectorAll('[data-b]').forEach(function(e){var p=e.getAttribute('data-b').split('.');e.outerHTML=Natillera.badge(p[0],p[1])});
+document.querySelectorAll('[data-cop]').forEach(function(e){e.textContent=Natillera.formatoCOP(+e.getAttribute('data-cop'))});
+</script>
