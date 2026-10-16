@@ -22,8 +22,8 @@ export function loadConfig(env) {
     return valor === '' ? undefined : valor;
   };
 
-  const numero = (nombre, regla, descripcion) => {
-    const valor = texto(nombre);
+  const numero = (nombre, regla, descripcion, { obligatoria = true } = {}) => {
+    const valor = texto(nombre, { obligatoria });
     if (valor === undefined) return undefined;
     const n = Number(valor);
     if (!Number.isFinite(n) || !regla(n)) {
@@ -65,9 +65,27 @@ export function loadConfig(env) {
 
   const moraDiariaMaxPct = numero('MORA_DIARIA_MAX_PCT', (n) => n >= 0, 'un número mayor o igual a 0');
 
-  // Del servicio externo y de pagos: opcionales hasta las tareas 5 y #4, pero si vienen, bien formadas.
-  const externoUrl = url('EXTERNO_URL');
-  const externoApiKey = texto('EXTERNO_API_KEY', { obligatoria: false });
+  const entero = (nombre, minimo, opciones) =>
+    numero(nombre, (n) => Number.isInteger(n) && n >= minimo, `un número entero desde ${minimo}`, opciones);
+
+  // Servicio externo de staging (telegram/INTEGRACION.md). Opcional: sin él, /crear termina en una
+  // vista previa. Si viene la URL, se exige todo lo que piden sus llamadas.
+  const externoUrl = url('SERVICIO_EXTERNO_URL');
+  const conExterno = externoUrl !== undefined;
+  const externoToken = texto('SERVICIO_EXTERNO_TOKEN', { obligatoria: conExterno });
+  // Reglas del préstamo y del cupo que el bot pone al crear la natillera (US-001-CFG).
+  const diasEsperaCupo = entero('DIAS_ESPERA_CUPO', 0, { obligatoria: conExterno });
+  const pagosParaPrestamo = entero('PAGOS_PARA_PRESTAMO', 1, { obligatoria: conExterno });
+  const multiploPrestamo = entero('MULTIPLO_PRESTAMO', 1, { obligatoria: conExterno });
+
+  // La web guarda la lista de natilleras; el bot le avisa lo que crea. Van juntas o ninguna.
+  const webIndiceUrl = url('WEB_INDICE_URL');
+  const webIndiceApiKey = texto('WEB_INDICE_API_KEY', { obligatoria: webIndiceUrl !== undefined });
+
+  // Avisos de staging: con AVISOS_PUERTO llegan por webhook (sus secretos, uno por evento, los guarda
+  // `npm run registrar-avisos` en telegram/data/); sin él, el bot los lee del flujo en vivo.
+  const avisosPuerto = numero('AVISOS_PUERTO', (n) => Number.isInteger(n) && n > 0 && n < 65536, 'un puerto entre 1 y 65535', { obligatoria: false });
+
   const pagosUrl = url('PAGOS_URL');
   // Formulario de la Mini App (miniapp/). Sin ella, /crear pregunta todo en el chat.
   const miniappUrl = url('MINIAPP_URL', { soloHttps: true });
@@ -81,10 +99,13 @@ export function loadConfig(env) {
     teamChatId,
     cuota: Object.freeze({ min: cuotaMin, max: cuotaMax }),
     moraDiariaMaxPct,
-    externo: Object.freeze({ url: externoUrl, apiKey: externoApiKey }),
+    externo: Object.freeze({ url: externoUrl, token: externoToken }),
+    reglasServicio: Object.freeze({ diasEsperaCupo, pagosParaPrestamo, multiploPrestamo }),
+    webIndice: Object.freeze({ url: webIndiceUrl, apiKey: webIndiceApiKey }),
+    avisos: Object.freeze({ puerto: avisosPuerto }),
     pagosUrl,
     miniappUrl,
     dbPath,
-    secretos: Object.freeze(listaDeSecretos(botToken, externoApiKey)),
+    secretos: Object.freeze(listaDeSecretos(botToken, externoToken, webIndiceApiKey)),
   });
 }
