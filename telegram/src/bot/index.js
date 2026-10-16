@@ -1,11 +1,16 @@
-import { Bot, GrammyError, HttpError } from 'grammy';
+import { Bot, GrammyError, HttpError, session } from 'grammy';
 import { contieneSecreto } from '../secretos.js';
 import { start } from './comandos/start.js';
 import { diag } from './comandos/diag.js';
+import { cancelar } from './comandos/cancelar.js';
+import { crearMotorDeFlujos } from './flujo.js';
+import { almacenDeSesiones } from './sesion-storage.js';
+import { eco, flujoEco } from './flujos/eco.js';
 
-// Menú de comandos que se publica en Telegram. /diag no va aquí: no se anuncia.
+// Menú de comandos que se publica en Telegram. /diag y /eco no van aquí: no se anuncian.
 export const COMANDOS = [
   { command: 'start', description: 'Empezar' },
+  { command: 'cancelar', description: 'Cancelar lo que estás haciendo' },
 ];
 
 // Sin emoji ni culpa (guía de voz y tono): el problema es nuestro, no de la persona.
@@ -50,9 +55,10 @@ function guardiaDeSecretos(secretos, log) {
 
 // Arma el bot sin arrancarlo, para poder probarlo sin conexión.
 // `config` sale de loadConfig(); sus `secretos` nunca se pueden enviar.
-// `botInfo`, `cliente`, `inicio` y `ahora` son opcionales: en las pruebas evitan getMe y la red
-// y fijan el reloj.
-export function crearBot(config, { log, botInfo, cliente, inicio, ahora } = {}) {
+// `db` es la base de abrirBaseDeDatos(); sin ella, las sesiones quedan en memoria y se pierden al
+// reiniciar. `botInfo`, `cliente`, `inicio` y `ahora` son opcionales: en las pruebas evitan getMe y
+// la red y fijan el reloj.
+export function crearBot(config, { log, db, botInfo, cliente, inicio, ahora } = {}) {
   const bot = new Bot(config.botToken, { botInfo, client: cliente });
 
   bot.api.config.use(guardiaDeSecretos(config.secretos, log));
@@ -64,8 +70,17 @@ export function crearBot(config, { log, botInfo, cliente, inicio, ahora } = {}) 
   bot.catch(manejarError);
   const app = bot.errorBoundary(manejarError);
 
+  // La clave de sesión es el id del chat (chats privados). Si el bot se usa en grupos: chat + usuario.
+  app.use(session({ initial: () => ({ flujo: null }), storage: db ? almacenDeSesiones(db) : undefined }));
+
+  const motor = crearMotorDeFlujos();
+  motor.registrar(flujoEco(config));
+
   app.use(start({ log }));
-  app.use(diag({ config, inicio, ahora }));
+  app.use(cancelar());
+  app.use(diag({ config, db, inicio, ahora }));
+  app.use(eco({ motor }));
+  app.use(motor.middleware());
 
   return bot;
 }

@@ -13,7 +13,7 @@ export const ENV_DE_PRUEBA = Object.freeze({
   MORA_DIARIA_MAX_PCT: '2.5',
 });
 
-const BOT_INFO = {
+export const BOT_INFO = {
   id: 1,
   is_bot: true,
   first_name: 'Natillera Prueba',
@@ -29,7 +29,7 @@ export const logSilencioso = { info() {}, warn() {}, error() {} };
 
 // Bot sin red: un `fetch` falso guarda cada llamada a Telegram en `llamadas` en vez de enviarla.
 // Va por debajo de los transformadores del bot, así que la guardia de secretos sí se ejerce.
-export function crearBotDePrueba({ env = {}, log = logSilencioso, inicio, ahora } = {}) {
+export function crearBotDePrueba({ env = {}, log = logSilencioso, db, inicio, ahora } = {}) {
   const llamadas = [];
   const fetchFalso = async (url, init) => {
     const method = String(url).split('/').at(-1);
@@ -43,6 +43,7 @@ export function crearBotDePrueba({ env = {}, log = logSilencioso, inicio, ahora 
   const config = loadConfig({ ...ENV_DE_PRUEBA, ...env });
   const bot = crearBot(config, {
     log,
+    db,
     botInfo: BOT_INFO,
     cliente: { fetch: fetchFalso },
     inicio,

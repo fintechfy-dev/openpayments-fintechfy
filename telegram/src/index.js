@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { crearLogger } from './log.js';
 import { loadConfig, ConfigError } from './config.js';
 import { crearBot, COMANDOS } from './bot/index.js';
+import { abrirBaseDeDatos } from './db.js';
 
 // Si no hay .env, se usan las variables del sistema.
 if (existsSync('.env')) process.loadEnvFile('.env');
@@ -17,7 +18,9 @@ try {
 }
 
 const log = crearLogger({ secretos: config.secretos });
-const bot = crearBot(config, { log });
+const db = abrirBaseDeDatos(config.dbPath);
+log.info(`Sesiones en ${config.dbPath}.`);
+const bot = crearBot(config, { log, db });
 
 // Enganche de #6: si los avisos llegan por webhook, aquí se monta el servidor HTTP del bot.
 
@@ -27,7 +30,6 @@ async function detener(senal) {
   deteniendo = true;
   log.info(`${senal} recibido, apagando el bot...`);
   await bot.stop();
-  // Tarea 4: aquí se cierra la base de datos.
 }
 process.once('SIGINT', () => detener('SIGINT'));
 process.once('SIGTERM', () => detener('SIGTERM'));
@@ -42,4 +44,7 @@ try {
 await bot.start({
   onStart: (info) => log.info(`Bot @${info.username} escuchando (long polling).`),
 });
+// Se cierra después de que bot.start() termina: así ninguna actualización en curso escribe en una
+// base ya cerrada.
+db.close();
 log.info('Bot apagado.');

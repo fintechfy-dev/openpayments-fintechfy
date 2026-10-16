@@ -32,7 +32,8 @@ Node.js 24 o más nuevo y [grammY](https://grammy.dev). Todo se corre **dentro d
    npm start        # o npm run dev para reiniciar al guardar
    ```
 4. Escríbele `/start` al bot. En la terminal queda el id del chat, que sirve como `TEAM_CHAT_ID`.
-5. En el chat del equipo, `/diag` muestra la configuración en uso. En cualquier otro chat no responde.
+5. En el chat del equipo, `/diag` muestra la configuración en uso y cuántas sesiones hay guardadas. En cualquier otro chat no responde.
+6. Para probar las conversaciones: `/eco` hace dos preguntas (nombre y cuota). Se pueden contestar aunque el bot se reinicie entre una y otra, y `/cancelar` deja todo como estaba. Las sesiones quedan en `telegram/data/bot.db` (ignorada por git).
 
 Solo puede correr una copia del bot por token: si sale `409: Conflict`, hay otra abierta.
 
