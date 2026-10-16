@@ -143,6 +143,25 @@ export function validarPeriodicidad(texto) {
   return { valor: clave };
 }
 
+// Dirección de billetera de Open Payments (US-005): 'https://host/ruta' o el atajo '$host/ruta'. Aquí
+// solo se revisa la forma; que exista y maneje la misma moneda lo verifica el servicio de pagos (#19).
+export const BILLETERA_MAX = 200;
+
+export function validarBilletera(texto) {
+  const limpio = String(texto).trim();
+  const conEsquema = limpio.startsWith('$') ? `https://${limpio.slice(1)}` : limpio;
+  const error = { error: 'Esa dirección no se ve bien. Escríbela completa, como https://ilp.interledger-test.dev/tu-nombre' };
+  if (conEsquema.length > BILLETERA_MAX || /\s/.test(conEsquema)) return error;
+  let url;
+  try {
+    url = new URL(conEsquema);
+  } catch {
+    return error;
+  }
+  if (url.protocol !== 'https:' || url.pathname.length < 2 || url.search || url.hash || url.username) return error;
+  return { valor: `${url.origin}${url.pathname.replace(/\/+$/, '')}` };
+}
+
 export function validarInicio(texto, { hoy }) {
   const fecha = leerFecha(texto, hoy);
   if (!fecha) return { error: 'No entendí la fecha. Escríbela como día/mes/año.' };
