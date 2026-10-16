@@ -11,13 +11,13 @@ node scripts/revisar-entrega.mjs --rama   # además, lo que le falta al diff de 
 
 Sale con código 1 solo si encuentra un secreto o un `.env` versionado. El resto son avisos. La regla `.claude/rules/checklist-entrega.md` pide correrlo y actualizar este documento en cada commit y PR.
 
-**Contrastado:** viernes 16 de octubre, 15:56 (hora de Bogotá), sobre `develop` en `ec6a35c`.
+**Contrastado:** viernes 16 de octubre, 16:05 (hora de Bogotá), sobre `develop` en `a719c8b` (con #49, #50 y #51).
 
 **Estados:** ✅ hecho, con evidencia en el repo · ⚠️ a medias · ❌ falta · 👥 depende de personas y no se ve en el repo: se marca en la página · ❓ pregunta abierta para la organización · ℹ️ dato
 
 ## Lo que falta, por urgencia
 
-1. ❌ **Nada usa todavía la API de Open Payments** (`b-op`, `c-op`). `pagos/` solo tiene su README y ningún `package.json` depende de `@interledger/open-payments`. Sin esto el proyecto no entra a evaluación ni a premios. #3 (cobro recurrente con un permiso) y #4 (servicio de pagos) **no tienen responsable**, y ya pasó el checkpoint de las 15:00.
+1. ❌ **Nada usa todavía la API de Open Payments** (`b-op`, `c-op`). `pagos/` solo tiene su README y ningún `package.json` depende de `@interledger/open-payments`. Sin esto el proyecto no entra a evaluación ni a premios. #3 (cobro recurrente con un permiso) y #4 (servicio de pagos) **no tienen responsable**, y ya pasó el checkpoint de las 15:00. Además, según `integracion/README.md` (diferencia 6), en staging la API de pagos del servicio externo apunta a `https://natillera-bff.example`, que no existe, y puede estar en modo de prueba: hay que configurarla en modo real con la URL pública del servicio de pagos, o no se mueve dinero real.
 2. ❌ **Sin evidencia de un pago de punta a punta** (`b-primer-pago`, `b-evidencia`, `s-video`). El video debe mostrar la solicitud, la autorización en la billetera, la ejecución y la finalización exitosa.
 3. ⚠️ **Ningún issue del frente Pagos tiene responsable**: #3, #4, #12, #15, #20 a #23, #25, #28, #30 y #31. Tampoco #11 (release de entrega), #14 (secretos), #37 (guion con 4 billeteras) ni #38 (entregables del repositorio).
 4. ⚠️ **El checkpoint de las 15:00 no dejó registro** (`b-checkpoint`). Si se recortó algo, hay que anotarlo en `docs/plan-de-trabajo.md` y en los issues `recorte *`.
@@ -40,7 +40,7 @@ Sale con código 1 solo si encuentra un secreto o un `.env` versionado. El resto
 | `hoy-wallet-grupo` | Recomendado | Billetera del grupo a nombre de la financiera | ❌ #15 abierto, sin responsable |
 | `hoy-moneda` | Plan | Anotar la moneda de la Test Wallet (riesgo R-02) | ❌ Sigue como supuesto en `docs/discovery/3-bdd/risk-analysis.md:8` |
 | `hoy-claves` | Recomendado | Claves de desarrollador de la billetera, fuera del repo | 👥 No hay claves en el repo ni en el historial (ver `s-secretos`) |
-| `hoy-recurrente` | Recomendado | Leer cómo se pide un permiso de pago saliente con tope e intervalo | ⚠️ Está explicado en la skill `natillera-open-payments` (PR #50), pero la prueba (#3) no se ha hecho |
+| `hoy-recurrente` | Recomendado | Leer cómo se pide un permiso de pago saliente con tope e intervalo | ⚠️ Está explicado en la skill `natillera-open-payments`, pero la prueba (#3) no se ha hecho |
 | `hoy-laptops` | Recomendado | Node, Git y la extensión de snippets de Open Payments | 👥 |
 | `hoy-bot` | Recomendado | Crear el bot con BotFather | ✅ Lo creó Estiven (`AI_USAGE.md`, "Lo que hizo el equipo"); el token no está en el repo |
 | `hoy-plantilla` | Recomendado | Copiar la plantilla oficial y llenar portada y equipo | 👥 |
@@ -56,16 +56,16 @@ Sale con código 1 solo si encuentra un secreto o un `.env` versionado. El resto
 | `vie-bienvenida` | Dato | Mesa de mentores y canal de Slack | ℹ️ |
 | `ask-hora` | Por confirmar | ¿Video y presentación cierran a las 11:00 o a las 12:00? | ❓ Sin respuesta anotada. Plan seguro: antes de las 11:00 |
 | `ask-donde` | Por confirmar | ¿Drive, repositorio o ambos? | ❓ Plan seguro: los dos |
-| `ask-demo` | Por confirmar | ¿La demo puede correr desde nuestro equipo? | ❓ `integracion/README.md` deja abierto dónde corre el servicio externo en la demo (#5) |
+| `ask-demo` | Por confirmar | ¿La demo puede correr desde nuestro equipo? | ❓ El servicio externo corre en staging (`integracion/README.md`); falta decidir dónde corren el puente y el servicio de pagos, que necesitan una URL pública HTTPS para los avisos y para que staging los llame |
 | `ask-docs` | Por confirmar | ¿Se puede subir el discovery hecho antes? | ❓ Ya está subido; si dicen que no, se retira antes de las 11:00 del sábado |
 | `ask-ronda1` | Por confirmar | ¿Presentan todos en la Ronda 1? | ❓ Plan seguro: estar listos |
 | `b-primer-commit` | Exigido | Primer código y primer commit después de las 10:30 | ✅ 11:32 del viernes |
 | `b-op` | Exigido | El proyecto usa la API de Open Payments | ❌ Ver "Lo que falta", punto 1 |
 | `b-primer-pago` | Recomendado | Lo primero: un pago de punta a punta | ❌ #3 abierto |
-| `b-prompts` | Exigido | Prompts reales desde el primer minuto | ✅ 7 archivos en `prompts/` con el texto literal; cada PR agrega los suyos |
+| `b-prompts` | Exigido | Prompts reales desde el primer minuto | ✅ 10 archivos en `prompts/` con el texto literal; cada PR agrega los suyos |
 | `b-servicio` | Recomendado | El servicio de Open Payments con poca IA | ⚠️ Aún no existe. La regla `ia-y-prompts.md` dice que lo escribe el equipo y Claude solo explica y revisa |
 | `b-revisar-ia` | Recomendado | Revisar y probar lo que genera la IA | ✅ La web y el bot tienen pruebas (`npm run verificar` en `web/`, `npm test` en `telegram/`) y revisiones con hallazgos corregidos (PR #49) |
-| `b-push` | Plan | Subir cambios seguido | ✅ Del #1 al #50, todo entra por PR a `develop` |
+| `b-push` | Plan | Subir cambios seguido | ✅ Del #1 al #51, todo entra por PR a `develop` |
 | `b-evidencia` | Plan | Evidencia de cada pago real de prueba | ❌ No hay pagos todavía |
 | `b-checkpoint` | Plan | 15:00, checkpoint de alcance | ⚠️ Ver "Lo que falta", punto 4 |
 | `b-noche` | Dato | En la noche se puede seguir desde casa | ℹ️ |
@@ -76,7 +76,7 @@ Sale con código 1 solo si encuentra un secreto o un `.env` versionado. El resto
 |---|---|---|---|
 | `s-congelar` | Plan | 10:30: congelar y revisar entregables | Pendiente: correr el script y este documento a las 10:30 |
 | `s-publico` | Exigido | El repositorio es público | ✅ `gh repo view` dice `PUBLIC`. Confirmarlo también en una ventana sin sesión |
-| `s-main` | Exigido | Todas las ramas integradas en la principal y todo subido | ❌ `develop` lleva 37 commits que no están en `main`; se integran con `release/entrega` (#11). Ver también "Lo que falta", punto 7 |
+| `s-main` | Exigido | Todas las ramas integradas en la principal y todo subido | ❌ `develop` lleva 44 commits que no están en `main`; se integran con `release/entrega` (#11). Ver también "Lo que falta", punto 7 |
 | `s-aiusage` | Exigido | `AI_USAGE.md` en la raíz, con herramientas, partes y archivos sin IA | ⚠️ Existe; le faltan las secciones del punto 5 |
 | `s-prompts` | Exigido | Prompts en `/prompts`, texto real | ✅ |
 | `s-readme` | Plan | README con la natillera, la demo y los secretos | ⚠️ Faltan "Cómo usa Open Payments" y "Correr la demo"; la sección de secretos ya está |
