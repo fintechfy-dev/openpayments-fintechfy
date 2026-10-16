@@ -45,6 +45,18 @@ Sin variables de entorno, la web usa **datos de prueba** (lo indica un aviso arr
 
 Las rutas del cliente HTTP (`src/lib/servicio/http.ts`) son provisionales hasta que se defina el contrato en #5.
 
+### Inicio de sesión
+
+`/` es la página pública con el propósito del proyecto; `/ingresar`, el formulario. Todo el panel (`/natilleras`, `/creditos`, `/pagos`, `/bitacora` y `/api/pagos`) exige sesión.
+
+- Dos usuarios de demo: `financiera` (ve todo y responde créditos) y `andres` (administrador de Los Primos: solo ve sus natilleras, sus pagos y su bitácora).
+- **No hay claves: se entra con un código de 6 dígitos que llega por Telegram** (vence en 5 minutos y sirve una sola vez).
+- En `.env.local`: `SESION_SECRETO` (al menos 32 caracteres al azar; el comando para generarlo está en `.env.example`), `TELEGRAM_BOT_TOKEN` (el mismo `BOT_TOKEN` del bot; la web solo envía mensajes) y el chat de cada usuario (`DEMO_FINANCIERA_TELEGRAM_CHAT_ID`, `DEMO_ADMIN_TELEGRAM_CHAT_ID`). Para saber el chat id, la persona le escribe `/start` al bot y el id queda en su log. Sin `SESION_SECRETO` nadie puede entrar y la página lo dice.
+- **En desarrollo sin `TELEGRAM_BOT_TOKEN`**, el código aparece en la terminal de `npm run dev` en vez de enviarse. En producción eso nunca pasa.
+- La sesión es una cookie `httpOnly` firmada (HMAC-SHA256) que dura 8 horas. El `proxy` (`src/proxy.ts`) es la primera barrera; cada página, la acción de créditos y la API vuelven a comprobar la sesión y el rol (`src/lib/sesion/acceso.ts`).
+- Hasta 3 códigos por usuario cada 10 minutos; con 5 códigos equivocados, el código se invalida y el usuario espera 10 minutos. La pantalla responde igual exista o no el usuario.
+- Es un inicio de sesión de demo: cuando el servicio externo (#5) defina cómo se autentica la financiera y dónde están los usuarios, se cambia `src/lib/sesion/usuarios.ts`.
+
 ### Cómo está hecha
 
 - `src/lib/servicio/`: la única puerta al servicio externo (tipos, datos de prueba y cliente HTTP), solo de servidor.

@@ -52,6 +52,14 @@ El contrato con el servicio externo se define en el issue #5. Mientras tanto, `l
 - Los tipos de `lib/servicio/tipos.ts` siguen los estados de `docs/discovery/4-logica-financiera/especificacion-funcional.md` y de `design-system/docs/estados.md`. Si necesitas un campo nuevo, agrégalo al tipo, a los datos de prueba y anótalo para el contrato de #5.
 - `SERVICIO_URL` vacía → datos de prueba. Con valor → cliente HTTP. Así se puede hacer la demo aunque el servicio externo no esté.
 
+## Sesión y roles
+
+Todo lo que está en `app/(panel)/` exige sesión: `financiera` ve todo y responde créditos; un `administrador` solo ve sus natilleras. Las páginas públicas son `/` e `/ingresar`.
+
+- En cada página, Server Action y route handler nuevos del panel: `await requerirSesion()` (o `obtenerSesion()` en acciones y API, que devuelven un error en vez de redirigir). El layout y el `proxy` no bastan: una Server Action se puede llamar directo por HTTP.
+- Los criterios de acceso viven **una sola vez** en `src/lib/sesion/acceso.ts` (`puedeVerNatillera`, `puedeResponderCreditos`). Para filtrar pagos o bitácora usa `natillerasVisibles(sesion)`. No escribas `sesion.rol === "financiera"` suelto en una pantalla.
+- Una natillera ajena responde `notFound()`, igual que una inexistente.
+
 ## Seguridad: la llave no sale del servidor
 
 El repo es público y la web llama a un servicio con `X-Api-Key`.
