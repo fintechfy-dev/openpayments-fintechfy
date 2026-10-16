@@ -33,11 +33,14 @@ GitFlow: cada cosa por hacer es un [issue](https://github.com/fintechfy-dev/open
 
 ## Correr la demo
 
-_Por completar._
+_Por completar con la demo de punta a punta._ Cada pieza explica cómo correrla en su carpeta:
+
+- Bot de Telegram: [`telegram/README.md`](telegram/README.md#cómo-correrlo)
+- Web de la financiera y el administrador: [`web/README.md`](web/README.md#cómo-correrlo)
 
 ## Secretos
 
-Las claves de Open Payments y el token del bot van en un archivo `.env` que **nunca** se sube (está en `.gitignore`). Las variables necesarias quedan listadas en `.env.example` sin valores.
+Las claves de Open Payments y el token del bot van en un archivo `.env` que **nunca** se sube (está en `.gitignore`). Cada pieza tiene su `.env` en su carpeta, y las variables necesarias quedan listadas en su `.env.example` sin valores (por ejemplo, [`telegram/.env.example`](telegram/.env.example)).
 
 ## Discovery
 
