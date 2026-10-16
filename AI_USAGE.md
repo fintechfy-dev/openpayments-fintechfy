@@ -17,6 +17,7 @@ Declaración exigida por la política de IA de la hackathon. El equipo la comple
 ### 2. Arranque del repositorio
 
 - Claude Code armó la estructura inicial y copió el discovery: `README.md`, `.gitignore`, este archivo, `docs/` y la carpeta `prompts/`.
+- Con las decisiones del equipo sobre los frentes, Claude Code redactó el plan de trabajo (`docs/plan-de-trabajo.md`), la guía de GitFlow (`CONTRIBUTING.md`), los README de `telegram/`, `web/`, `motor/` y `pagos/`, las plantillas de `.github/`, y creó los issues y etiquetas del repositorio.
 
 ### 3. Código de la hackathon
 
