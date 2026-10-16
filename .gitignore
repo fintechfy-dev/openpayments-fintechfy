@@ -8,6 +8,12 @@ private*.key
 keys/
 secrets/
 
+# Datos locales: guardan ids de chats de personas reales
+telegram/data/
+*.db
+*.db-wal
+*.db-shm
+
 # Dependencias y compilados
 node_modules/
 dist/
