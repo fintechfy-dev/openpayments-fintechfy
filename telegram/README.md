@@ -14,4 +14,24 @@ El bot no mueve dinero: eso pasa en el servicio de pagos.
 
 ## Cómo correrlo
 
-_Por completar en #7: lenguaje, instalación, variables de `.env` (el token del bot va ahí) y comando para arrancarlo._
+Node.js 24 o más nuevo y [grammY](https://grammy.dev). Todo se corre **dentro de esta carpeta**.
+
+1. Crea un bot con [@BotFather](https://t.me/BotFather) (`/newbot`) y copia el token. No lo pegues en ningún chat.
+2. Crea `telegram/.env` con el token (el archivo está en `.gitignore`):
+   ```
+   BOT_TOKEN=<tu token>
+   ```
+   _La lista completa de variables llega en `.env.example` con la tarea 2 del [plan](docs/plan-esqueleto.md)._
+3. Instala y arranca:
+   ```bash
+   cd telegram
+   npm install
+   npm start        # o npm run dev para reiniciar al guardar
+   ```
+4. Escríbele `/start` al bot. En la terminal queda el id del chat, que sirve como `TEAM_CHAT_ID`.
+
+Solo puede correr una copia del bot por token: si sale `409: Conflict`, hay otra abierta.
+
+**Pruebas:** `npm test` (no necesitan token ni conexión).
+
+**Plan, decisiones y avance del esqueleto:** [`docs/plan-esqueleto.md`](docs/plan-esqueleto.md).

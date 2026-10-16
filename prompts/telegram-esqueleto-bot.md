@@ -1,4 +1,4 @@
-# Bot de Telegram
+# Telegram: esqueleto del bot (#7)
 
 ## 2026-10-16 · Claude Code (Claude Opus 5.5)
 
@@ -24,4 +24,12 @@ como lo hago
 
 ```text
 LISTO, hecho todo
+```
+
+```text
+revisa los nuevos cambios y ve si afectan nuestro trabajo ahoruita con elñ bot
+```
+
+```text
+haz el reacomodo
 ```

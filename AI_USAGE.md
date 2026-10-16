@@ -25,7 +25,10 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 
 | Archivo o componente | Herramienta | Para qué | Cuánta IA |
 |---|---|---|---|
-| | | | |
+| `telegram/docs/plan-esqueleto.md` | Claude Code (Claude Opus 5.5) | Plan del esqueleto del bot: decisiones, herramientas y pasos; el equipo lo revisó y aprobó antes de ejecutar | Mucho |
+| `telegram/src/` (arranque, `crearBot`, `/start`, logger) | Claude Code (Claude Opus 5.5) | Esqueleto del bot con grammY (#7) | Mucho; probado a mano por el equipo con un bot real |
+| `telegram/test/` | Claude Code (Claude Opus 5.5) | Arnés de pruebas sin red y pruebas de `/start` | Mucho |
+| `telegram/README.md` («Cómo correrlo») | Claude Code (Claude Opus 5.5) | Instrucciones para correr el bot | Mucho |
 
 ## Servicios externos
 
