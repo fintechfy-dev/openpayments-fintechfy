@@ -43,7 +43,16 @@ export function abrirBaseDeDatos(ruta) {
       UNIQUE (actividad_id, participacion_id)
     );
   `);
+  // Columnas que llegaron después de la primera versión: las bases que ya existen las ganan aquí.
+  agregarColumna(db, 'natilleras', 'codigo_invitacion', 'TEXT');
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS natilleras_codigo ON natilleras (codigo_invitacion);');
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS participaciones_unica ON participaciones (natillera_id, telegram_id);');
   return db;
+}
+
+function agregarColumna(db, tabla, columna, tipo) {
+  const existe = db.prepare(`PRAGMA table_info(${tabla})`).all().some((c) => c.name === columna);
+  if (!existe) db.exec(`ALTER TABLE ${tabla} ADD COLUMN ${columna} ${tipo}`);
 }
 
 export function contarSesiones(db) {

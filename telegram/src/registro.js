@@ -7,8 +7,13 @@
 export function crearRegistro(db) {
   const sql = {
     guardarNatillera: db.prepare(
-      'INSERT INTO natilleras (natillera_id, contract_id, nombre, admin_telegram_id, creada_en) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO natilleras (natillera_id, contract_id, nombre, admin_telegram_id, creada_en, codigo_invitacion) VALUES (?, ?, ?, ?, ?, ?)',
     ),
+    guardarCodigo: db.prepare('UPDATE natilleras SET codigo_invitacion = ? WHERE natillera_id = ? AND codigo_invitacion IS NULL'),
+    natilleraPorCodigo: db.prepare('SELECT * FROM natilleras WHERE codigo_invitacion = ?'),
+    natilleraDelAdmin: db.prepare('SELECT * FROM natilleras WHERE admin_telegram_id = ? ORDER BY creada_en DESC LIMIT 1'),
+    participacionEn: db.prepare('SELECT * FROM participaciones WHERE natillera_id = ? AND telegram_id = ?'),
+    contarParticipaciones: db.prepare('SELECT count(*) AS n FROM participaciones WHERE natillera_id = ?'),
     guardarParticipacion: db.prepare(
       'INSERT INTO participaciones (participacion_id, contract_id, natillera_id, telegram_id) VALUES (?, ?, ?, ?)',
     ),
@@ -30,9 +35,20 @@ export function crearRegistro(db) {
   };
 
   return {
-    guardarNatillera({ natilleraId, contractId, nombre, adminTelegramId, creadaEn }) {
-      sql.guardarNatillera.run(natilleraId, contractId, nombre, adminTelegramId, creadaEn);
+    guardarNatillera({ natilleraId, contractId, nombre, adminTelegramId, creadaEn, codigoInvitacion = null }) {
+      sql.guardarNatillera.run(natilleraId, contractId, nombre, adminTelegramId, creadaEn, codigoInvitacion);
     },
+    // El código del enlace de invitación (US-003). Solo se pone si no tenía: un enlace ya compartido no
+    // deja de funcionar. Devuelve el código vigente.
+    codigoDeInvitacion(natilleraId, nuevo) {
+      sql.guardarCodigo.run(nuevo, natilleraId);
+      return sql.natillera.get(natilleraId)?.codigo_invitacion;
+    },
+    natilleraPorCodigo: (codigo) => sql.natilleraPorCodigo.get(codigo),
+    // La natillera más reciente que administra una persona: la de /invitar.
+    natilleraDelAdmin: (telegramId) => sql.natilleraDelAdmin.get(telegramId),
+    participacionEn: (natilleraId, telegramId) => sql.participacionEn.get(natilleraId, telegramId),
+    contarParticipaciones: (natilleraId) => sql.contarParticipaciones.get(natilleraId).n,
     guardarParticipacion({ participacionId, contractId, natilleraId, telegramId }) {
       sql.guardarParticipacion.run(participacionId, contractId, natilleraId, telegramId);
     },

@@ -106,6 +106,19 @@ test('con el servicio conectado, confirmar crea la natillera una sola vez', asyn
   assert.ok(textos(llamadas).includes(textoCreada('Ana', NATILLERA)));
 });
 
+test('apenas se crea la natillera, el administrador recibe su enlace de invitación (US-003)', async () => {
+  const { bot, llamadas } = crearBotDePrueba({ hoy, crearNatillera: async () => ({ codigoInvitacion: 'Cod-123_abcd' }) });
+  await bot.handleUpdate(formulario(NATILLERA));
+  await bot.handleUpdate(boton('f:ok'));
+
+  const enviados = textos(llamadas);
+  const creada = enviados.indexOf(textoCreada('Ana', NATILLERA));
+  assert.ok(creada >= 0);
+  // Después de «creada»: el mensaje para el administrador y la invitación lista para reenviar.
+  assert.match(enviados[creada + 1], /Reenvía el siguiente mensaje/);
+  assert.match(enviados[creada + 2], /https:\/\/t\.me\/natillera_prueba_bot\?start=Cod-123_abcd$/);
+});
+
 test('el formulario de la Mini App llega validado al resumen', async () => {
   const { bot, llamadas } = crearBotDePrueba({ hoy });
   await bot.handleUpdate(formulario({ ...NATILLERA, cuota: '50000', cupo: '5', mora: '1' }));
