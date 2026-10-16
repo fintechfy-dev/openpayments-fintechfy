@@ -15,3 +15,7 @@ high web/src telegram/src web/scripts web/next.config.ts
 ```text
 /director haz commit y push y despues cambia ese color verde de toda la pagina y pon el claro. muchas gracias
 ```
+
+```text
+listo haz los PRs
+```
