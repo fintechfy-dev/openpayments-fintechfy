@@ -1,7 +1,7 @@
 # Plan del esqueleto del bot de Telegram
 
 > Issue [#7](https://github.com/fintechfy-dev/openpayments-fintechfy/issues/7) · rama `feature/telegram-7-esqueleto-bot` · 2026-10-16.
-> Estado: **aprobado**. Tareas 1 y 2 hechas; reacomodo hecho; tareas 3 a 5 pendientes (la 5, bloqueada por #5).
+> Estado: **aprobado**. Tareas 1 y 2 hechas; tarea 3 hecha (falta la prueba manual de `/diag`); tareas 4 y 5 pendientes (la 5, bloqueada por #5).
 
 ## 0. Reacomodo del 16 de octubre (después del plan de trabajo del equipo)
 
@@ -147,13 +147,13 @@ Cada paso termina en algo que se puede verificar. Todos los comandos se corren d
 
 ### Tarea 3: configuración del bot (parte del bot de US-001-CFG)
 
-- [ ] 3.1 Crear `src/config.js` con `loadConfig(env)`: función pura que devuelve un objeto congelado.
-- [ ] 3.2 Validar cada variable según la sección 5 y juntar **todos** los errores.
-- [ ] 3.3 Si hay errores, lanzar `ConfigError`; cada error nombra la variable y la regla, nunca el valor.
-- [ ] 3.4 En `src/index.js`: si `loadConfig` falla, imprimir la lista y salir con código 1.
-- [ ] 3.5 Comando `/diag` (solo en `TEAM_CHAT_ID`): límites en uso, tiempo encendido, estado de la BD, sesiones activas y estado del servicio externo («sin conectar» hasta la tarea 5).
-- [ ] 3.6 Pruebas: config válida; falta una variable; `CUOTA_MIN ≥ CUOTA_MAX`; el mensaje de error no contiene el valor del token; `/diag` fuera del chat del equipo no responde.
-- [ ] 3.7 Verificar a mano: `/diag` en el chat del equipo responde; en otro chat, nada.
+- [x] 3.1 Crear `src/config.js` con `loadConfig(env)`: función pura que devuelve un objeto congelado (`botToken`, `teamChatId`, `cuota.min/max`, `moraDiariaMaxPct`, `externo.url/apiKey`, `pagosUrl`, `dbPath`, `secretos`).
+- [x] 3.2 Validar cada variable según la sección 5 y juntar **todos** los errores. Una variable con solo espacios cuenta como faltante. `EXTERNO_URL`, `EXTERNO_API_KEY` y `PAGOS_URL` son opcionales por ahora, pero si vienen, las URL deben ser `http(s)`.
+- [x] 3.3 Si hay errores, lanzar `ConfigError` con la lista en `errores`; cada error nombra la variable y la regla, nunca el valor.
+- [x] 3.4 En `src/index.js`: si `loadConfig` falla, imprimir la lista y salir con código 1. Reemplaza la validación provisional de `BOT_TOKEN`; los secretos para el logger y la guardia ahora salen de `config.secretos`. → Verificado en terminal: con variables faltantes y `CUOTA_MIN > CUOTA_MAX`, lista los 4 errores y sale con código 1.
+- [x] 3.5 Comando `/diag` (`src/bot/comandos/diag.js`, solo en `TEAM_CHAT_ID`): tiempo encendido, límites en uso con formato `10.000`, servicio externo y de pagos (solo el **origen** de la URL, nunca usuario, clave ni ruta; dice si hay llave sin mostrarla) y la ruta de la BD. El estado de la BD y las sesiones se suman en la tarea 4, y la conexión con el servicio externo en la 5. No va en el menú de comandos.
+- [x] 3.6 Pruebas: `test/config.test.js` (10) y `test/diag.test.js` (3): config válida y congelada; todas las faltantes juntas; espacios; `CUOTA_MIN ≥ CUOTA_MAX`; números inválidos; mora 0 sí y negativa no; `TEAM_CHAT_ID` negativo; URL opcionales; la llave entra a secretos; los errores no muestran valores; `/diag` en el equipo, fuera del equipo y sin secretos. El arnés ahora arma la config con `loadConfig`. → `npm test`: 22/22.
+- [ ] 3.7 Verificar a mano: `/diag` en el chat del equipo responde; en otro chat, nada. **Pendiente de Estiven:** agregar a `telegram/.env` `TEAM_CHAT_ID`, `CUOTA_MIN`, `CUOTA_MAX` y `MORA_DIARIA_MAX_PCT`.
 
 ### Tarea 4: conversaciones que sobreviven a un reinicio
 

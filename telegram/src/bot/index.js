@@ -1,6 +1,7 @@
 import { Bot, GrammyError, HttpError } from 'grammy';
 import { contieneSecreto } from '../secretos.js';
 import { start } from './comandos/start.js';
+import { diag } from './comandos/diag.js';
 
 // Menú de comandos que se publica en Telegram. /diag no va aquí: no se anuncia.
 export const COMANDOS = [
@@ -47,12 +48,13 @@ function guardiaDeSecretos(secretos, log) {
 }
 
 // Arma el bot sin arrancarlo, para poder probarlo sin conexión.
-// `secretos`: valores que el bot nunca puede enviar (al menos el token).
-// `botInfo` y `cliente` son opcionales: en las pruebas evitan la llamada a getMe y la red.
-export function crearBot(config, { log, secretos = [config.botToken], botInfo, cliente } = {}) {
+// `config` sale de loadConfig(); sus `secretos` nunca se pueden enviar.
+// `botInfo`, `cliente`, `inicio` y `ahora` son opcionales: en las pruebas evitan getMe y la red
+// y fijan el reloj.
+export function crearBot(config, { log, botInfo, cliente, inicio, ahora } = {}) {
   const bot = new Bot(config.botToken, { botInfo, client: cliente });
 
-  bot.api.config.use(guardiaDeSecretos(secretos, log));
+  bot.api.config.use(guardiaDeSecretos(config.secretos, log));
 
   const manejarError = manejadorDeErrores(log);
 
@@ -62,6 +64,7 @@ export function crearBot(config, { log, secretos = [config.botToken], botInfo, c
   const app = bot.errorBoundary(manejarError);
 
   app.use(start({ log }));
+  app.use(diag({ config, inicio, ahora }));
 
   return bot;
 }

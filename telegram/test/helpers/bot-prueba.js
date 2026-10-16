@@ -1,6 +1,17 @@
 import { crearBot } from '../../src/bot/index.js';
+import { loadConfig } from '../../src/config.js';
 
 export const TOKEN_DE_PRUEBA = '123456:token-de-prueba';
+export const CHAT_EQUIPO = -999;
+
+// Variables válidas mínimas; cada prueba puede cambiar las que necesite.
+export const ENV_DE_PRUEBA = Object.freeze({
+  BOT_TOKEN: TOKEN_DE_PRUEBA,
+  TEAM_CHAT_ID: String(CHAT_EQUIPO),
+  CUOTA_MIN: '10000',
+  CUOTA_MAX: '500000',
+  MORA_DIARIA_MAX_PCT: '2.5',
+});
 
 const BOT_INFO = {
   id: 1,
@@ -18,7 +29,7 @@ export const logSilencioso = { info() {}, warn() {}, error() {} };
 
 // Bot sin red: un `fetch` falso guarda cada llamada a Telegram en `llamadas` en vez de enviarla.
 // Va por debajo de los transformadores del bot, así que la guardia de secretos sí se ejerce.
-export function crearBotDePrueba({ config = {}, log = logSilencioso, secretos } = {}) {
+export function crearBotDePrueba({ env = {}, log = logSilencioso, inicio, ahora } = {}) {
   const llamadas = [];
   const fetchFalso = async (url, init) => {
     const method = String(url).split('/').at(-1);
@@ -29,11 +40,15 @@ export function crearBotDePrueba({ config = {}, log = logSilencioso, secretos } 
     });
   };
 
-  const bot = crearBot(
-    { botToken: TOKEN_DE_PRUEBA, ...config },
-    { log, secretos, botInfo: BOT_INFO, cliente: { fetch: fetchFalso } },
-  );
-  return { bot, llamadas };
+  const config = loadConfig({ ...ENV_DE_PRUEBA, ...env });
+  const bot = crearBot(config, {
+    log,
+    botInfo: BOT_INFO,
+    cliente: { fetch: fetchFalso },
+    inicio,
+    ahora,
+  });
+  return { bot, llamadas, config };
 }
 
 let siguienteUpdate = 1;

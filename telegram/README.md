@@ -17,9 +17,9 @@ El bot no mueve dinero: eso pasa en el servicio de pagos.
 Node.js 24 o más nuevo y [grammY](https://grammy.dev). Todo se corre **dentro de esta carpeta**.
 
 1. Crea un bot con [@BotFather](https://t.me/BotFather) (`/newbot`) y copia el token. No lo pegues en ningún chat.
-2. Copia `.env.example` a `.env` (el `.env` está en `.gitignore`) y pon tu token en `BOT_TOKEN`. Por ahora el bot solo exige esa variable; las demás se validan a partir de la tarea 3 del [plan](docs/plan-esqueleto.md).
+2. Copia `.env.example` a `.env` (el `.env` está en `.gitignore`) y llénalo. Son obligatorias `BOT_TOKEN`, `TEAM_CHAT_ID`, `CUOTA_MIN`, `CUOTA_MAX` y `MORA_DIARIA_MAX_PCT`; si falta alguna o está mal, el bot no arranca y lista todos los errores, sin mostrar los valores.
    ```powershell
-   Copy-Item .env.example .env
+   Copy-Item .env.example .env   # solo si todavía no tienes .env: lo sobrescribe
    ```
 3. Instala y arranca:
    ```bash
@@ -28,6 +28,7 @@ Node.js 24 o más nuevo y [grammY](https://grammy.dev). Todo se corre **dentro d
    npm start        # o npm run dev para reiniciar al guardar
    ```
 4. Escríbele `/start` al bot. En la terminal queda el id del chat, que sirve como `TEAM_CHAT_ID`.
+5. En el chat del equipo, `/diag` muestra la configuración en uso. En cualquier otro chat no responde.
 
 Solo puede correr una copia del bot por token: si sale `409: Conflict`, hay otra abierta.
 

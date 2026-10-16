@@ -28,7 +28,8 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 | `telegram/docs/plan-esqueleto.md` | Claude Code (Claude Opus 5.5) | Plan del esqueleto del bot: decisiones, herramientas y pasos; el equipo lo revisó y aprobó antes de ejecutar | Mucho |
 | `telegram/src/` (arranque, `crearBot`, `/start`, logger) | Claude Code (Claude Opus 5.5) | Esqueleto del bot con grammY (#7) | Mucho; probado a mano por el equipo con un bot real |
 | `telegram/src/secretos.js`, guardia de salida y logger que tapa secretos | Claude Code (Claude Opus 5.5) | US-002-SEC (#14): ningún secreto en logs ni en mensajes; `telegram/.env.example` | Mucho; el equipo verificó el arranque con su `.env` |
-| `telegram/test/` | Claude Code (Claude Opus 5.5) | Arnés de pruebas sin red, pruebas de `/start` y de secretos | Mucho |
+| `telegram/src/config.js` y `/diag` | Claude Code (Claude Opus 5.5) | Parte del bot de US-001-CFG (#12): configuración validada al arrancar y diagnóstico del equipo | Mucho |
+| `telegram/test/` | Claude Code (Claude Opus 5.5) | Arnés de pruebas sin red y pruebas de `/start`, secretos, configuración y `/diag` | Mucho |
 | `telegram/README.md` («Cómo correrlo») | Claude Code (Claude Opus 5.5) | Instrucciones para correr el bot | Mucho |
 
 ## Servicios externos

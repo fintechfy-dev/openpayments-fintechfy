@@ -1,25 +1,25 @@
 import { existsSync } from 'node:fs';
 import { crearLogger } from './log.js';
-import { listaDeSecretos } from './secretos.js';
+import { loadConfig, ConfigError } from './config.js';
 import { crearBot, COMANDOS } from './bot/index.js';
 
 // Si no hay .env, se usan las variables del sistema.
 if (existsSync('.env')) process.loadEnvFile('.env');
 
-// Lo que nunca puede salir en el log ni en un mensaje. En la tarea 3 sale de loadConfig().
-const secretos = listaDeSecretos(process.env.BOT_TOKEN, process.env.EXTERNO_API_KEY);
-const log = crearLogger({ secretos });
-
-// Validación provisional: en la tarea 3 la reemplaza loadConfig().
-const botToken = process.env.BOT_TOKEN;
-if (!botToken) {
-  log.error('Falta la variable BOT_TOKEN. Cópiala en .env (ver .env.example).');
+let config;
+try {
+  config = loadConfig(process.env);
+} catch (error) {
+  if (!(error instanceof ConfigError)) throw error;
+  // Los errores de configuración nombran la variable, nunca su valor.
+  crearLogger().error(`${error.message}\nRevisa telegram/.env (la lista está en .env.example).`);
   process.exit(1);
 }
 
-const bot = crearBot({ botToken }, { log, secretos });
+const log = crearLogger({ secretos: config.secretos });
+const bot = crearBot(config, { log });
 
-// Enganche de la tarea 10: aquí se montará el servidor HTTP del retorno de Open Payments.
+// Enganche de #6: si los avisos llegan por webhook, aquí se monta el servidor HTTP del bot.
 
 let deteniendo = false;
 async function detener(senal) {
