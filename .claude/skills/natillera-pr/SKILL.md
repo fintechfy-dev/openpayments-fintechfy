@@ -5,7 +5,7 @@ description: Cierra un trabajo en el repo de Natillera 2.0 y lo deja listo para 
 
 # Cerrar un trabajo y abrir el PR
 
-Las reglas están en `.claude/rules/git-y-entrega.md`, `ia-y-prompts.md` y `secretos.md`, y el detalle de GitFlow en `CONTRIBUTING.md`. Esta skill es el procedimiento, en orden.
+Las reglas están en `.claude/rules/git-y-entrega.md`, `ia-y-prompts.md`, `secretos.md` y `checklist-entrega.md`, y el detalle de GitFlow en `CONTRIBUTING.md`. Esta skill es el procedimiento, en orden.
 
 ## 0. Qué te pidieron exactamente
 
@@ -24,6 +24,7 @@ Las reglas están en `.claude/rules/git-y-entrega.md`, `ia-y-prompts.md` y `secr
 
 ## 3. Revisa antes de preparar el commit
 
+- **La checklist de entrega:** `node scripts/revisar-entrega.mjs --rama`. Con código 1 (un secreto o un `.env` versionado) no hay commit. Si el cambio cumple o avanza un punto, actualiza su fila y "Lo que falta" en `docs/checklist-entrega.md` en este mismo commit.
 - Sin secretos: `git status` (ningún `.env` ni `.env.local`) y `git diff | grep -inE "key|secret|token|password|BEGIN .*PRIVATE"`.
 - Sin archivos generados: `node_modules/`, `.next/`, `web/public/ds/`, `web/src/styles/ds/`, `web/.capturas/`, `telegram/data/`.
 - Pruebas de cada carpeta tocada, y guarda la salida para el PR:
@@ -48,6 +49,7 @@ Las reglas están en `.claude/rules/git-y-entrega.md`, `ia-y-prompts.md` y `secr
 - **Frente** marcado.
 - **Antes de fusionar:** marca solo lo que de verdad hiciste; lo que falte, sin marcar y explicado.
 - Pendientes y decisiones para el equipo en una lista corta.
+- **Checklist de entrega:** lo que sigue faltando según el script y los puntos ❌ y 👥 de `docs/checklist-entrega.md` que vencen antes del próximo hito. Lo mismo va al final del reporte al usuario, también después de un commit sin PR.
 - Termina con la línea de atribución que indique la sesión.
 
 Después espera unos segundos y confirma `gh pr view <n> --json mergeable,mergeStateStatus`.
