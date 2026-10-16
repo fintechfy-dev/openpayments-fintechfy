@@ -7,6 +7,7 @@ import { crearMotorDeFlujos } from './flujo.js';
 import { almacenDeSesiones } from './sesion-storage.js';
 import { crear, flujoCrear } from './flujos/crear.js';
 import { miNatillera } from './comandos/mi-natillera.js';
+import { cobros } from './comandos/cobros.js';
 
 // Menú de comandos que se publica en Telegram. /diag no va aquí: no se anuncia.
 export const COMANDOS = [
@@ -59,10 +60,11 @@ function guardiaDeSecretos(secretos, log) {
 // Arma el bot sin arrancarlo, para poder probarlo sin conexión.
 // `config` sale de loadConfig(); sus `secretos` nunca se pueden enviar.
 // `db` es la base de abrirBaseDeDatos(); sin ella, las sesiones quedan en memoria y se pierden al
-// reiniciar. `crearNatillera(datos, ctx)` llega con el contrato de #5; sin ella, /crear termina en una
-// vista previa. `botInfo`, `cliente`, `inicio`, `ahora` y `hoy` son opcionales: en las pruebas evitan
-// getMe y la red y fijan el reloj y la fecha.
-export function crearBot(config, { log, db, crearNatillera, botInfo, cliente, inicio, ahora, hoy } = {}) {
+// reiniciar. `crearNatillera(datos, ctx)` crea la natillera en staging; sin ella, /crear termina en una
+// vista previa. `servicio` (cliente de staging) y `registro` activan los botones de cobro de los avisos.
+// `botInfo`, `cliente`, `inicio`, `ahora` y `hoy` son opcionales: en las pruebas evitan getMe y la red
+// y fijan el reloj y la fecha.
+export function crearBot(config, { log, db, crearNatillera, servicio, registro, botInfo, cliente, inicio, ahora, hoy } = {}) {
   const bot = new Bot(config.botToken, { botInfo, client: cliente });
 
   bot.api.config.use(guardiaDeSecretos(config.secretos, log));
@@ -84,6 +86,7 @@ export function crearBot(config, { log, db, crearNatillera, botInfo, cliente, in
   app.use(cancelar({ motor }));
   app.use(diag({ config, db, inicio, ahora }));
   app.use(miNatillera({ config }));
+  if (servicio && registro) app.use(cobros({ servicio, registro, log }));
   // Antes del motor: «Responder aquí» y el formulario de la Mini App no son respuestas de un flujo.
   app.use(crear({ config, motor, log, hoy }));
   app.use(motor.middleware());

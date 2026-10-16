@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "test": "node --test \"test/**/*.test.js\""
+    "test": "node --test \"test/**/*.test.js\"",
+    "registrar-avisos": "node src/registrar-avisos.js"
   },
   "dependencies": {
     "grammy": "1.46.0"

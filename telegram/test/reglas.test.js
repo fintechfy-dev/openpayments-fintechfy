@@ -31,8 +31,8 @@ test('número de cuotas: fechas de cobro entre inicio y final, ambas incluidas (
   assert.deepEqual(fechasDeCobro('2026-11-01', '2026-12-01', 'mensual'), ['2026-11-01', '2026-12-01']);
   // Si el rango no calza exacto, solo cuentan las que caen dentro.
   assert.equal(fechasDeCobro('2026-11-01', '2026-11-30', 'mensual').length, 1);
-  assert.equal(fechasDeCobro('2026-11-01', '2026-11-29', 'semanal').length, 5);
-  assert.equal(fechasDeCobro('2026-11-01', '2026-12-01', 'quincenal').length, 3);
+  // Solo mensual (#58): staging cuenta en meses. Otra periodicidad no da fechas.
+  assert.deepEqual(fechasDeCobro('2026-11-01', '2026-11-29', 'semanal'), []);
   // La mensual no corre el día: 31 ene → 28 feb → 31 mar.
   assert.deepEqual(fechasDeCobro('2027-01-31', '2027-03-31', 'mensual'), ['2027-01-31', '2027-02-28', '2027-03-31']);
   assert.deepEqual(fechasDeCobro('2026-12-01', '2026-11-01', 'mensual'), []);
@@ -66,6 +66,8 @@ test('validaciones de cada campo con su mensaje', () => {
 
   assert.deepEqual(validarPeriodicidad('Mensual'), { valor: 'mensual' });
   assert.ok(validarPeriodicidad('anual').error);
+  assert.ok(validarPeriodicidad('quincenal').error);
+  assert.ok(validarPeriodicidad('quincenal').error);
 
   assert.deepEqual(validarInicio(HOY, { hoy: HOY }), { valor: HOY });
   assert.deepEqual(validarInicio('16/11/2026', { hoy: HOY }), { valor: '2026-11-16' });
@@ -124,8 +126,7 @@ test('sugerencias para los botones', () => {
     { fecha: '2027-10-01', cuotas: 12 },
   ]);
   // El 31 de diciembre aparece cuando da más de una cuota.
-  assert.deepEqual(sugerenciasFinal('2026-11-01', 'semanal')[0], { fecha: '2026-11-15', cuotas: 3 });
-  assert.ok(sugerenciasFinal('2026-11-01', 'semanal').some((o) => o.diciembre && o.cuotas === 9));
+  assert.deepEqual(sugerenciasFinal('2026-11-01', 'quincenal'), []);
   assert.deepEqual(sugerenciasFinal(undefined, 'mensual'), []);
 });
 

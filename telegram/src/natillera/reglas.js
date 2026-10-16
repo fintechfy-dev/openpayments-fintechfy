@@ -11,9 +11,9 @@ export const NOMBRE_MAX = 40;
 export const CUPO_MIN = 3;
 export const CUPO_MAX = 50;
 
+// Solo mensual (#58): el servicio externo cuenta la periodicidad en meses enteros. Si algún día acepta
+// días, basta con volver a agregar { dias: 7 } o { dias: 15 }: fechasDeCobro ya sabe contarlos.
 export const PERIODICIDADES = Object.freeze({
-  semanal: { texto: 'Semanal', cada: 'cada semana', dias: 7 },
-  quincenal: { texto: 'Quincenal', cada: 'cada 15 días', dias: 15 },
   mensual: { texto: 'Mensual', cada: 'cada mes', meses: 1 },
 });
 
@@ -139,7 +139,7 @@ export function validarCuota(texto, limites) {
 export function validarPeriodicidad(texto) {
   const t = String(texto).trim().toLowerCase();
   const clave = Object.keys(PERIODICIDADES).find((k) => k === t || PERIODICIDADES[k].texto.toLowerCase() === t);
-  if (!clave) return { error: 'Escoge semanal, quincenal o mensual.' };
+  if (!clave) return { error: 'Por ahora la cuota se cobra cada mes. Escoge «Mensual».' };
   return { valor: clave };
 }
 

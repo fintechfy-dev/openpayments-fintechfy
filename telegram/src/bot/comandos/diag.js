@@ -17,13 +17,14 @@ function servicio(url, extra = '') {
 
 // `sesiones`: cuántas hay guardadas; undefined si no hay base abierta y null si no respondió.
 export function textoDiagnostico(config, { encendidoMs, sesiones }) {
-  const llave = config.externo.apiKey ? ' (con llave)' : ' (sin llave)';
+  const avisos = config.avisos.puerto ? `webhook en el puerto ${config.avisos.puerto}` : 'flujo en vivo';
   return [
     'Diagnóstico del bot',
     `Encendido hace: ${duracion(encendidoMs)}`,
     `Cuota: mínimo ${formatoCOP(config.cuota.min)} · máximo ${formatoCOP(config.cuota.max)}`,
     `Mora diaria máxima: ${formatoPorcentaje(config.moraDiariaMaxPct)}`,
-    `Servicio externo: ${config.externo.url ? servicio(config.externo.url, llave) : 'sin configurar'} · conexión: sin probar (tarea 5)`,
+    `Servicio externo: ${config.externo.url ? `${servicio(config.externo.url)} · avisos por ${avisos}` : 'sin configurar'}`,
+    `Índice de la web: ${servicio(config.webIndice.url)}`,
     `Servicio de pagos: ${servicio(config.pagosUrl)}`,
     `Formulario (Mini App): ${servicio(config.miniappUrl)}`,
     `Base de datos: ${baseDeDatos(config, sesiones)}`,
