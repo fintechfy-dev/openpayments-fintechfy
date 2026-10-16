@@ -158,6 +158,32 @@ if (conRama) {
     else ok("s-aiusage", "La rama actualiza AI_USAGE.md");
     if (deCodigo.some((f) => f.startsWith("pagos/"))) aviso("b-servicio", "La rama toca pagos/: debe estar escrito por el equipo con poca o ninguna IA, y AI_USAGE.md lo declara con precisión");
   }
+
+  // Documentación al día (.claude/rules/documentacion.md): archivos agregados, borrados o movidos
+  // cambian la estructura que describe el README de su carpeta. Pruebas y assets no cuentan.
+  let estructura = [];
+  try {
+    const base = git("merge-base", "origin/develop", "HEAD");
+    estructura = [
+      ...git("diff", "--name-status", "-M", base)
+        .split("\n")
+        .filter((l) => /^[ADR]/.test(l))
+        .flatMap((l) => l.split("\t").slice(1)),
+      ...git("ls-files", "--others", "--exclude-standard").split("\n"),
+    ].filter((f) => f && !/(\/test\/|\.test\.|\/assets\/|\/fonts\/)/.test(f));
+  } catch {}
+  for (const carpeta of ["web", "telegram", "pagos", "integracion", "design-system", "scripts", ".claude", "docs"]) {
+    const readme = `${carpeta}/README.md`;
+    if (cambiados.includes(readme)) continue;
+    const motivo =
+      // Un .md nuevo es documentación, no estructura (salvo las reglas, que se revisan aparte).
+      estructura.find((f) => f.startsWith(`${carpeta}/`) && (!f.endsWith(".md") || f.startsWith(".claude/")) && !f.startsWith("docs/discovery/")) ??
+      cambiados.find((f) => f === `${carpeta}/package.json` || f === `${carpeta}/.env.example`);
+    if (motivo) aviso("docs", `La rama cambia la estructura de ${carpeta}/ (${motivo}) pero no toca ${readme}`);
+  }
+  if (estructura.some((f) => f.startsWith(".claude/rules/")) && !cambiados.includes("CLAUDE.md")) {
+    aviso("docs", "La rama agrega, borra o mueve una regla de .claude/rules/ pero no toca la tabla de reglas de CLAUDE.md");
+  }
 }
 
 // --- El reloj (hitos) ---

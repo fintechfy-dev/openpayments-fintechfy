@@ -43,4 +43,42 @@ Solo puede correr una copia del bot por token: si sale `409: Conflict`, hay otra
 
 **Pruebas:** `npm test` (no necesitan token ni conexión).
 
-**Plan, decisiones y avance del esqueleto:** [`docs/plan-esqueleto.md`](docs/plan-esqueleto.md). **Crear la natillera (#13):** [`docs/crear-natillera.md`](docs/crear-natillera.md). **Mi natillera (#26):** [`docs/mi-natillera.md`](docs/mi-natillera.md).
+## Estructura
+
+Node 24 en ESM, una sola dependencia (`grammy`). El bot arranca en long polling: **no hay servidor HTTP** todavía (el enganche para los avisos de #6 está en `src/index.js`).
+
+| Ruta | Qué hace |
+|---|---|
+| `src/index.js` | Arranque: carga `.env`, valida la configuración (sale con código 1 si falla), abre la base, arma el bot, publica el menú y, con `MINIAPP_URL`, el botón «Mi natillera»; luego `bot.start()` |
+| `src/config.js` | `loadConfig`: valida todas las variables de una vez y devuelve un objeto congelado; `ConfigError` lista todos los errores sin mostrar valores |
+| `src/secretos.js` | Lista de secretos de la configuración y cómo taparlos (`***`) |
+| `src/log.js` | Logger con hora que tapa los secretos |
+| `src/db.js` | SQLite de Node (`node:sqlite`) con una sola tabla, `sesiones`. El estado de las natilleras **no** se guarda aquí |
+| `src/formato.js` | `formatoCOP` (copia del de `design-system/components/bundle.js`), `escaparHTML`, `formatoPorcentaje` |
+| `src/natillera/reglas.js` | Reglas puras de US-001: fechas en hora de Bogotá, validación de cada campo y resumen. Las comparten el bot y la Mini App, por eso no usa nada de Node |
+| `src/bot/index.js` | `crearBot`: guardia que bloquea cualquier mensaje con un secreto, manejo de errores, sesión, motor de flujos y los comandos, en ese orden |
+| `src/bot/flujo.js` | Motor de flujos de preguntas: una tarjeta que se edita, botones `f:…`, resumen con confirmar, corregir o cancelar |
+| `src/bot/sesion-storage.js` | Las sesiones de grammY sobre la tabla `sesiones` |
+| `src/bot/comandos/` | Un `Composer` por comando: `start`, `cancelar`, `diag` (solo en el chat del equipo) y `mi-natillera` |
+| `src/bot/flujos/crear.js` | `/crear` por el chat o por la Mini App; termina en una vista previa hasta que exista `crearNatillera` (#5) |
+| `miniapp/` | Páginas estáticas sin compilar, publicadas en GitHub Pages: el formulario de crear (`index.html`, `app.js`) y «Mi natillera» (`natillera/`, con datos de ejemplo visibles en `datos-demo.js`). Reusan `src/formato.js` y `src/natillera/reglas.js`, y el design system por ruta relativa |
+| `test/` | `node:test`; `helpers/bot-prueba.js` reemplaza el `fetch` de grammY, así que las pruebas no usan red ni token |
+
+**Sistemas externos:** hoy el único tráfico es grammY con la API de Telegram. `EXTERNO_URL`, `EXTERNO_API_KEY` y `PAGOS_URL` se validan y se muestran en `/diag`, pero nadie las usa todavía. La integración con staging está planeada en [`INTEGRACION.md`](INTEGRACION.md), con otros nombres de variables (`SERVICIO_EXTERNO_URL`, `SERVICIO_EXTERNO_TOKEN`, `WEB_INDICE_*`, `WEBHOOK_SECRET`); al construirla, se actualizan `.env.example`, `config.js` y la tabla de abajo.
+
+## Variables
+
+Todas se validan al arrancar (`src/config.js`). Coinciden con `.env.example`.
+
+| Variable | Obligatoria | Qué es |
+|---|---|---|
+| `BOT_TOKEN` | Sí | Token de @BotFather |
+| `TEAM_CHAT_ID` | Sí | Chat del equipo, el único donde responde `/diag` |
+| `CUOTA_MIN`, `CUOTA_MAX` | Sí | Límites de la cuota al crear una natillera |
+| `MORA_DIARIA_MAX_PCT` | Sí | Tope del porcentaje de mora diaria |
+| `EXTERNO_URL`, `EXTERNO_API_KEY` | No | Servicio externo (aún sin uso) |
+| `PAGOS_URL` | No | Servicio de pagos (aún sin uso) |
+| `MINIAPP_URL` | No | URL `https` de la Mini App |
+| `DB_PATH` | No | Base de sesiones; por defecto `./data/bot.db` |
+
+**Plan, decisiones y avance del esqueleto:** [`docs/plan-esqueleto.md`](docs/plan-esqueleto.md) (registro de cómo se planeó; la estructura vigente es la de arriba). **Crear la natillera (#13):** [`docs/crear-natillera.md`](docs/crear-natillera.md). **Mi natillera (#26):** [`docs/mi-natillera.md`](docs/mi-natillera.md).
