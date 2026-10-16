@@ -7,6 +7,8 @@ import { EstadoVacio } from "@/components/EstadoVacio";
 import { formatoFecha } from "@/lib/fechas";
 import { formatoCOP } from "@/lib/natillera";
 import { listarNatilleras } from "@/lib/servicio";
+import { requerirSesion } from "@/lib/sesion";
+import { puedeVerNatillera } from "@/lib/sesion/acceso";
 import { plural, resumirNatilleras, textoPeriodicidad } from "./presentacion";
 import "./natilleras.css";
 
@@ -16,7 +18,8 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Natilleras" };
 
 export default async function Natilleras() {
-  const natilleras = await listarNatilleras();
+  const sesion = await requerirSesion();
+  const natilleras = (await listarNatilleras()).filter((n) => puedeVerNatillera(sesion, n));
   const r = resumirNatilleras(natilleras);
 
   if (natilleras.length === 0) {

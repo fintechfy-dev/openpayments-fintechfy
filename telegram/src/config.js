@@ -33,16 +33,20 @@ export function loadConfig(env) {
     return n;
   };
 
-  const url = (nombre) => {
+  const url = (nombre, { soloHttps = false } = {}) => {
     const valor = texto(nombre, { obligatoria: false });
     if (valor === undefined) return undefined;
+    const permitidos = soloHttps ? ['https:'] : ['http:', 'https:'];
     try {
-      const { protocol } = new URL(valor);
-      if (protocol === 'http:' || protocol === 'https:') return valor;
+      if (permitidos.includes(new URL(valor).protocol)) return valor;
     } catch {
       // Cae al error de abajo.
     }
-    errores.push(`${nombre} debe ser una URL que empiece por http:// o https://.`);
+    errores.push(
+      soloHttps
+        ? `${nombre} debe ser una URL que empiece por https:// (Telegram no abre otras).`
+        : `${nombre} debe ser una URL que empiece por http:// o https://.`,
+    );
     return undefined;
   };
 
@@ -65,6 +69,8 @@ export function loadConfig(env) {
   const externoUrl = url('EXTERNO_URL');
   const externoApiKey = texto('EXTERNO_API_KEY', { obligatoria: false });
   const pagosUrl = url('PAGOS_URL');
+  // Formulario de la Mini App (miniapp/). Sin ella, /crear pregunta todo en el chat.
+  const miniappUrl = url('MINIAPP_URL', { soloHttps: true });
 
   const dbPath = texto('DB_PATH', { obligatoria: false }) ?? DB_PATH_POR_DEFECTO;
 
@@ -77,6 +83,7 @@ export function loadConfig(env) {
     moraDiariaMaxPct,
     externo: Object.freeze({ url: externoUrl, apiKey: externoApiKey }),
     pagosUrl,
+    miniappUrl,
     dbPath,
     secretos: Object.freeze(listaDeSecretos(botToken, externoApiKey)),
   });

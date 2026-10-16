@@ -14,7 +14,7 @@ const ENLACES: { href: string; texto: string; corto?: string; icono: NombreIcono
 ];
 
 /** Navegación principal. En móvil es una barra que se desplaza; marca la sección actual con aria-current. */
-export function Navegacion() {
+export function Navegacion({ mostrarCreditos }: { mostrarCreditos: boolean }) {
   const ruta = usePathname();
   const lista = useRef<HTMLUListElement>(null);
 
@@ -26,7 +26,7 @@ export function Navegacion() {
   return (
     <nav className="navegacion" aria-label="Secciones">
       <ul className="navegacion__lista" ref={lista}>
-        {ENLACES.map((e) => {
+        {ENLACES.filter((e) => mostrarCreditos || e.href !== "/creditos").map((e) => {
           const actual = ruta === e.href || ruta.startsWith(`${e.href}/`);
           return (
             <li key={e.href}>

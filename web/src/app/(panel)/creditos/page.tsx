@@ -4,7 +4,10 @@ import { EncabezadoPagina } from "@/components/EncabezadoPagina";
 import { EstadoVacio } from "@/components/EstadoVacio";
 import { Icono } from "@/components/Icono";
 import { formatoFecha } from "@/lib/fechas";
+import { redirect } from "next/navigation";
 import { listarSolicitudesCredito, type SolicitudCredito } from "@/lib/servicio";
+import { requerirSesion } from "@/lib/sesion";
+import { puedeResponderCreditos } from "@/lib/sesion/acceso";
 import { AvisoRespuestas } from "./AvisoRespuestas";
 import { agruparSolicitudes, textoAhorro, textoCondiciones, textoPendientes } from "./logica";
 import { RespuestaSolicitud } from "./RespuestaSolicitud";
@@ -18,6 +21,8 @@ export const dynamic = "force-dynamic";
 const FINANCIERA = "Financiera Aliada";
 
 export default async function Pagina() {
+  // Solo la financiera presta; un administrador no ve solicitudes de otras personas.
+  if (!puedeResponderCreditos(await requerirSesion())) redirect("/natilleras");
   const solicitudes = await listarSolicitudesCredito();
   const { porResponder, respondidas } = agruparSolicitudes(solicitudes);
 

@@ -26,7 +26,9 @@ img { max-width: 100%; height: auto; }
   max-width: 1200px; margin: 0 auto; padding: var(--espacio-3) var(--espacio-4);
 }
 .app-encabezado__marca { display: inline-flex; border-radius: var(--radio-sm); }
-.app-encabezado__rol { font-size: 14px; line-height: 20px; color: var(--tinta-suave); text-align: right; }
+.app-encabezado__sesion { display: flex; align-items: center; gap: var(--espacio-2); min-width: 0; }
+.app-encabezado__rol { font-size: 14px; line-height: 20px; color: var(--tinta); text-align: right; }
+@media (max-width: 639px) { .app-encabezado__rol { display: none; } }
 
 .logo { display: inline-flex; align-items: center; gap: var(--espacio-2); }
 .logo__simbolo { width: 40px; height: 40px; }

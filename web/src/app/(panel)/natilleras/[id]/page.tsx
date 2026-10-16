@@ -10,6 +10,8 @@ import { Icono } from "@/components/Icono";
 import { formatoFecha } from "@/lib/fechas";
 import { formatoCOP } from "@/lib/natillera";
 import { obtenerNatillera } from "@/lib/servicio";
+import { requerirSesion } from "@/lib/sesion";
+import { puedeVerNatillera } from "@/lib/sesion/acceso";
 import { avanceAhorro, plural, segmentosCuotas, textoPeriodicidad } from "../presentacion";
 import "../natilleras.css";
 
@@ -21,16 +23,20 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
+  const sesion = await requerirSesion();
   const natillera = await obtenerNatillera(id);
-  return { title: natillera ? natillera.nombre : "Natillera no encontrada" };
+  // Sin acceso, ni siquiera el nombre: el título también es información.
+  return { title: natillera && puedeVerNatillera(sesion, natillera) ? natillera.nombre : "Natillera no encontrada" };
 }
 
 const CLASE_SEGMENTO = { pagada: "nt-cuota nt-cuota--pagada", hoy: "nt-cuota nt-cuota--hoy", pendiente: "nt-cuota" } as const;
 
 export default async function DetalleNatillera({ params }: Props) {
   const { id } = await params;
+  const sesion = await requerirSesion();
   const n = await obtenerNatillera(id);
-  if (!n) notFound();
+  // Una natillera ajena responde igual que una inexistente: no se confirma que existe.
+  if (!n || !puedeVerNatillera(sesion, n)) notFound();
 
   const avance = avanceAhorro(n);
   const segmentos = segmentosCuotas(n);
