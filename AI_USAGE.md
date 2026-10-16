@@ -46,6 +46,8 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 | `web/` (configuración, `src/lib/`, `src/components/`, layout, `scripts/`) | Claude Code (Claude Opus 5.5) | Esqueleto de Next.js (#8), capa de datos del servicio externo con datos de prueba, componentes sobre el design system, script de capturas | Mucho |
 | `web/src/app/page.tsx`, `inicio.css`, `ingresar/`, `(panel)/layout.tsx`, `src/lib/sesion/`, `src/proxy.ts` | Claude Code (Claude Opus 5.5) | Página de inicio con el propósito, inicio de sesión con código por Telegram (OTP), roles y protección del panel | Mucho |
 | `web/src/app/natilleras/`, `creditos/`, `pagos/`, `bitacora/`, `api/pagos/` | Claude Code (Claude Opus 5.5, subagentes) | Pantallas de #9, #10, US-007-RPT y US-012-AUD, revisadas por un agente revisor y uno visual | Mucho |
+| `.claude/hooks/`, `.claude/settings.json`, `.claude/commands/director-web.md`, `.claude/agents/web-implementador.md` | Claude Code (Claude Opus 5.5) | Guardias automáticas de Claude (no escribe código en `pagos/`, ni `.env`, ni secretos; ESLint por archivo; pruebas antes de terminar; checklist antes de cada commit o PR) y `/director-web` corregido para no compilar en paralelo y registrar prompts mientras trabaja | Mucho |
+| `.github/workflows/calidad.yml`, `scripts/secretos.mjs` | Claude Code (Claude Opus 5.5) | CI en cada PR (checklist de entrega, `verificar` de la web, pruebas del bot y de `pagos/` cuando exista) y patrones de secretos declarados una sola vez | Mucho |
 
 ## Servicios externos
 
