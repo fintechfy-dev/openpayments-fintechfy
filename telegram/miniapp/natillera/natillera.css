@@ -1,0 +1,56 @@
+/* «Mi natillera»: lo propio de esta pantalla. La base (cuerpo, tarjetas de campo, chips y segmentos)
+   viene de ../miniapp.css, y los colores y componentes del design system. */
+
+.mn-avatar {
+  flex: none;
+  display: grid; place-items: center;
+  width: 48px; height: 48px;
+  border-radius: var(--radio-pildora);
+  background: var(--primario); color: var(--sobre-primario);
+  font-family: var(--font-display); font-weight: 900; font-size: 18px;
+}
+.mn-cabeza__texto { min-width: 0; }
+.mn-cabeza__texto .ma-sub { display: flex; flex-wrap: wrap; align-items: center; gap: var(--espacio-2); }
+
+.mn-pestanas {
+  position: sticky; top: 0; z-index: 1;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--espacio-2);
+  margin: 0 calc(var(--espacio-4) * -1) var(--espacio-4);
+  padding: var(--espacio-2) var(--espacio-4);
+  background: var(--superficie);
+}
+.mn-pestanas .ma-segmento[aria-selected="true"] {
+  background: var(--primario); border-color: var(--primario); color: var(--sobre-primario);
+}
+
+.mn-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--espacio-4); }
+/* Sin esto, el display: grid de arriba le gana al atributo hidden y se ven las tres pestañas. */
+.mn-panel[hidden] { display: none; }
+.mn-panel > * { min-width: 0; }
+.mn-panel p { margin: 0; }
+
+.mn-tarjeta { display: grid; gap: var(--espacio-3); }
+.mn-tarjeta__cabeza { display: flex; align-items: center; gap: var(--espacio-2); font-family: var(--font-display); font-weight: 800; }
+.mn-tarjeta__cabeza .nt-ico { color: var(--primario-texto); }
+
+.mn-leyenda { display: flex; flex-wrap: wrap; gap: var(--espacio-3); font-size: 13px; color: var(--tinta-suave); }
+.mn-leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+.mn-leyenda i { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+
+.mn-reglas { display: grid; gap: var(--espacio-3); margin: 0; }
+.mn-reglas div { display: grid; gap: 2px; }
+.mn-reglas dt { font-size: 14px; font-weight: 700; color: var(--tinta-suave); }
+.mn-reglas dd { margin: 0; font-weight: 700; }
+
+.mn-personas { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--espacio-3); }
+.mn-personas li { display: flex; align-items: center; gap: var(--espacio-3); }
+.mn-personas .mn-avatar { width: 36px; height: 36px; font-size: 14px; background: var(--primario-suave); color: var(--primario-texto); }
+
+.mn-cobros { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--espacio-3); }
+.mn-cobro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--espacio-1) var(--espacio-3); align-items: center; }
+.mn-cobro__monto { font-family: var(--font-display); font-weight: 900; font-variant-numeric: tabular-nums; text-align: right; }
+.mn-cobro__motivo { grid-column: 1 / -1; font-size: 14px; color: var(--tinta-suave); }
+
+.mn-vacio { text-align: center; padding: var(--espacio-6) var(--espacio-4); }
+
+.mn-demo { margin-top: var(--espacio-7); display: grid; gap: var(--espacio-2); }

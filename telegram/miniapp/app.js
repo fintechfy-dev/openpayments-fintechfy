@@ -19,17 +19,12 @@ import {
   validarNatillera,
 } from '../src/natillera/reglas.js';
 
+import { enTelegram, iniciarTelegram, parametros as q, pintarIconos, tg } from './comun.js';
+
 const TIPO = 'crear-natillera';
 const MAX_SEGMENTOS = 24;
 
-const tg = window.Telegram?.WebApp;
-// Fuera de Telegram el script de Telegram carga igual, pero con platform 'unknown'. No se usa initData:
-// viene vacío cuando la Mini App se abre desde un botón del teclado, que es justo como la abre el bot
-// (core.telegram.org/bots/webapps: "It is empty if the Mini App was launched from a keyboard button").
-const enTelegram = Boolean(tg && tg.platform && tg.platform !== 'unknown' && typeof tg.sendData === 'function');
-
 // Los límites vienen en la dirección (el bot los pone desde su .env). Si faltan, unos razonables.
-const q = new URLSearchParams(location.search);
 function numero(clave, porDefecto) {
   const crudo = q.get(clave);
   const n = Number(crudo);
@@ -63,21 +58,6 @@ const estado = {
 // Los errores se muestran en los campos que la persona ya tocó, o en todos al intentar enviar.
 const tocados = new Set();
 let intentoEnviar = false;
-
-// ---------- Tema e íconos ----------
-
-// Dentro de Telegram, el tema del teléfono. En el navegador, `?tema=dark` o `?tema=light` para revisar
-// el diseño; sin él, el del sistema (tokens.css ya lo sigue).
-function aplicarTema() {
-  const tema = enTelegram ? tg.colorScheme : q.get('tema');
-  if (tema === 'dark' || tema === 'light') document.documentElement.dataset.theme = tema;
-}
-
-function pintarIconos() {
-  for (const span of document.querySelectorAll('[data-icono]')) {
-    if (window.Natillera) span.outerHTML = window.Natillera.icono(span.dataset.icono);
-  }
-}
 
 // ---------- Controles ----------
 
@@ -324,16 +304,10 @@ function conectar() {
   });
 }
 
-aplicarTema();
+// El tema primero: el botón de Telegram toma su color de los tokens ya aplicados, y se repinta cuando
+// cambia el tema del teléfono.
+iniciarTelegram({ alCambiarTema: () => enTelegram && pintarBotonPrincipal() });
 pintarIconos();
 conectar();
 actualizar();
 configurarBotonPrincipal();
-if (tg) {
-  tg.onEvent?.('themeChanged', () => {
-    aplicarTema();
-    if (enTelegram) pintarBotonPrincipal();
-  });
-  tg.ready();
-  tg.expand();
-}
