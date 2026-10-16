@@ -1,0 +1,36 @@
+/* Pantalla de créditos (#10). Solo tokens; móvil primero (360 px) y se agranda desde 1024 px,
+   igual que .tabla-apilable de app.css. Referencia: design-system/components/SolicitudesCredito/preview.html */
+
+.pila-corta { display: flex; flex-direction: column; gap: var(--espacio-3); }
+.pila-corta .seccion__titulo { margin: 0; }
+.creditos-nada { margin: 0; }
+.creditos-aviso:focus { outline: none; }
+.creditos-aviso:focus-visible .nt-aviso { outline: 3px solid var(--foco); outline-offset: 2px; }
+
+/* Dato con una segunda línea más suave (natillera, máximo, plazo y tasa) */
+.celda-doble { display: flex; flex-direction: column; align-items: flex-end; }
+.nt-tabla__principal .celda-doble { align-items: flex-start; }
+.celda-doble__sub { font-size: 14px; line-height: 20px; font-weight: 400; color: var(--tinta-suave); }
+
+/* Acciones: en móvil ocupan el ancho de la tarjeta y miden 48 px de alto */
+.nt-tabla.tabla-apilable td.tabla-creditos__acciones { display: block; padding-top: var(--espacio-3); }
+.respuesta { display: flex; flex-direction: column; gap: var(--espacio-2); }
+.respuesta__botones { display: flex; flex-wrap: wrap; gap: var(--espacio-2); justify-content: flex-end; }
+.respuesta .nt-btn { white-space: nowrap; min-height: var(--control-alto); flex: 1 1 auto; }
+.respuesta .nt-btn:disabled { opacity: 0.6; cursor: progress; }
+.respuesta__pregunta { margin: 0; font-weight: 700; text-align: left; }
+
+@media (min-width: 1024px) {
+  .celda-doble { align-items: flex-start; }
+  .nt-tabla__num .celda-doble { align-items: flex-end; }
+  .nt-tabla.tabla-apilable td.tabla-creditos__acciones { display: table-cell; padding-top: var(--espacio-3); }
+  .respuesta { align-items: flex-end; }
+  .respuesta__botones { flex-wrap: nowrap; }
+  .respuesta .nt-btn { min-height: var(--control-alto-sm); flex: none; }
+  .respuesta__pregunta { font-size: 14px; line-height: 20px; text-align: right; }
+}
+
+/* Entre 1024 y 1279 px la tabla de 7 columnas no deja espacio para dos botones lado a lado: van apilados. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .respuesta__botones { flex-direction: column; align-items: stretch; }
+}

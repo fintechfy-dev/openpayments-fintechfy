@@ -36,6 +36,7 @@ GitFlow: cada cosa por hacer es un [issue](https://github.com/fintechfy-dev/open
 _Por completar con la demo de punta a punta._ Cada pieza explica cómo correrla en su carpeta:
 
 - Bot de Telegram: [`telegram/README.md`](telegram/README.md#cómo-correrlo)
+- Web de la financiera y el administrador: [`web/README.md`](web/README.md#cómo-correrlo)
 
 ## Secretos
 

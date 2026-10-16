@@ -1,0 +1,24 @@
+/* LineaTiempoPago y EtapasCompactas. La línea usa nt-linea del design system; aquí solo va lo que le falta.
+   Solo tokens. Móvil primero. */
+
+.linea-pago__resumen {
+  display: grid; gap: var(--espacio-2) var(--espacio-4); margin: 0 0 var(--espacio-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+}
+.linea-pago__resumen dt { font-size: 14px; line-height: 20px; font-weight: 700; color: var(--tinta-suave); }
+.linea-pago__resumen dd { margin: 0; overflow-wrap: anywhere; }
+.linea-pago .nt-card__cabeza { flex-wrap: wrap; }
+.linea-pago .nt-linea__detalle { overflow-wrap: anywhere; }
+
+/* Marcas compactas: orden fijo Solicitud · Autorización · Ejecución · Finalización */
+.etapas-compactas { display: inline-flex; }
+.etapas-compactas__marcas { display: inline-flex; gap: var(--espacio-1); }
+.etapa-marca {
+  display: inline-grid; place-items: center; width: var(--espacio-6); height: var(--espacio-6);
+  border-radius: var(--radio-pildora); border: 2px solid var(--borde-fuerte);
+  background: var(--superficie-elevada); color: var(--tinta-suave);
+}
+.etapa-marca .nt-ico { width: var(--espacio-4); height: var(--espacio-4); stroke-width: 2.8; }
+.etapa-marca--hecha { background: var(--primario); border-color: var(--primario); color: var(--sobre-primario); }
+.etapa-marca--fallida { background: var(--estado-error-texto); border-color: var(--estado-error-texto); color: var(--superficie-elevada); }
+.etapa-marca--actual { background: var(--estado-info-fondo); border-color: var(--estado-info-texto); color: var(--estado-info-texto); }
