@@ -10,9 +10,24 @@ En una natillera, un grupo de familiares o amigos ahorra junto durante el año p
 
 Un bot de Telegram donde el grupo arma su natillera, cada participante autoriza una sola vez el cobro de sus cuotas y el dinero queda en una billetera a nombre de una financiera, no de una persona. Nadie del grupo puede mover el dinero por fuera de las reglas, ni siquiera el administrador. Todos ven en todo momento lo suyo y lo de todos, y al final la liquidación se paga sola.
 
+## Cómo está armado
+
+| Pieza | Carpeta | Para quién |
+|---|---|---|
+| Bot de Telegram | [`telegram/`](telegram/) | Integrantes de la natillera y su administrador |
+| Página web | [`web/`](web/) | La financiera y el administrador: gestionar natilleras y ver solicitudes de crédito |
+| Motor financiero | [`motor/`](motor/) | Guarda el estado y aplica las reglas. Existía antes del evento: se usa como servicio |
+| Servicio de pagos | [`pagos/`](pagos/) | Lo único que habla con Open Payments: cobrar, pagar y desembolsar |
+
+El diagrama, los contratos entre piezas y el orden de trabajo están en el [plan de trabajo](docs/plan-de-trabajo.md).
+
 ## Cómo usa Open Payments
 
-_Por completar con lo que quede construido._ El plan: un permiso de pago saliente con tope por participante para cobrar cada cuota, pagos entrantes a la billetera del grupo y pagos salientes para premios y liquidación, todo en la Interledger Test Wallet.
+_Por completar con lo que quede construido._ El plan: un permiso de pago saliente con tope por participante para cobrar cada cuota, pagos hacia la billetera del grupo y pagos salientes para premios, préstamos y liquidación, todo en la Interledger Test Wallet.
+
+## Cómo trabajamos
+
+GitFlow: cada cosa por hacer es un [issue](https://github.com/fintechfy-dev/openpayments-fintechfy/issues), cada cambio una rama `feature/` desde `develop` y todo entra por pull request. Las reglas y los comandos están en [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Correr la demo
 
