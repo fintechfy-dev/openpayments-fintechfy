@@ -56,7 +56,7 @@ Sale con código 1 solo si encuentra un secreto o un `.env` versionado. El resto
 | `vie-bienvenida` | Dato | Mesa de mentores y canal de Slack | ℹ️ |
 | `ask-hora` | Por confirmar | ¿Video y presentación cierran a las 11:00 o a las 12:00? | ❓ Sin respuesta anotada. Plan seguro: antes de las 11:00 |
 | `ask-donde` | Por confirmar | ¿Drive, repositorio o ambos? | ❓ Plan seguro: los dos |
-| `ask-demo` | Por confirmar | ¿La demo puede correr desde nuestro equipo? | ❓ El servicio externo corre en staging (`integracion/README.md`); falta decidir dónde corren el puente y el servicio de pagos, que necesitan una URL pública HTTPS para los avisos y para que staging los llame |
+| `ask-demo` | Por confirmar | ¿La demo puede correr desde nuestro equipo? | ❓ El servicio externo corre en staging (`integracion/README.md`). El bot ya no necesita URL pública: lee los avisos del flujo en vivo de staging desde cualquier laptop (`telegram/src/avisos/`, rama `feature/telegram-5-integracion-staging`). Falta decidir dónde corre el servicio de pagos, que sí necesita una URL pública HTTPS para que staging lo llame |
 | `ask-docs` | Por confirmar | ¿Se puede subir el discovery hecho antes? | ❓ Ya está subido; si dicen que no, se retira antes de las 11:00 del sábado |
 | `ask-ronda1` | Por confirmar | ¿Presentan todos en la Ronda 1? | ❓ Plan seguro: estar listos |
 | `b-primer-commit` | Exigido | Primer código y primer commit después de las 10:30 | ✅ 11:32 del viernes |
