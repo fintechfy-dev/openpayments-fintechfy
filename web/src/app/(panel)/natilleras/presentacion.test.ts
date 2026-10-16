@@ -23,8 +23,8 @@ function resumen(parcial: Partial<NatilleraResumen>): NatilleraResumen {
   };
 }
 
-function persona(aportado: number): Participante {
-  return { id: "p", nombre: "P", estado: "activo", billetera: "", cuotasPagadas: 0, aportado, deuda: 0 };
+function persona(cuotasPagadas: number, aportado = cuotasPagadas * 50000): Participante {
+  return { id: "p", nombre: "P", estado: "activo", billetera: "", cuotasPagadas, aportado, deuda: 0 };
 }
 
 describe("resumirNatilleras", () => {
@@ -54,9 +54,16 @@ describe("segmentosCuotas", () => {
 });
 
 describe("avanceAhorro", () => {
-  it("compara lo aportado con la meta del grupo", () => {
-    const a = avanceAhorro({ participantes: [persona(150000), persona(100000)], valorCuota: 50000, cuotasTotales: 12, periodoActual: 3 });
+  it("compara las cuotas pagadas con la meta del grupo", () => {
+    const a = avanceAhorro({ participantes: [persona(3), persona(2)], valorCuota: 50000, cuotasTotales: 12, periodoActual: 3 });
     expect(a).toEqual({ ahorrado: 250000, meta: 1200000, porcentaje: 21, cuotasFaltantes: 9 });
+  });
+
+  it("la mora pagada no infla el avance del ahorro", () => {
+    // Pagó 2 cuotas tarde, con $1.500 de mora: el ahorro son las 2 cuotas, no lo aportado.
+    const a = avanceAhorro({ participantes: [persona(2, 101500)], valorCuota: 50000, cuotasTotales: 2, periodoActual: 2 });
+    expect(a.ahorrado).toBe(100000);
+    expect(a.porcentaje).toBe(100);
   });
 
   it("sin participantes no divide entre cero", () => {

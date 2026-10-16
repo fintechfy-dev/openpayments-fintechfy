@@ -2,7 +2,7 @@
 // Mide además si la página tiene scroll horizontal (el error responsive más común).
 //
 // Uso: npm run capturas -- [--base http://localhost:3000] [--rutas /natilleras,/pagos]
-// Requiere la web corriendo (npm run dev o npm run start) y Google Chrome o Chromium instalado.
+// Requiere Node 22+ (WebSocket nativo), la web corriendo (npm run dev o npm run start) y Google Chrome o Chromium.
 // Deja las imágenes y reporte.json en web/.capturas/ (ignorada por git).
 
 import { spawn } from "node:child_process";
@@ -62,6 +62,11 @@ await new Promise((r, e) => ((ws.onopen = r), (ws.onerror = e)));
 let siguiente = 0;
 const pendientes = new Map();
 const oyentes = new Set();
+// Si Chrome se cae, todas las llamadas pendientes fallan en vez de esperar para siempre.
+ws.onclose = () => {
+  for (const { mal } of pendientes.values()) mal(new Error("Chrome cerró la conexión de DevTools"));
+  pendientes.clear();
+};
 ws.onmessage = ({ data }) => {
   const m = JSON.parse(String(data));
   if (m.id && pendientes.has(m.id)) {
@@ -71,17 +76,27 @@ ws.onmessage = ({ data }) => {
     else ok(m.result);
   } else for (const o of oyentes) o(m);
 };
+const conTiempo = (promesa, ms, que) =>
+  Promise.race([promesa, new Promise((_, mal) => setTimeout(() => mal(new Error(`${que}: sin respuesta en ${ms / 1000} s`)), ms))]);
 const cdp = (method, params = {}, sessionId) =>
-  new Promise((ok, mal) => {
-    const id = ++siguiente;
-    pendientes.set(id, { ok, mal });
-    ws.send(JSON.stringify({ id, method, params, sessionId }));
-  });
+  conTiempo(
+    new Promise((ok, mal) => {
+      const id = ++siguiente;
+      pendientes.set(id, { ok, mal });
+      ws.send(JSON.stringify({ id, method, params, sessionId }));
+    }),
+    30_000,
+    method,
+  );
 const esperarCarga = (sessionId) =>
-  new Promise((ok) => {
-    const o = (m) => m.sessionId === sessionId && m.method === "Page.loadEventFired" && (oyentes.delete(o), ok());
-    oyentes.add(o);
-  });
+  conTiempo(
+    new Promise((ok) => {
+      const o = (m) => m.sessionId === sessionId && m.method === "Page.loadEventFired" && (oyentes.delete(o), ok());
+      oyentes.add(o);
+    }),
+    30_000,
+    "Cargar la página",
+  );
 
 rmSync(salida, { recursive: true, force: true });
 mkdirSync(salida, { recursive: true });
@@ -111,7 +126,10 @@ try {
           },
           sessionId,
         );
-        const { data } = await cdp("Page.captureScreenshot", { format: "png", captureBeyondViewport: true }, sessionId);
+        // Página completa: sin clip, Chrome solo captura los 900 px visibles.
+        const { cssContentSize } = await cdp("Page.getLayoutMetrics", {}, sessionId);
+        const clip = { x: 0, y: 0, width: ancho, height: Math.ceil(cssContentSize.height), scale: 1 };
+        const { data } = await cdp("Page.captureScreenshot", { format: "png", captureBeyondViewport: true, clip }, sessionId);
         const nombre = `${ruta.replace(/^\//, "").replace(/\//g, "_") || "inicio"}-${ancho}-${tema === "light" ? "claro" : "oscuro"}.png`;
         writeFileSync(join(salida, nombre), Buffer.from(data, "base64"));
         reporte.push({ ruta, ancho, tema, captura: `.capturas/${nombre}`, scrollHorizontalPx: result.value.scroll, h1: result.value.h1, titulo: result.value.titulo });

@@ -5,6 +5,7 @@
 
 import { formatoCOP, formatoPorcentaje } from '../src/formato.js';
 import {
+  CAMPOS,
   CUPO_MAX,
   CUPO_MIN,
   PERIODICIDADES,
@@ -151,14 +152,17 @@ function pintarMora() {
   $('mora-valor').textContent = `${formatoPorcentaje(estado.mora)} diario`;
 }
 
+// Control que recibe aria-invalid por cada campo (algunos no tienen un input con el nombre del campo).
+const CONTROL_DE = { cuota: 'cuota-rango', cupo: 'cupo-valor', mora: 'mora-rango' };
+
 function pintarErrores(errores) {
-  for (const clave of ['nombre', 'cuota', 'periodicidad', 'inicio', 'final', 'cupo', 'mora']) {
+  for (const { clave } of CAMPOS) {
     const visible = Boolean(errores[clave]) && (intentoEnviar || tocados.has(clave));
     const p = $(`error-${clave}`);
     p.hidden = !visible;
     p.textContent = visible ? errores[clave] : '';
-    const input = $(clave);
-    if (input) input.setAttribute('aria-invalid', String(visible));
+    const control = $(CONTROL_DE[clave] ?? clave);
+    if (control) control.setAttribute('aria-invalid', String(visible));
   }
 }
 
@@ -198,18 +202,23 @@ function pintarResumen(datos, valido) {
 
 // ---------- Botón de enviar ----------
 
-function configurarBotonPrincipal() {
-  if (!enTelegram) {
-    $('enviar-navegador').hidden = false;
-    $('fuera-de-telegram').hidden = false;
-    return;
-  }
+// Colores del botón de Telegram desde los tokens: se repinta cuando cambia el tema del teléfono.
+function pintarBotonPrincipal() {
   const estilo = getComputedStyle(document.documentElement);
   tg.MainButton.setParams({
     text: 'Revisar natillera',
     color: estilo.getPropertyValue('--primario').trim() || undefined,
     text_color: estilo.getPropertyValue('--sobre-primario').trim() || undefined,
   });
+}
+
+function configurarBotonPrincipal() {
+  if (!enTelegram) {
+    $('enviar-navegador').hidden = false;
+    $('fuera-de-telegram').hidden = false;
+    return;
+  }
+  pintarBotonPrincipal();
   tg.MainButton.show();
   tg.MainButton.onClick(enviar);
 }
@@ -295,8 +304,9 @@ function conectar() {
   });
 }
 
-// El tema primero: el botón de Telegram toma su color de los tokens ya aplicados.
-iniciarTelegram();
+// El tema primero: el botón de Telegram toma su color de los tokens ya aplicados, y se repinta cuando
+// cambia el tema del teléfono.
+iniciarTelegram({ alCambiarTema: () => enTelegram && pintarBotonPrincipal() });
 pintarIconos();
 conectar();
 actualizar();

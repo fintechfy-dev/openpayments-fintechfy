@@ -12,6 +12,7 @@ import type {
   SolicitudCredito,
 } from "./tipos";
 import { ETAPAS } from "./tipos";
+import { FINANCIERA } from "@/lib/financiera";
 import { formatoCOP } from "@/lib/natillera";
 
 const BILLETERAS = "https://ilp.interledger-test.dev";
@@ -342,7 +343,7 @@ export const servicioDePrueba: Servicio = {
       id: `bit-${Date.now()}`,
       natilleraId: s.natilleraId,
       natilleraNombre: s.natilleraNombre,
-      actor: "Financiera Aliada",
+      actor: FINANCIERA,
       accion: decision === "aprobar" ? "Aprobó un préstamo" : "No aprobó un préstamo",
       detalle: `${s.participanteNombre}: ${formatoCOP(s.montoSolicitado)} a ${s.plazoMeses} meses`,
       fecha: s.fechaRespuesta,

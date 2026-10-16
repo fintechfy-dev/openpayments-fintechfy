@@ -1,6 +1,7 @@
 // Usuarios de la demo. Cada uno entra con un código que le llega por Telegram, al chat que dice
 // su variable de entorno (web/.env.local). Sin esa variable, ese usuario no puede entrar.
 // El bot solo puede escribirle a quien ya le escribió: cada persona debe mandarle /start una vez.
+import { FINANCIERA } from "@/lib/financiera";
 import type { Rol } from "./firma";
 
 export interface UsuarioDemo {
@@ -12,7 +13,7 @@ export interface UsuarioDemo {
 
 // El administrador de demo es el de la natillera "Los Primos" en los datos de prueba.
 export const USUARIOS_DEMO: readonly UsuarioDemo[] = [
-  { usuario: "financiera", nombre: "Financiera Aliada", rol: "financiera", variableChat: "DEMO_FINANCIERA_TELEGRAM_CHAT_ID" },
+  { usuario: "financiera", nombre: FINANCIERA, rol: "financiera", variableChat: "DEMO_FINANCIERA_TELEGRAM_CHAT_ID" },
   { usuario: "andres", nombre: "Andrés Restrepo", rol: "administrador", variableChat: "DEMO_ADMIN_TELEGRAM_CHAT_ID" },
 ];
 

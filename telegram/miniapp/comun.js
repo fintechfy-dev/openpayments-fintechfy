@@ -1,8 +1,10 @@
 // Lo que comparten las páginas de la Mini App: Telegram, el tema y los íconos del design system.
 
 export const tg = window.Telegram?.WebApp;
-// Fuera de Telegram el script existe pero no hay initData: se puede ver el diseño, no enviar.
-export const enTelegram = Boolean(tg?.initData);
+// Fuera de Telegram el script de Telegram carga igual, pero con platform 'unknown'. No se usa initData:
+// viene vacío cuando la Mini App se abre desde un botón del teclado, que es justo como la abre el bot
+// (core.telegram.org/bots/webapps: "It is empty if the Mini App was launched from a keyboard button").
+export const enTelegram = Boolean(tg && tg.platform && tg.platform !== 'unknown' && typeof tg.sendData === 'function');
 export const parametros = new URLSearchParams(location.search);
 
 // Dentro de Telegram, el tema del teléfono. En el navegador, `?tema=dark` o `?tema=light` para revisar
@@ -20,15 +22,19 @@ export function pintarIconos(raiz = document) {
   }
 }
 
-// El nombre de pila de quien abrió la Mini App, si Telegram lo da.
+// El nombre de pila de quien abrió la Mini App, si Telegram lo da (desde el teclado no lo da).
 export function nombreDePila() {
   return tg?.initDataUnsafe?.user?.first_name ?? null;
 }
 
-export function iniciarTelegram() {
+// `alCambiarTema` corre después de aplicar el tema nuevo (el formulario repinta su botón principal).
+export function iniciarTelegram({ alCambiarTema } = {}) {
   aplicarTema();
   if (!tg) return;
-  tg.onEvent?.('themeChanged', aplicarTema);
+  tg.onEvent?.('themeChanged', () => {
+    aplicarTema();
+    alCambiarTema?.();
+  });
   tg.ready();
   tg.expand();
 }
