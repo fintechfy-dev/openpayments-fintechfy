@@ -18,6 +18,16 @@ export function invitacionPronto(nombre) {
   ].join('\n');
 }
 
+// Llega desde «Pedir préstamo» de la Mini App (t.me/<bot>?start=prestamo). Enganche de US-014 (#29).
+export const PAYLOAD_PRESTAMO = 'prestamo';
+
+export function prestamoPronto(nombre) {
+  return [
+    nombre ? `${nombre}, recibí que quieres pedir un préstamo.` : 'Recibí que quieres pedir un préstamo.',
+    'Todavía no se puede pedir desde aquí. Te avisamos apenas Financiera Aliada lo abra.',
+  ].join('\n');
+}
+
 export function start({ log }) {
   const comandos = new Composer();
 
@@ -29,6 +39,10 @@ export function start({ log }) {
 
     // El payload del enlace profundo (t.me/<bot>?start=<payload>) llega en ctx.match.
     // Enganche de #16: aquí se resolverá la natillera del enlace de invitación.
+    if (ctx.match === PAYLOAD_PRESTAMO) {
+      await ctx.reply(prestamoPronto(nombre));
+      return;
+    }
     if (ctx.match) {
       await ctx.reply(invitacionPronto(nombre));
       return;

@@ -18,15 +18,12 @@ import {
   validarNatillera,
 } from '../src/natillera/reglas.js';
 
+import { enTelegram, iniciarTelegram, parametros as q, pintarIconos, tg } from './comun.js';
+
 const TIPO = 'crear-natillera';
 const MAX_SEGMENTOS = 24;
 
-const tg = window.Telegram?.WebApp;
-// Fuera de Telegram el script existe pero no hay initData: se puede ver el diseño, no enviar.
-const enTelegram = Boolean(tg?.initData);
-
 // Los límites vienen en la dirección (el bot los pone desde su .env). Si faltan, unos razonables.
-const q = new URLSearchParams(location.search);
 function numero(clave, porDefecto) {
   const crudo = q.get(clave);
   const n = Number(crudo);
@@ -60,21 +57,6 @@ const estado = {
 // Los errores se muestran en los campos que la persona ya tocó, o en todos al intentar enviar.
 const tocados = new Set();
 let intentoEnviar = false;
-
-// ---------- Tema e íconos ----------
-
-// Dentro de Telegram, el tema del teléfono. En el navegador, `?tema=dark` o `?tema=light` para revisar
-// el diseño; sin él, el del sistema (tokens.css ya lo sigue).
-function aplicarTema() {
-  const tema = enTelegram ? tg.colorScheme : q.get('tema');
-  if (tema === 'dark' || tema === 'light') document.documentElement.dataset.theme = tema;
-}
-
-function pintarIconos() {
-  for (const span of document.querySelectorAll('[data-icono]')) {
-    if (window.Natillera) span.outerHTML = window.Natillera.icono(span.dataset.icono);
-  }
-}
 
 // ---------- Controles ----------
 
@@ -313,13 +295,9 @@ function conectar() {
   });
 }
 
-aplicarTema();
+// El tema primero: el botón de Telegram toma su color de los tokens ya aplicados.
+iniciarTelegram();
 pintarIconos();
 conectar();
 actualizar();
 configurarBotonPrincipal();
-if (tg) {
-  tg.onEvent?.('themeChanged', aplicarTema);
-  tg.ready();
-  tg.expand();
-}

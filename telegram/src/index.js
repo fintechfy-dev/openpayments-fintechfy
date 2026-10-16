@@ -3,6 +3,7 @@ import { crearLogger } from './log.js';
 import { loadConfig, ConfigError } from './config.js';
 import { crearBot, COMANDOS } from './bot/index.js';
 import { abrirBaseDeDatos } from './db.js';
+import { TEXTO_MENU, urlMiNatillera } from './bot/comandos/mi-natillera.js';
 
 // Si no hay .env, se usan las variables del sistema.
 if (existsSync('.env')) process.loadEnvFile('.env');
@@ -38,6 +39,18 @@ try {
   await bot.api.setMyCommands(COMANDOS);
 } catch (error) {
   log.warn(`No se pudo publicar el menú de comandos: ${error.message}`);
+}
+
+// Botón «Mi natillera» junto al cuadro de texto, en todos los chats privados con el bot.
+if (config.miniappUrl) {
+  try {
+    await bot.init();
+    await bot.api.setChatMenuButton({
+      menu_button: { type: 'web_app', text: TEXTO_MENU, web_app: { url: urlMiNatillera(config, bot.botInfo.username) } },
+    });
+  } catch (error) {
+    log.warn(`No se pudo poner el botón «${TEXTO_MENU}»: ${error.message}`);
+  }
 }
 
 // Long polling (decisión D-03). La promesa termina cuando se llama a bot.stop().

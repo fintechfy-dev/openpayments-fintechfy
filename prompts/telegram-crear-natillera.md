@@ -15,3 +15,15 @@ esto que estamos haciendo de esas tareas seria el front en telegram, necesito qu
 ```text
 las dos haslo en automatico
 ```
+
+15:16 (publicar la Mini App en GitHub Pages: `.nojekyll` y `MINIAPP_URL`)
+
+```text
+hagamoslo en github pages como lo hacemos
+```
+
+15:21
+
+```text
+ya lo activamos en github, donde deberia salir la pagina
+```

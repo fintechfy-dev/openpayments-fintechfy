@@ -6,10 +6,12 @@ import { cancelar } from './comandos/cancelar.js';
 import { crearMotorDeFlujos } from './flujo.js';
 import { almacenDeSesiones } from './sesion-storage.js';
 import { crear, flujoCrear } from './flujos/crear.js';
+import { miNatillera } from './comandos/mi-natillera.js';
 
 // Menú de comandos que se publica en Telegram. /diag no va aquí: no se anuncia.
 export const COMANDOS = [
   { command: 'start', description: 'Empezar' },
+  { command: 'mi_natillera', description: 'Ver mi ahorro, las reglas y mis cobros' },
   { command: 'crear', description: 'Crear una natillera' },
   { command: 'cancelar', description: 'Cancelar lo que estás haciendo' },
 ];
@@ -81,6 +83,7 @@ export function crearBot(config, { log, db, crearNatillera, botInfo, cliente, in
   app.use(start({ log }));
   app.use(cancelar({ motor }));
   app.use(diag({ config, db, inicio, ahora }));
+  app.use(miNatillera({ config }));
   // Antes del motor: «Responder aquí» y el formulario de la Mini App no son respuestas de un flujo.
   app.use(crear({ config, motor, log, hoy }));
   app.use(motor.middleware());
