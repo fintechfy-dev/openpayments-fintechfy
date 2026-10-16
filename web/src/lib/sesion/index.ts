@@ -70,7 +70,13 @@ export async function requerirSesion(): Promise<DatosSesion> {
 }
 
 export async function crearSesion(usuario: UsuarioDemo): Promise<void> {
-  const datos: DatosSesion = { usuario: usuario.usuario, nombre: usuario.nombre, rol: usuario.rol, exp: Date.now() + DURACION_SESION_MS };
+  const datos: DatosSesion = {
+    usuario: usuario.usuario,
+    nombre: usuario.nombre,
+    rol: usuario.rol,
+    telegramId: chatDe(usuario),
+    exp: Date.now() + DURACION_SESION_MS,
+  };
   (await cookies()).set(NOMBRE_COOKIE, firmarSesion(datos, secreto()), opcionesCookie(datos.exp));
 }
 

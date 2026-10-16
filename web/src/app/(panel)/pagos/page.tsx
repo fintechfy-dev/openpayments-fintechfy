@@ -1,4 +1,5 @@
-import { listarPagos } from "@/lib/servicio";
+import { PantallaSinConectar } from "@/components/PantallaSinConectar";
+import { listarPagos, pantallasSinConectar } from "@/lib/servicio";
 import { natillerasVisibles, requerirSesion } from "@/lib/sesion";
 import { RegistroPagos } from "./RegistroPagos";
 import "./pagos.css";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 // y RegistroPagos los refresca desde /api/pagos.
 export default async function Pagina() {
   const sesion = await requerirSesion();
+  if (pantallasSinConectar) return <PantallaSinConectar titulo="Registro de pagos" />;
   const visibles = await natillerasVisibles(sesion);
   const pagos = (await listarPagos()).filter((p) => visibles.has(p.natilleraId));
   return <RegistroPagos inicial={pagos} leidoEn={new Date().toISOString()} />;

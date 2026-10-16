@@ -2,7 +2,8 @@ import { EncabezadoPagina } from "@/components/EncabezadoPagina";
 import { EstadoVacio } from "@/components/EstadoVacio";
 import { Icono } from "@/components/Icono";
 import { formatoFechaHora } from "@/lib/fechas";
-import { listarBitacora } from "@/lib/servicio";
+import { PantallaSinConectar } from "@/components/PantallaSinConectar";
+import { listarBitacora, pantallasSinConectar } from "@/lib/servicio";
 import { natillerasVisibles, requerirSesion } from "@/lib/sesion";
 import { ACTOR, ordenarBitacora, tipoActor } from "./bitacora";
 import "./bitacora.css";
@@ -15,6 +16,7 @@ export const dynamic = "force-dynamic";
 // US-012-AUD: registro de lo que hizo cada quien, lo más reciente primero.
 export default async function Pagina() {
   const sesion = await requerirSesion();
+  if (pantallasSinConectar) return <PantallaSinConectar titulo="Bitácora" />;
   const visibles = await natillerasVisibles(sesion);
   const eventos = ordenarBitacora((await listarBitacora()).filter((e) => visibles.has(e.natilleraId)));
 

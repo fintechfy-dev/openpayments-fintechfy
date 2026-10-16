@@ -1,11 +1,13 @@
 // Única puerta de la web al servicio externo. Solo corre en el servidor:
-// la X-Api-Key nunca llega al navegador. Si un componente de cliente lo importa, el build falla.
+// el token y la X-Api-Key nunca llegan al navegador. Si un componente de cliente lo importa, el build falla.
 import "server-only";
 
 import { cache } from "react";
 
+import { lectorIndice } from "@/lib/indice";
 import { crearServicioHttp } from "./http";
 import { servicioDePrueba } from "./mock";
+import { crearServicioStaging } from "./staging";
 import type { Servicio } from "./tipos";
 
 /** Si la configuración está incompleta, cada petición falla con un mensaje claro (lo muestra error.tsx)
@@ -25,6 +27,17 @@ function servicioMalConfigurado(motivo: string): Servicio {
 }
 
 function crearServicio(): Servicio {
+  // Staging (#53, web/INTEGRACION.md): Bearer y la lista desde el índice que alimenta el bot.
+  const urlStaging = process.env.SERVICIO_EXTERNO_URL?.trim();
+  if (urlStaging) {
+    const token = process.env.SERVICIO_EXTERNO_TOKEN?.trim();
+    if (!token) {
+      console.error("SERVICIO_EXTERNO_URL está definida pero falta SERVICIO_EXTERNO_TOKEN en web/.env.local");
+      return servicioMalConfigurado("Falta SERVICIO_EXTERNO_TOKEN: la web no puede hablar con staging.");
+    }
+    return crearServicioStaging({ urlBase: urlStaging, token, indice: lectorIndice });
+  }
+
   const url = process.env.SERVICIO_URL?.trim();
   if (!url) return servicioDePrueba;
   const apiKey = process.env.SERVICIO_API_KEY?.trim();
@@ -37,7 +50,11 @@ function crearServicio(): Servicio {
 
 const servicio = crearServicio();
 
-/** true cuando la web muestra datos de prueba (sin SERVICIO_URL). */
+/** true con staging: /creditos, /pagos y /bitacora todavía no leen de allí (#53) y lo dicen.
+ *  Solo si staging quedó bien configurado; si falta el token, todas las pantallas muestran ese error. */
+export const pantallasSinConectar = Boolean(process.env.SERVICIO_EXTERNO_URL?.trim() && process.env.SERVICIO_EXTERNO_TOKEN?.trim());
+
+/** true cuando la web muestra datos de prueba (sin SERVICIO_EXTERNO_URL ni SERVICIO_URL). */
 export const usaDatosDePrueba = servicio === servicioDePrueba;
 
 export const listarNatilleras = () => servicio.listarNatilleras();

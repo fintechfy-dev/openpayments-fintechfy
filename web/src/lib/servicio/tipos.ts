@@ -32,6 +32,8 @@ export interface NatilleraResumen {
   nombre: string;
   estado: EstadoNatillera;
   administrador: string;
+  /** Id de Telegram del administrador, cuando la natillera viene de staging (lo manda el bot al índice). */
+  administradorTelegramId?: string;
   valorCuota: number;
   periodicidad: Periodicidad;
   fechaInicio: FechaISO;

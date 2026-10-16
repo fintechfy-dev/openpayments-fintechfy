@@ -38,12 +38,17 @@ npm run dev            # http://localhost:3000
 
 ### Datos
 
-Sin variables de entorno, la web usa **datos de prueba** (lo indica un aviso arriba de cada pantalla). Para conectarla al servicio externo, copia `.env.example` a `.env.local` y llena:
+Sin variables de entorno, la web usa **datos de prueba** (lo indica un aviso arriba de cada pantalla). Para conectarla a **staging** (#53, [`INTEGRACION.md`](INTEGRACION.md)), copia `.env.example` a `.env.local` y llena:
 
-- `SERVICIO_URL`: dirección del servicio externo de lógica financiera.
-- `SERVICIO_API_KEY`: su `X-Api-Key`. Solo la lee el servidor; nunca le pongas el prefijo `NEXT_PUBLIC_`.
+- `SERVICIO_EXTERNO_URL`: URL base de staging (la da Willy).
+- `SERVICIO_EXTERNO_TOKEN`: el JWT de la organización; va como `Authorization: Bearer`. Solo lo lee el servidor; nunca le pongas el prefijo `NEXT_PUBLIC_`.
+- `WEB_INDICE_API_KEY`: la llave con la que el bot alimenta el índice (`X-Api-Key`). Compártela con Estiven por canal privado.
 
-Las rutas del cliente HTTP (`src/lib/servicio/http.ts`) son provisionales hasta que se defina el contrato en #5.
+Con staging, `/natilleras` y su detalle leen la lista del **índice** (lo que el bot registra en `POST /api/indice/natilleras`, `/participaciones`, `/actividades` y `/solicitudes`, guardado en `web/data/indice.json`, ignorado por git) y el estado de cada contrato de staging (`currentStateRaw`). `/creditos`, `/pagos` y `/bitacora` todavía no están conectados: con staging muestran un aviso que lo dice (`src/components/PantallaSinConectar.tsx`).
+
+Con staging, el administrador ve las natilleras cuyo `administrador.telegramId` (lo manda el bot al índice) es su chat de Telegram (`DEMO_ADMIN_TELEGRAM_CHAT_ID`), no las que coinciden por nombre. Sin ese chat configurado, no ve ninguna. El bot reintenta sin duplicar: reenviar un id con los mismos datos responde 200; con otros datos, 409 y no cambia nada.
+
+`SERVICIO_URL` y `SERVICIO_API_KEY` son el cliente provisional anterior (`X-Api-Key`); solo se usan si no hay `SERVICIO_EXTERNO_URL`.
 
 ### Inicio de sesión
 
