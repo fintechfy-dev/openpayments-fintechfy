@@ -23,6 +23,7 @@ Las reglas del proyecto viven en `.claude/rules/` y Claude Code las carga solas.
 | `pruebas.md` | Qué se prueba siempre, tests que fallan de verdad, evidencia del pago real |
 | `revision.md` | Qué busca una revisión y las severidades comunes |
 | `agentes.md` | Cómo se escribe un agente o comando de Claude (frontera, veredicto, `tools` acotado) |
+| `checklist-entrega.md` | En cada commit y PR: `node scripts/revisar-entrega.mjs --rama` y lo que falta de la checklist (`docs/checklist-entrega.md`) |
 
 ## Cómo se trabaja
 
