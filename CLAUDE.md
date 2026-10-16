@@ -47,7 +47,7 @@ GitFlow (`CONTRIBUTING.md`): rama `feature/<frente>-<issue>-<tema>` desde `devel
 | Carpeta | Qué |
 |---|---|
 | `design-system/` | Marca, tokens, componentes y voz y tono. Skill: `natillera-design-system` |
-| `web/` | Web de la financiera y el administrador (Next.js) y backend del sistema: índice, avisos, Mini App y pagos de Open Payments. Skill: `natillera-web`; agentes `web-implementador`, `web-revisor`, `web-verificador-visual`; comando `/director-web`. Mapa: `web/INTEGRACION.md` |
+| `web/` | Web de la financiera y el administrador (Next.js) y backend del sistema: índice, avisos y pagos de Open Payments. Skill: `natillera-web`; agentes `web-implementador`, `web-revisor`, `web-verificador-visual`; comando `/director-web`. Mapa: `web/INTEGRACION.md` |
 | `telegram/` | Bot de Telegram (Node + grammY). Skill: `natillera-telegram`. Mapa: `telegram/INTEGRACION.md` |
 | `pagos/`, `integracion/` | Especificación de los pagos de Open Payments y guía del servicio externo. Skill: `natillera-open-payments` (explica y revisa; el código de Open Payments lo escribe el equipo) |
 | `docs/discovery/` | Historias, criterios y escenarios (`3-bdd/`), reglas de dinero (`4-logica-financiera/`) |
