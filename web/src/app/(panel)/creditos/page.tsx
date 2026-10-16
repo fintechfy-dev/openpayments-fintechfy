@@ -12,13 +12,13 @@ import { AvisoRespuestas } from "./AvisoRespuestas";
 import { agruparSolicitudes, textoAhorro, textoCondiciones, textoPendientes } from "./logica";
 import { RespuestaSolicitud } from "./RespuestaSolicitud";
 import "./creditos.css";
+import { FINANCIERA } from "@/lib/financiera";
 
 export const metadata = { title: "Créditos" };
 
 // Las solicitudes cambian cuando un participante pide un préstamo por el bot.
 export const dynamic = "force-dynamic";
 
-const FINANCIERA = "Financiera Aliada";
 
 export default async function Pagina() {
   // Solo la financiera presta; un administrador no ve solicitudes de otras personas.

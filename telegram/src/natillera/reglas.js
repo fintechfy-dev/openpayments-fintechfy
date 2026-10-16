@@ -102,9 +102,12 @@ export function fechasDeCobro(inicio, final, periodicidad) {
 // ---------- Números ----------
 
 // Acepta '50000', '50.000' o '$50.000'. Devuelve un entero o NaN.
+// El punto solo vale como separador de miles (grupos de 3): '5000.00' o '50.5' no se leen como
+// 500.000 y 505, se rechazan.
 export function leerMonto(texto) {
-  const limpio = String(texto).trim().replace(/^\$\s*/, '').replace(/\./g, '');
-  return /^\d+$/.test(limpio) ? Number(limpio) : NaN;
+  const limpio = String(texto).trim().replace(/^\$\s*/, '');
+  if (!/^\d{1,3}(\.\d{3})+$|^\d+$/.test(limpio)) return NaN;
+  return Number(limpio.replace(/\./g, ''));
 }
 
 // Acepta '1', '1.5', '1,5' o '1,5 %'. Devuelve un número o NaN.
@@ -150,16 +153,16 @@ export function validarInicio(texto, { hoy }) {
   return { valor: fecha };
 }
 
-export function validarFinal(texto, { hoy, inicio, periodicidad }) {
-  const fecha = leerFecha(texto, hoy);
+export function validarFinal(texto, { hoy, inicio }) {
+  // 'DD/MM' sin año se lee después de la primera cuota, no de hoy: con inicio el 1 de noviembre,
+  // '31/10' es el 31 de octubre del año siguiente.
+  const fecha = leerFecha(texto, inicio ?? hoy);
   if (!fecha) return { error: 'No entendí la fecha. Escríbela como día/mes/año.' };
   if (inicio) {
     const limite = sumarMeses(inicio, 12);
     if (fecha <= inicio) return { error: `La fecha final debe ser después del ${formatoFecha(inicio)}.` };
     if (fecha > limite) return { error: `La natillera puede durar hasta un año: máximo el ${formatoFecha(limite, { anio: true })}.` };
-    if (periodicidad && fechasDeCobro(inicio, fecha, periodicidad).length < 1) {
-      return { error: 'Con esas fechas no alcanza a haber ninguna cuota.' };
-    }
+    // Siempre hay al menos una cuota: la primera es el día de inicio, y la final va después.
   }
   return { valor: fecha };
 }
@@ -199,7 +202,7 @@ export function validarCampo(clave, texto, { limites, hoy, datos = {} }) {
     case 'cuota': return validarCuota(texto, limites);
     case 'periodicidad': return validarPeriodicidad(texto);
     case 'inicio': return validarInicio(texto, { hoy });
-    case 'final': return validarFinal(texto, { hoy, inicio: datos.inicio, periodicidad: datos.periodicidad });
+    case 'final': return validarFinal(texto, { hoy, inicio: datos.inicio });
     case 'cupo': return validarCupo(texto);
     case 'mora': return validarMora(texto, limites);
     default: return { error: 'Campo desconocido.' };

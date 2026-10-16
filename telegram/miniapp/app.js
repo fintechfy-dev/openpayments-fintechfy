@@ -5,6 +5,7 @@
 
 import { formatoCOP, formatoPorcentaje } from '../src/formato.js';
 import {
+  CAMPOS,
   CUPO_MAX,
   CUPO_MIN,
   PERIODICIDADES,
@@ -22,8 +23,10 @@ const TIPO = 'crear-natillera';
 const MAX_SEGMENTOS = 24;
 
 const tg = window.Telegram?.WebApp;
-// Fuera de Telegram el script existe pero no hay initData: se puede ver el diseño, no enviar.
-const enTelegram = Boolean(tg?.initData);
+// Fuera de Telegram el script de Telegram carga igual, pero con platform 'unknown'. No se usa initData:
+// viene vacío cuando la Mini App se abre desde un botón del teclado, que es justo como la abre el bot
+// (core.telegram.org/bots/webapps: "It is empty if the Mini App was launched from a keyboard button").
+const enTelegram = Boolean(tg && tg.platform && tg.platform !== 'unknown' && typeof tg.sendData === 'function');
 
 // Los límites vienen en la dirección (el bot los pone desde su .env). Si faltan, unos razonables.
 const q = new URLSearchParams(location.search);
@@ -169,14 +172,17 @@ function pintarMora() {
   $('mora-valor').textContent = `${formatoPorcentaje(estado.mora)} diario`;
 }
 
+// Control que recibe aria-invalid por cada campo (algunos no tienen un input con el nombre del campo).
+const CONTROL_DE = { cuota: 'cuota-rango', cupo: 'cupo-valor', mora: 'mora-rango' };
+
 function pintarErrores(errores) {
-  for (const clave of ['nombre', 'cuota', 'periodicidad', 'inicio', 'final', 'cupo', 'mora']) {
+  for (const { clave } of CAMPOS) {
     const visible = Boolean(errores[clave]) && (intentoEnviar || tocados.has(clave));
     const p = $(`error-${clave}`);
     p.hidden = !visible;
     p.textContent = visible ? errores[clave] : '';
-    const input = $(clave);
-    if (input) input.setAttribute('aria-invalid', String(visible));
+    const control = $(CONTROL_DE[clave] ?? clave);
+    if (control) control.setAttribute('aria-invalid', String(visible));
   }
 }
 
@@ -216,18 +222,23 @@ function pintarResumen(datos, valido) {
 
 // ---------- Botón de enviar ----------
 
-function configurarBotonPrincipal() {
-  if (!enTelegram) {
-    $('enviar-navegador').hidden = false;
-    $('fuera-de-telegram').hidden = false;
-    return;
-  }
+// Colores del botón de Telegram desde los tokens: se repinta cuando cambia el tema del teléfono.
+function pintarBotonPrincipal() {
   const estilo = getComputedStyle(document.documentElement);
   tg.MainButton.setParams({
     text: 'Revisar natillera',
     color: estilo.getPropertyValue('--primario').trim() || undefined,
     text_color: estilo.getPropertyValue('--sobre-primario').trim() || undefined,
   });
+}
+
+function configurarBotonPrincipal() {
+  if (!enTelegram) {
+    $('enviar-navegador').hidden = false;
+    $('fuera-de-telegram').hidden = false;
+    return;
+  }
+  pintarBotonPrincipal();
   tg.MainButton.show();
   tg.MainButton.onClick(enviar);
 }
@@ -319,7 +330,10 @@ conectar();
 actualizar();
 configurarBotonPrincipal();
 if (tg) {
-  tg.onEvent?.('themeChanged', aplicarTema);
+  tg.onEvent?.('themeChanged', () => {
+    aplicarTema();
+    if (enTelegram) pintarBotonPrincipal();
+  });
   tg.ready();
   tg.expand();
 }

@@ -14,8 +14,8 @@ import { requerirSesion } from "@/lib/sesion";
 import { puedeVerNatillera } from "@/lib/sesion/acceso";
 import { avanceAhorro, plural, segmentosCuotas, textoPeriodicidad } from "../presentacion";
 import "../natilleras.css";
+import { FINANCIERA } from "@/lib/financiera";
 
-const FINANCIERA = "Financiera Aliada";
 
 interface Props {
   params: Promise<{ id: string }>;
