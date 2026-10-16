@@ -22,4 +22,39 @@ La página usa el [design system](../design-system/): carga `design-system/token
 
 ## Cómo correrlo
 
-_Por completar en #8: stack, instalación, variables de `.env` y comando para arrancarla._
+Next.js + TypeScript. Necesita Node 20.9 o más reciente.
+
+```bash
+cd web
+npm install
+npm run dev            # http://localhost:3000
+```
+
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Arranca en modo desarrollo. Antes copia el design system (`npm run ds`). |
+| `npm run verificar` | Tipos, lint, pruebas y build: lo que debe pasar antes de un PR. |
+| `npm run capturas` | Con la web corriendo, toma capturas de cada pantalla en 360, 768, 1024 y 1280 px, en claro y oscuro, y avisa si alguna tiene scroll horizontal. Quedan en `web/.capturas/`. |
+
+### Datos
+
+Sin variables de entorno, la web usa **datos de prueba** (lo indica un aviso arriba de cada pantalla). Para conectarla al servicio externo, copia `.env.example` a `.env.local` y llena:
+
+- `SERVICIO_URL`: dirección del servicio externo de lógica financiera.
+- `SERVICIO_API_KEY`: su `X-Api-Key`. Solo la lee el servidor; nunca le pongas el prefijo `NEXT_PUBLIC_`.
+
+Las rutas del cliente HTTP (`src/lib/servicio/http.ts`) son provisionales hasta que se defina el contrato en #5.
+
+### Cómo está hecha
+
+- `src/lib/servicio/`: la única puerta al servicio externo (tipos, datos de prueba y cliente HTTP), solo de servidor.
+- `src/app/<pantalla>/`: una carpeta por pantalla. Las páginas son componentes de servidor; lo interactivo (aprobar créditos, refresco del registro de pagos) va en componentes de cliente pequeños.
+- Todo lo visual sale del [design system](../design-system/): `npm run ds` copia sus tokens, componentes, fuentes y logos.
+
+### Trabajar con Claude Code
+
+El repo trae lo necesario para que Claude construya la web con las reglas del proyecto:
+
+- Skills `natillera-web` (buenas prácticas de esta web) y `natillera-design-system` (marca y componentes), en `.claude/skills/`.
+- Agentes `web-implementador`, `web-revisor` y `web-verificador-visual`, en `.claude/agents/`.
+- Comando `/director-web <encargo>`: planea, reparte pantallas entre implementadores en paralelo, revisa, verifica en 3 anchos y deja el PR listo.
