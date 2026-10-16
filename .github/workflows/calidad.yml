@@ -1,0 +1,81 @@
+# Lo mismo que se exige antes de un PR (.claude/rules/git-y-entrega.md), corrido por GitHub en cada PR,
+# para que no dependa de que alguien se acuerde de correrlo en su máquina.
+name: Calidad
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+
+concurrency:
+  group: calidad-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  entrega:
+    name: Checklist de entrega y secretos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # Sale con código 1 ante un secreto o un .env versionado; lo demás son avisos en el log.
+      - run: node scripts/revisar-entrega.mjs --rama
+
+  web:
+    name: Web (tipos, lint, pruebas y build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      # Sin .env: la web arranca con los datos de prueba, como en un clon nuevo.
+      - run: npm run verificar
+
+  telegram:
+    name: Bot de Telegram (pruebas)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: telegram
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: telegram/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  pagos:
+    name: Servicio de pagos (pruebas)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pagos
+    steps:
+      - uses: actions/checkout@v4
+      # Hoy pagos/ solo tiene su README: el job queda en verde hasta que el equipo agregue el paquete.
+      - id: hay
+        working-directory: .
+        run: test -f pagos/package.json && echo "codigo=si" >> "$GITHUB_OUTPUT" || echo "pagos/ todavía no tiene package.json"
+      - if: steps.hay.outputs.codigo == 'si'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - if: steps.hay.outputs.codigo == 'si'
+        run: npm ci
+      - if: steps.hay.outputs.codigo == 'si'
+        run: npm test --if-present
