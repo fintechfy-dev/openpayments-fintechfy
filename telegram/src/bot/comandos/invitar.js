@@ -1,12 +1,14 @@
-import { Composer } from 'grammy';
+import { Composer, InlineKeyboard } from 'grammy';
 import { escaparHTML } from '../../formato.js';
 import { nuevoCodigoDeInvitacion } from '../../externo/crear-natillera.js';
+import { formatoFecha } from '../../natillera/reglas.js';
+import { enlaceDeInvitacion, textoInvitacion } from '../../natillera/invitacion.js';
 
 // El enlace de invitación (US-003, #16): se entrega al crear la natillera y /invitar lo vuelve a dar.
 // Van dos mensajes: uno para el administrador y otro listo para reenviar al chat del grupo, sin formato,
 // para que se copie tal cual.
 
-export const enlaceDeInvitacion = (usuarioBot, codigo) => `https://t.me/${usuarioBot}?start=${codigo}`;
+export { enlaceDeInvitacion, textoInvitacion } from '../../natillera/invitacion.js';
 
 export function textoParaElAdmin(nombreNatillera, inscritos) {
   return [
@@ -18,15 +20,15 @@ export function textoParaElAdmin(nombreNatillera, inscritos) {
     .join('\n');
 }
 
-export function textoInvitacion(nombreNatillera, enlace) {
-  return [
-    `Únete a nuestra natillera «${nombreNatillera}» para ahorrar juntos para diciembre.`,
-    'La plata la guarda Financiera Aliada, no una persona.',
-    `Entra aquí y mira las reglas: ${enlace}`,
-  ].join('\n');
-}
-
 export const TEXTO_SIN_NATILLERA = 'Todavía no administras ninguna natillera. Crea una con /crear.';
+export const PREGUNTA_CUAL = '¿De cuál natillera quieres el enlace?';
+export const BOTON_ENLACE = 'Enlace de invitación';
+export const TEXTO_NO_ES_TUYA = 'Esa natillera no la administras tú.';
+
+// El botón lleva el id de la natillera; solo responde a quien la administra.
+export const datoInvitar = (natilleraId) => `ad:inv:${natilleraId}`;
+// Dos natilleras pueden llamarse igual: la fecha en que se crearon las distingue.
+export const botonDeNatillera = (fila) => `${fila.nombre} · ${formatoFecha(String(fila.creada_en).slice(0, 10))}`;
 
 export async function enviarInvitacion(ctx, { nombre, codigo, inscritos = 0 }) {
   await ctx.reply(textoParaElAdmin(nombre, inscritos), { parse_mode: 'HTML' });
@@ -38,15 +40,36 @@ export async function enviarInvitacion(ctx, { nombre, codigo, inscritos = 0 }) {
 export function invitar({ registro, nuevoCodigo = nuevoCodigoDeInvitacion }) {
   const comandos = new Composer();
 
+  // Las natilleras creadas antes del enlace no tienen código: se les da uno aquí.
+  const enviar = (ctx, natillera) =>
+    enviarInvitacion(ctx, {
+      nombre: natillera.nombre,
+      codigo: registro.codigoDeInvitacion(natillera.natillera_id, nuevoCodigo()),
+      inscritos: registro.contarParticipaciones(natillera.natillera_id),
+    });
+
   comandos.command('invitar', async (ctx) => {
-    const natillera = registro.natilleraDelAdmin(ctx.from.id);
-    if (!natillera) {
+    const natilleras = registro.natillerasDelAdmin(ctx.from.id);
+    if (!natilleras.length) {
       await ctx.reply(TEXTO_SIN_NATILLERA);
       return;
     }
-    // Las natilleras creadas antes del enlace no tienen código: se les da uno aquí.
-    const codigo = registro.codigoDeInvitacion(natillera.natillera_id, nuevoCodigo());
-    await enviarInvitacion(ctx, { nombre: natillera.nombre, codigo, inscritos: registro.contarParticipaciones(natillera.natillera_id) });
+    if (natilleras.length === 1) {
+      await enviar(ctx, natilleras[0]);
+      return;
+    }
+    const teclado = InlineKeyboard.from(natilleras.map((fila) => [InlineKeyboard.text(botonDeNatillera(fila), datoInvitar(fila.natillera_id))]));
+    await ctx.reply(PREGUNTA_CUAL, { reply_markup: teclado });
+  });
+
+  comandos.callbackQuery(/^ad:inv:(.+)$/, async (ctx) => {
+    const natillera = registro.natillera(ctx.match[1]);
+    if (!natillera || Number(natillera.admin_telegram_id) !== ctx.from.id) {
+      await ctx.answerCallbackQuery({ text: TEXTO_NO_ES_TUYA });
+      return;
+    }
+    await ctx.answerCallbackQuery();
+    await enviar(ctx, natillera);
   });
 
   return comandos;

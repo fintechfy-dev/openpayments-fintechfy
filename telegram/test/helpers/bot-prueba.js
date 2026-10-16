@@ -36,10 +36,13 @@ export function crearFetchFalso(llamadas) {
     const method = String(url).split('/').at(-1);
     const payload = init?.body ? JSON.parse(init.body) : undefined;
     llamadas.push({ method, payload });
-    const result =
-      method === 'sendMessage'
-        ? { message_id: siguienteMensaje++, date: 0, chat: { id: payload.chat_id, type: 'private' }, text: payload.text }
-        : true;
+    let result = true;
+    if (method === 'sendMessage') {
+      result = { message_id: siguienteMensaje++, date: 0, chat: { id: payload.chat_id, type: 'private' }, text: payload.text };
+    } else if (method === 'getChat') {
+      // Un chat privado con nombre: «Persona <id>».
+      result = { id: payload.chat_id, type: 'private', first_name: 'Persona', last_name: String(payload.chat_id) };
+    }
     return new Response(JSON.stringify({ ok: true, result }), {
       headers: { 'content-type': 'application/json' },
     });

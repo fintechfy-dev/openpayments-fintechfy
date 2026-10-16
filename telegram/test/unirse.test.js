@@ -209,7 +209,7 @@ test('unirse: pide la billetera, crea la participación, avisa a la web y al adm
   assert.equal(servicio.creados[0].templateName, 'natillera-participacion');
   assert.equal(servicio.creados[0].parameters.WalletParticipante.value, 'https://ilp.interledger-test.dev/beto');
   assert.equal(servicio.creados[0].parameters.ParticipanteId.value, String(BETO));
-  assert.deepEqual({ ...registro.participacionEn('nat-1', BETO) }, { participacion_id: 'par-uno', contract_id: 'c-par-1', natillera_id: 'nat-1', telegram_id: BETO });
+  assert.deepEqual({ ...registro.participacionEn('nat-1', BETO) }, { participacion_id: 'par-uno', contract_id: 'c-par-1', natillera_id: 'nat-1', telegram_id: BETO, nombre: 'Ana' });
   assert.deepEqual(avisosWeb, [
     { natilleraId: 'nat-1', participacionId: 'par-uno', contractId: 'c-par-1', nombre: 'Ana', telegramId: BETO, billetera: 'https://ilp.interledger-test.dev/beto' },
   ]);
