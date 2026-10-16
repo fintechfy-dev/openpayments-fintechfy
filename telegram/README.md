@@ -33,10 +33,12 @@ Node.js 24 o más nuevo y [grammY](https://grammy.dev). Todo se corre **dentro d
    ```
 4. Escríbele `/start` al bot. En la terminal queda el id del chat, que sirve como `TEAM_CHAT_ID`.
 5. En el chat del equipo, `/diag` muestra la configuración en uso y cuántas sesiones hay guardadas. En cualquier otro chat no responde.
-6. Para probar las conversaciones: `/eco` hace dos preguntas (nombre y cuota). Se pueden contestar aunque el bot se reinicie entre una y otra, y `/cancelar` deja todo como estaba. Las sesiones quedan en `telegram/data/bot.db` (ignorada por git).
+6. `/crear` (o el botón de la bienvenida) arma la natillera: con `MINIAPP_URL` ofrece el formulario de la Mini App o responder en el chat; sin ella, pregunta en el chat con botones. Las respuestas sobreviven a un reinicio del bot y `/cancelar` deja todo como estaba. Las sesiones quedan en `telegram/data/bot.db` (ignorada por git). Por ahora termina en una vista previa: crear de verdad espera el contrato de #5.
+
+**Mini App:** el formulario está en [`miniapp/`](miniapp/) y necesita una dirección https (GitHub Pages o un túnel). Cómo publicarla y las decisiones: [`docs/crear-natillera.md`](docs/crear-natillera.md).
 
 Solo puede correr una copia del bot por token: si sale `409: Conflict`, hay otra abierta.
 
 **Pruebas:** `npm test` (no necesitan token ni conexión).
 
-**Plan, decisiones y avance del esqueleto:** [`docs/plan-esqueleto.md`](docs/plan-esqueleto.md).
+**Plan, decisiones y avance del esqueleto:** [`docs/plan-esqueleto.md`](docs/plan-esqueleto.md). **Crear la natillera (#13):** [`docs/crear-natillera.md`](docs/crear-natillera.md).

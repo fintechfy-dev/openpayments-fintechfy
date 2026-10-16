@@ -18,6 +18,11 @@ export function formatoCOP(valor) {
   return negativo ? `-${texto}` : texto;
 }
 
+// Para mensajes con parse_mode HTML: todo texto que escribió una persona pasa por aquí.
+export function escaparHTML(texto) {
+  return String(texto).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 // Porcentaje con coma decimal: 2.5 → "2,5 %".
 export function formatoPorcentaje(valor) {
   return `${String(valor).replace('.', ',')} %`;

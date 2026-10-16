@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Crear natillera</title>
+  <!-- Se sirve desde la raíz del repositorio (GitHub Pages o `python -m http.server`), así que el
+       design system y las reglas del bot se cargan con rutas relativas. -->
+  <link rel="stylesheet" href="../../design-system/tokens/tokens.css">
+  <link rel="stylesheet" href="../../design-system/components/bundle.css">
+  <link rel="stylesheet" href="miniapp.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="../../design-system/components/bundle.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main class="ma">
+    <header class="ma-cabeza">
+      <img class="ma-logo" src="../../design-system/assets/logos/kit/01_simbolo/marranito_96px.png" alt="" width="48" height="48">
+      <div>
+        <h1 class="ma-titulo">Crea tu natillera</h1>
+        <p class="nt-muted ma-sub">Pon las reglas. Antes de crearla, revisas el resumen en el chat.</p>
+      </div>
+    </header>
+
+    <form id="formulario" class="ma-form" novalidate>
+      <section class="nt-card ma-campo">
+        <label class="ma-etiqueta" for="nombre"><span data-icono="grupo"></span>Nombre</label>
+        <input class="ma-input" id="nombre" name="nombre" type="text" autocomplete="off" maxlength="40" placeholder="Los Primos">
+        <p class="ma-error" id="error-nombre" role="alert" hidden></p>
+      </section>
+
+      <section class="nt-card ma-campo">
+        <label class="ma-etiqueta" for="cuota-rango"><span data-icono="cuota"></span>Cuota de cada persona</label>
+        <output class="ma-grande nt-num" id="cuota-valor" for="cuota-rango"></output>
+        <input class="ma-rango" id="cuota-rango" type="range">
+        <div class="ma-chips" id="cuota-chips" role="group" aria-label="Montos sugeridos"></div>
+        <p class="ma-error" id="error-cuota" role="alert" hidden></p>
+      </section>
+
+      <section class="nt-card ma-campo">
+        <span class="ma-etiqueta" id="periodicidad-etiqueta"><span data-icono="reloj"></span>Cada cuánto se cobra</span>
+        <div class="ma-segmentos" id="periodicidad" role="radiogroup" aria-labelledby="periodicidad-etiqueta"></div>
+        <p class="ma-error" id="error-periodicidad" role="alert" hidden></p>
+      </section>
+
+      <section class="nt-card ma-campo">
+        <span class="ma-etiqueta"><span data-icono="calendario"></span>Fechas</span>
+        <div class="ma-fechas">
+          <label class="ma-fecha">
+            <span class="nt-dato__etiqueta">Primera cuota</span>
+            <input class="ma-input" id="inicio" name="inicio" type="date">
+          </label>
+          <label class="ma-fecha">
+            <span class="nt-dato__etiqueta">Hasta</span>
+            <input class="ma-input" id="final" name="final" type="date">
+          </label>
+        </div>
+        <div class="ma-chips" id="final-chips" role="group" aria-label="Duraciones sugeridas"></div>
+        <p class="ma-error" id="error-inicio" role="alert" hidden></p>
+        <p class="ma-error" id="error-final" role="alert" hidden></p>
+      </section>
+
+      <section class="nt-card ma-campo">
+        <span class="ma-etiqueta" id="cupo-etiqueta"><span data-icono="grupo"></span>Personas para arrancar</span>
+        <div class="ma-stepper" role="group" aria-labelledby="cupo-etiqueta">
+          <button type="button" class="nt-btn nt-btn--secundario ma-paso" id="cupo-menos" aria-label="Una persona menos">−</button>
+          <output class="ma-grande nt-num" id="cupo-valor" aria-live="polite"></output>
+          <button type="button" class="nt-btn nt-btn--secundario ma-paso" id="cupo-mas" aria-label="Una persona más">+</button>
+        </div>
+        <p class="nt-muted ma-ayuda">Contándote a ti. Mínimo 3.</p>
+        <p class="ma-error" id="error-cupo" role="alert" hidden></p>
+      </section>
+
+      <section class="nt-card ma-campo">
+        <label class="ma-etiqueta" for="mora-rango"><span data-icono="alerta"></span>Mora diaria si una cuota queda pendiente</label>
+        <output class="ma-grande nt-num" id="mora-valor" for="mora-rango"></output>
+        <input class="ma-rango" id="mora-rango" type="range" step="0.1" min="0">
+        <p class="ma-error" id="error-mora" role="alert" hidden></p>
+      </section>
+
+      <section class="nt-card nt-card--destacada ma-resumen" aria-live="polite">
+        <div class="nt-dato">
+          <span class="nt-dato__etiqueta">Cada quien ahorra</span>
+          <span class="nt-dato__valor nt-num" id="resumen-total">—</span>
+        </div>
+        <p class="ma-resumen__linea" id="resumen-cuotas"></p>
+        <div class="nt-cuotas" id="resumen-barra" aria-hidden="true"></div>
+        <p class="nt-muted ma-resumen__linea" id="resumen-fechas"></p>
+        <p class="ma-resumen__linea" id="resumen-grupo"></p>
+      </section>
+
+      <div class="nt-aviso nt-aviso--info" role="status">
+        <span data-icono="candado"></span>
+        <div>
+          <p class="nt-aviso__titulo">La plata la guarda Financiera Aliada</p>
+          <p class="nt-aviso__texto">No una persona. Nadie del grupo la puede sacar, ni el administrador.</p>
+        </div>
+      </div>
+
+      <!-- Fuera de Telegram (para revisar el diseño en el navegador). Dentro, se usa el botón de Telegram. -->
+      <button type="submit" class="nt-btn nt-btn--primario nt-btn--bloque" id="enviar-navegador" hidden>Revisar natillera</button>
+      <p class="nt-muted ma-ayuda" id="fuera-de-telegram" hidden>Abre este formulario desde el botón del bot para enviarlo.</p>
+    </form>
+  </main>
+</body>
+</html>
