@@ -147,7 +147,13 @@ export function flujoCrear(config, { hoy = () => hoyEnBogota(), crearNatillera }
         return;
       }
       await crearNatillera(datos, ctx);
-      await ctx.reply(textoCreada(nombre, datos), { parse_mode: 'HTML' });
+      // Ya existe en el servicio externo: si el mensaje no sale, no se relanza el error, porque el
+      // flujo quedaría abierto y confirmar otra vez crearía la natillera dos veces.
+      try {
+        await ctx.reply(textoCreada(nombre, datos), { parse_mode: 'HTML' });
+      } catch {
+        // El manejador de errores del bot no se entera; la natillera quedó creada.
+      }
     },
   };
 }

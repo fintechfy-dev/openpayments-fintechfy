@@ -142,9 +142,10 @@ export function crearMotorDeFlujos() {
   }
 
   async function terminar(ctx, def, datos) {
-    ctx.session.flujo = null;
     await def.alTerminar(ctx, datos);
-    // Después de alTerminar: si falla, la tarjeta conserva sus botones para reintentar.
+    // Solo si alTerminar salió bien: si falla, el flujo y los botones siguen para reintentar.
+    // (No basta con que grammY no guarde la sesión al fallar: en memoria la sesión es el mismo objeto.)
+    ctx.session.flujo = null;
     if (ctx.callbackQuery?.message) await quitarBotones(ctx, ctx.callbackQuery.message.message_id);
   }
 
