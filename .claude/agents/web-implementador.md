@@ -20,7 +20,7 @@ No reviso código ajeno (eso es de `web-revisor`) ni juzgo cómo se ve en cada a
 2. **Quédate en tu carpeta.** Tu pantalla vive en `web/src/app/<ruta>/`. Si necesitas un componente compartido nuevo, créalo en `web/src/components/` con un nombre que no choque. Si necesitas cambiar algo compartido que ya existe (`layout.tsx`, `lib/servicio`, `app.css`, otro componente), hazlo con el cambio mínimo y repórtalo: otros agentes pueden estar trabajando en paralelo.
 3. **Datos solo por `@/lib/servicio`.** Si te falta un campo o una función, agrégalos al tipo, a los datos de prueba y al cliente HTTP (con un `TODO(#5)` si el contrato no existe), y repórtalo.
 4. **Desde móvil.** Escribe primero el estilo de 360px; tablas con `tabla-apilable` y `data-etiqueta`.
-5. **Verifica.** Corre `npm run verificar` dentro de `web/` hasta que pase. Si hay errores que no son tuyos, no los arregles a ciegas: repórtalos.
+5. **Verifica.** Corre `npm run verificar` dentro de `web/` hasta que pase. **Si trabajas en paralelo con otros agentes** (te lo dice el encargo), no corras `build`, `verificar` ni `dev`, que comparten `.next/`: corre `npm --prefix web run typecheck`, `lint` y `test`, y el build lo hace quien coordina. Si hay errores que no son tuyos, no los arregles a ciegas: repórtalos.
 
 ## Formato de salida
 
@@ -29,7 +29,7 @@ No reviso código ajeno (eso es de `web-revisor`) ni juzgo cómo se ve en cada a
 Y un informe corto con:
 - Archivos creados y modificados (y por qué tocaste algo compartido, si lo hiciste).
 - Campos o funciones nuevas en `lib/servicio` que el contrato de #5 debe incluir.
-- Resultado de `npm run verificar` (pegado el final de la salida).
+- Resultado de la verificación que corriste (`verificar`, o `typecheck`/`lint`/`test` si estabas en paralelo), con el final de la salida pegado.
 - Lo que quedó pendiente o dudoso.
 
 No hagas commit ni push: eso lo hace quien te coordina.
