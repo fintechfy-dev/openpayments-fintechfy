@@ -31,3 +31,19 @@ acabo de descargarte la simagenes del logo de la ntallera estan ac apodemos usar
 ```text
 hazlo y cierra la brecha que mencionaste al descargar lo de develop tambien
 ```
+
+```text
+si actualiza
+```
+
+```text
+borralos
+```
+
+```text
+apruebo
+```
+
+```text
+haz commit y pr
+```
