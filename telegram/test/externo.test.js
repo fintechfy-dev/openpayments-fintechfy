@@ -136,13 +136,15 @@ test('crear la natillera: contrato en staging, registro y aviso a la web', async
     log: logSilencioso,
     ahora: () => new Date('2026-10-16T20:00:00Z'),
     nuevoId: () => 'abc',
+    nuevoCodigo: () => 'Cod-123_abcd',
   });
   const ctx = { from: { id: 100, first_name: 'Ana', last_name: 'Pérez' } };
-  const { natilleraId, contractId, avisoWeb } = await crear(DATOS, ctx);
+  const { natilleraId, contractId, codigoInvitacion, avisoWeb } = await crear(DATOS, ctx);
   await avisoWeb;
 
   assert.equal(natilleraId, 'nat-abc');
   assert.equal(contractId, 'c-1');
+  assert.equal(codigoInvitacion, 'Cod-123_abcd');
   assert.equal(llamadas[0].cuerpo.parameters.NatilleraId.value, 'nat-abc');
   assert.deepEqual({ ...registro.natillera('nat-abc') }, {
     natillera_id: 'nat-abc',
@@ -150,7 +152,9 @@ test('crear la natillera: contrato en staging, registro y aviso a la web', async
     nombre: 'Los Primos',
     admin_telegram_id: 100,
     creada_en: '2026-10-16T20:00:00.000Z',
+    codigo_invitacion: 'Cod-123_abcd',
   });
+  assert.equal(registro.natilleraPorCodigo('Cod-123_abcd').natillera_id, 'nat-abc');
   assert.deepEqual(avisosWeb, [
     {
       natilleraId: 'nat-abc',

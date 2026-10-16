@@ -35,5 +35,6 @@ export function crearAvisoWeb({ url, apiKey, log, fetch = globalThis.fetch, espe
 
   return {
     natillera: (cuerpo) => avisar('/api/indice/natilleras', cuerpo),
+    participacion: (cuerpo) => avisar('/api/indice/participaciones', cuerpo),
   };
 }

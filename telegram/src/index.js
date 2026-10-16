@@ -8,6 +8,7 @@ import { TEXTO_MENU, urlMiNatillera } from './bot/comandos/mi-natillera.js';
 import { crearRegistro } from './registro.js';
 import { crearClienteExterno } from './externo/cliente.js';
 import { crearNatilleraEnServicio } from './externo/crear-natillera.js';
+import { crearUnirse } from './externo/unirse.js';
 import { crearAvisoWeb } from './web/indice.js';
 import { crearDespachador } from './avisos/despachar.js';
 import { archivoDeSecretos, iniciarWebhookDeAvisos, leerSecretosDeAvisos } from './avisos/webhook.js';
@@ -50,7 +51,9 @@ const crearNatillera = servicio
   : undefined;
 if (!servicio) log.warn('Sin SERVICIO_EXTERNO_URL: /crear termina en una vista previa y no llegan avisos.');
 
-const bot = crearBot(config, { log, db, crearNatillera, servicio, registro });
+const unirse = servicio ? crearUnirse({ servicio, registro, web, log }) : undefined;
+
+const bot = crearBot(config, { log, db, crearNatillera, servicio, registro, unirse });
 
 // Avisos de staging (#6): por webhook si hay puerto, si no, por el flujo en vivo.
 const avisos = new AbortController();

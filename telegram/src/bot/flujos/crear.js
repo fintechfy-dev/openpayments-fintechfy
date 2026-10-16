@@ -15,6 +15,7 @@ import {
   validarCampo,
   validarNatillera,
 } from '../../natillera/reglas.js';
+import { enviarInvitacion } from '../comandos/invitar.js';
 
 // Crear la natillera (US-001, #13), de dos formas que terminan en el mismo resumen:
 // - en el chat, una pregunta a la vez con botones (motor de flujos);
@@ -146,11 +147,13 @@ export function flujoCrear(config, { hoy = () => hoyEnBogota(), crearNatillera }
         await ctx.reply(textoVistaPrevia(nombre, datos), { parse_mode: 'HTML' });
         return;
       }
-      await crearNatillera(datos, ctx);
-      // Ya existe en el servicio externo: si el mensaje no sale, no se relanza el error, porque el
+      const creada = await crearNatillera(datos, ctx);
+      // Ya existe en el servicio externo: si un mensaje no sale, no se relanza el error, porque el
       // flujo quedaría abierto y confirmar otra vez crearía la natillera dos veces.
       try {
         await ctx.reply(textoCreada(nombre, datos), { parse_mode: 'HTML' });
+        // US-003: el enlace de invitación sale apenas se crea; /invitar lo vuelve a dar.
+        if (creada?.codigoInvitacion) await enviarInvitacion(ctx, { nombre: datos.nombre, codigo: creada.codigoInvitacion });
       } catch {
         // El manejador de errores del bot no se entera; la natillera quedó creada.
       }

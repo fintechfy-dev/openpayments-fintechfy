@@ -1,0 +1,40 @@
+/* Panel del administrador: lo propio de esta pantalla. La base viene de ../miniapp.css y las tarjetas,
+   reglas y personas de ../natillera/natillera.css (prefijo mn-). */
+
+.ad-selector {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--espacio-2);
+  margin-bottom: var(--espacio-4);
+}
+.ad-selector:empty { display: none; }
+
+.ad-opcion {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--espacio-3);
+  min-height: var(--control-alto);
+  padding: var(--espacio-2) var(--espacio-4);
+  border: 1.5px solid var(--borde); border-radius: var(--radio-md);
+  background: var(--superficie-elevada); color: var(--tinta);
+  font: inherit; font-weight: 700; text-align: left; cursor: pointer;
+}
+.ad-opcion span { min-width: 0; overflow-wrap: anywhere; }
+.ad-opcion small { flex: none; font-weight: 400; color: var(--tinta-suave); }
+.ad-opcion[aria-pressed="true"] { border-color: var(--primario); background: var(--primario-suave); color: var(--primario-texto); }
+.ad-opcion:focus-visible { outline: 3px solid var(--foco, var(--primario)); outline-offset: 2px; }
+
+.ad-cabeza { display: grid; gap: var(--espacio-1); }
+.ad-cabeza h2 { margin: 0; font-family: var(--font-display); font-weight: 900; font-size: 20px; overflow-wrap: anywhere; }
+.ad-cabeza .ad-fila { display: flex; flex-wrap: wrap; align-items: center; gap: var(--espacio-2); }
+
+/* .mn-personas li (natillera.css) pone display: flex; aquí hace falta la rejilla para el detalle. */
+.mn-personas .ad-persona { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--espacio-1) var(--espacio-3); }
+.ad-persona__nombre { min-width: 0; overflow-wrap: anywhere; font-weight: 700; }
+.ad-persona__detalle { grid-column: 2 / -1; font-size: 14px; color: var(--tinta-suave); }
+.ad-tu { font-weight: 400; color: var(--tinta-suave); }
+
+.ad-enlace {
+  margin: 0; padding: var(--espacio-3);
+  border-radius: var(--radio-md); background: var(--superficie);
+  font-family: ui-monospace, monospace; font-size: 14px; overflow-wrap: anywhere;
+}
+.ad-acciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--espacio-2); }
+
+#aviso-demo:not(:empty) { margin-bottom: var(--espacio-4); }
