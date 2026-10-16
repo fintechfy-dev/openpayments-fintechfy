@@ -6,11 +6,11 @@ El bot donde los integrantes de la natillera y su administrador hacen todo: crea
 
 ## Contratos
 
-- **Con el motor:** crea y consulta natilleras y participantes. El contrato se escribe en [`../motor/README.md`](../motor/README.md) (#5).
+- **Con el servicio externo de lógica financiera:** crea y consulta natilleras, participantes y préstamos. El contrato se escribe en [`../integracion/README.md`](../integracion/README.md) (#5).
 - **Con el servicio de pagos:** inicia el permiso interactivo de cada participante y recibe la vuelta después de que aprueba en su billetera (US-005, US-005-INT). Ver [`../pagos/README.md`](../pagos/README.md) (#4).
-- **Avisos del motor:** cobro hecho, permiso rechazado, mora, préstamo y liquidación (#6). _Por definir: webhook del bot o consulta periódica._
+- **Avisos:** cobro hecho, permiso rechazado, mora, préstamo y liquidación (#6). _Por definir: webhook del bot o consulta periódica._
 
-El bot no mueve dinero: lo hacen el motor y el servicio de pagos.
+El bot no mueve dinero: eso pasa en el servicio de pagos.
 
 ## Cómo correrlo
 

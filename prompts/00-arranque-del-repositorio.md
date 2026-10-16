@@ -33,3 +33,9 @@ ok, ahora necesito contarte como vamos a trabajar para poder actualizar el plan 
 4. vamos a trabajar full gitflow y el equipo lo debe de saber a traves del repo
 5. el repo es el que nos va a ayudar a organizar
 ```
+
+```text
+ten en cuenta que siempre vamos a hablar del motor finaciero con un servicio externo que nada tiene que ver en esta hackthon mas que como un n8n que contiene la logica financiera, nada mas ademas 
+
+ahora dime que debo de aclarar nuevamente
+```

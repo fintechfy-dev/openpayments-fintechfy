@@ -6,7 +6,6 @@ Closes #
 
 - [ ] Telegram
 - [ ] Web
-- [ ] Motor
 - [ ] Pagos
 
 ## Antes de fusionar

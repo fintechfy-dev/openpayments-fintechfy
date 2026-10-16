@@ -1,12 +1,12 @@
-# Servicio de pagos (Open Payments)
+# Frente Pagos: servicio de Open Payments
 
-Lo único del sistema que habla con Open Payments. Es parte del frente Motor y es lo que más mira el jurado: un pago de punta a punta con solicitud, autorización, ejecución y finalización.
+Lo único del sistema que habla con Open Payments, y lo que más mira el jurado: un pago de punta a punta con solicitud, autorización, ejecución y finalización. El frente también lleva la [integración con el servicio externo de lógica financiera](../integracion/).
 
-**Issues:** [pagos](https://github.com/fintechfy-dev/openpayments-fintechfy/issues?q=is%3Aopen+label%3Apagos). Empieza por #3 (probar el cobro recurrente con un solo permiso) y #4 (el servicio).
+**Issues:** [frente: pagos](https://github.com/fintechfy-dev/openpayments-fintechfy/issues?q=is%3Aopen+label%3A%22frente%3A+pagos%22). Empieza por #3 (probar el cobro recurrente con un solo permiso) y #4 (el servicio).
 
-## Lo que el motor ya espera
+## Lo que pide el servicio externo
 
-Contrato en [`open-payments.api.json`](../docs/discovery/4-fnd-motor/apis/open-payments.api.json). Autenticación con el encabezado `X-Api-Key`.
+Contrato en [`open-payments.api.json`](../docs/discovery/4-logica-financiera/apis/open-payments.api.json). Autenticación con el encabezado `X-Api-Key`.
 
 | Operación | Ruta | Qué hace |
 |---|---|---|

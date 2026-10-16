@@ -4,7 +4,7 @@ about: Algo por hacer que no es una historia del BDD
 labels: tarea
 ---
 
-**Frente:** Telegram / Web / Motor / Pagos
+**Frente:** Telegram / Web / Pagos
 
 **Qué hay que hacer**
 

@@ -12,11 +12,11 @@ Todo el trabajo pasa por el repositorio: cada cosa por hacer es un **issue**, ca
 | `release/entrega` | Se corta de `develop` el sábado a las 10:30 para la entrega. | Solo arreglos |
 | `hotfix/<tema>` | Arreglo urgente sobre `main` después de la release. Sale de `main`. | Tus commits |
 
-Ejemplos de nombre: `feature/telegram-15-crear-natillera`, `feature/pagos-4-servicio-open-payments`, `feature/web-9-lista-natilleras`.
+Ejemplos de nombre: `feature/telegram-15-crear-natillera`, `feature/pagos-4-servicio-open-payments`, `feature/web-9-lista-natilleras`. Los frentes son `telegram`, `web` y `pagos`.
 
 ## El ciclo de un issue
 
-1. **Elige un issue** en [Issues](https://github.com/fintechfy-dev/openpayments-fintechfy/issues) y asígnatelo (*Assignees*). Filtra por tu frente con las etiquetas `frente: telegram`, `frente: web`, `frente: motor` o `pagos`. Primero lo que tiene `núcleo`.
+1. **Elige un issue** en [Issues](https://github.com/fintechfy-dev/openpayments-fintechfy/issues) y asígnatelo (*Assignees*). Filtra por tu frente con las etiquetas `frente: telegram`, `frente: web` o `frente: pagos`. Primero lo que tiene `núcleo`.
 2. **Crea tu rama desde `develop`:**
    ```bash
    git checkout develop
@@ -46,7 +46,7 @@ Si hay conflictos, resuélvelos en tu rama, nunca en `develop`.
 
 ## Reglas que no se negocian
 
-- **Todo el código se escribe durante el evento.** El motor financiero existía antes: se usa como servicio y su código **no** se copia aquí (issue #2).
+- **Todo el código se escribe durante el evento.** La lógica financiera vive en un servicio externo, como un n8n: no es parte del proyecto y aquí solo va el código que lo llama.
 - **Secretos fuera del repo.** Claves de Open Payments, token del bot y llaves de API van en `.env`, que está en `.gitignore`. El repo es público. Si se sube un secreto por error, avisa de inmediato: se rota la clave.
 - **Prompts reales en `prompts/`.** Cada vez que uses IA para programar, copia el prompt tal cual en `prompts/<frente>-<tema>.md`. Un resumen no cumple la política de la hackathon.
 - **`AI_USAGE.md` al día.** En el mismo PR, agrega a su tabla los archivos que tocaste, con qué herramienta y cuánta IA.

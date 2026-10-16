@@ -16,8 +16,10 @@ Un bot de Telegram donde el grupo arma su natillera, cada participante autoriza 
 |---|---|---|
 | Bot de Telegram | [`telegram/`](telegram/) | Integrantes de la natillera y su administrador |
 | Página web | [`web/`](web/) | La financiera y el administrador: gestionar natilleras y ver solicitudes de crédito |
-| Motor financiero | [`motor/`](motor/) | Guarda el estado y aplica las reglas. Existía antes del evento: se usa como servicio |
 | Servicio de pagos | [`pagos/`](pagos/) | Lo único que habla con Open Payments: cobrar, pagar y desembolsar |
+| Integración | [`integracion/`](integracion/) | La conexión con el servicio externo de lógica financiera |
+
+Las reglas de dinero (cobros, mora, crédito, liquidación) las aplica un **servicio externo de lógica financiera**, como un n8n que contiene esa lógica. No forma parte de esta hackathon: el proyecto lo llama por API.
 
 El diagrama, los contratos entre piezas y el orden de trabajo están en el [plan de trabajo](docs/plan-de-trabajo.md).
 
@@ -39,7 +41,7 @@ Las claves de Open Payments y el token del bot van en un archivo `.env` que **nu
 
 ## Discovery
 
-En [`docs/discovery/`](docs/discovery/) está el diseño hecho **antes** del evento: el mapa de impacto, el mapa de historias, las historias con sus criterios y escenarios Gherkin, y el discovery financiero sobre el motor. Son documentos de diseño; el código de la hackathon se escribe durante el evento en este repositorio. La fuente original es [`docs/fuente/Natillera 2.pdf`](docs/fuente/).
+En [`docs/discovery/`](docs/discovery/) está el diseño hecho **antes** del evento: el mapa de impacto, el mapa de historias, las historias con sus criterios y escenarios Gherkin, y la especificación funcional de la lógica financiera. Son documentos de diseño; el código de la hackathon se escribe durante el evento en este repositorio. La fuente original es [`docs/fuente/Natillera 2.pdf`](docs/fuente/).
 
 ## Uso de IA
 

@@ -6,7 +6,7 @@ labels: historia, nuevo
 
 **Como** …, **quiero** …, **para** …
 
-**Frente:** Telegram / Web / Motor / Pagos
+**Frente:** Telegram / Web / Pagos
 
 **Criterios de aceptación**
 

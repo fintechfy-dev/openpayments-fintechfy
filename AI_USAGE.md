@@ -11,13 +11,13 @@ Declaración exigida por la política de IA de la hackathon. El equipo la comple
 
 ### 1. Discovery previo al evento (`docs/discovery/`)
 
-- Claude Code condujo las sesiones de impact mapping, user story mapping, BDD y el discovery financiero haciendo preguntas al equipo. El equipo respondió y aprobó cada fase; la IA redactó los documentos a partir de esas respuestas y decisiones.
+- Claude Code condujo las sesiones de impact mapping, user story mapping, BDD y la especificación funcional de la lógica financiera haciendo preguntas al equipo. El equipo respondió y aprobó cada fase; la IA redactó los documentos a partir de esas respuestas y decisiones.
 - No es código de la hackathon. Se hizo antes del 16 de octubre como diseño.
 
 ### 2. Arranque del repositorio
 
 - Claude Code armó la estructura inicial y copió el discovery: `README.md`, `.gitignore`, este archivo, `docs/` y la carpeta `prompts/`.
-- Con las decisiones del equipo sobre los frentes, Claude Code redactó el plan de trabajo (`docs/plan-de-trabajo.md`), la guía de GitFlow (`CONTRIBUTING.md`), los README de `telegram/`, `web/`, `motor/` y `pagos/`, las plantillas de `.github/`, y creó los issues y etiquetas del repositorio.
+- Con las decisiones del equipo sobre los frentes, Claude Code redactó el plan de trabajo (`docs/plan-de-trabajo.md`), la guía de GitFlow (`CONTRIBUTING.md`), los README de `telegram/`, `web/`, `pagos/` e `integracion/`, las plantillas de `.github/`, y creó los issues y etiquetas del repositorio.
 
 ### 3. Código de la hackathon
 
@@ -26,6 +26,11 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 | Archivo o componente | Herramienta | Para qué | Cuánta IA |
 |---|---|---|---|
 | | | | |
+
+## Servicios externos
+
+- **Servicio externo de lógica financiera:** aplica las reglas de dinero (cobros, mora, crédito y liquidación), como un n8n que contiene esa lógica. No forma parte de este proyecto ni de esta declaración: el proyecto lo llama por API.
+- **Interledger Test Wallet:** billeteras de prueba de Open Payments.
 
 ## Archivos hechos con poca o ninguna IA
 
