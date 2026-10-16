@@ -28,7 +28,7 @@ Contrato en [`open-payments.api.json`](../docs/discovery/4-logica-financiera/api
 - La parte de una actividad llega sin `grantId`: se busca el permiso del participante por su `walletOrigen`.
 - La liquidación y el reembolso llegan sin `origen`: el servicio tiene que saber de qué billetera del grupo sale el pago. Para la demo alcanza con una sola billetera del grupo. Los préstamos salen de la billetera de la financiera.
 
-**El registro para el jurado** (las cuatro etapas: solicitud, autorización, ejecución y finalización) vive aquí, porque el servicio externo solo ve la solicitud y el resultado. La pantalla `/pagos` de la web lo lee a través del puente.
+**El registro para el jurado** (las cuatro etapas: solicitud, autorización, ejecución y finalización) vive aquí, porque el servicio externo solo ve la solicitud y el resultado. La pantalla `/pagos` de la web lo une con los eventos de staging (ver `web/INTEGRACION.md`).
 
 ## Lo que necesita el bot
 
