@@ -19,15 +19,16 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
-    { media: "(prefers-color-scheme: dark)", color: "#17221C" },
-  ],
+  // La web va siempre en tema claro (decisión del equipo): coincide con superficie-elevada.
+  colorScheme: "light",
+  themeColor: "#FFFFFF",
 };
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <html lang="es">
+    // data-theme="light": la web no sigue el modo oscuro del sistema; siempre usa la crema y el blanco
+    // del design system. Los tokens oscuros siguen existiendo por si el equipo decide ofrecerlos.
+    <html lang="es" data-theme="light">
       <body className="nt">
         <a className="saltar" href="#contenido">
           Saltar al contenido

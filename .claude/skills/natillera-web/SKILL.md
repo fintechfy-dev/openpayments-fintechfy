@@ -88,7 +88,7 @@ Diseña primero para 360px y agranda; muchos administradores abren la web en el 
 - Formularios: cada campo con `<label>`, errores en texto junto al campo. Botones son `<button>`, enlaces son `<a>`/`<Link>`.
 - Avisos: `role="status"` para lo normal, `role="alert"` solo para errores. El polling no debe anunciar cada refresco; anuncia solo pagos nuevos o fallidos.
 - Respeta `prefers-reduced-motion` en cualquier animación.
-- Tema oscuro: viene de los tokens (`prefers-color-scheme`). Mira cada pantalla en los dos temas.
+- **La web va siempre en tema claro** (`data-theme="light"` en `<html>`, decisión del equipo): aunque el sistema esté en modo oscuro, se ve la crema y el blanco del design system. No quites ese atributo sin acordarlo. Las capturas "oscuro" sirven para comprobar que la web sigue clara con el sistema en modo oscuro.
 
 ## Rendimiento
 
@@ -100,7 +100,7 @@ Diseña primero para 360px y agranda; muchos administradores abren la web en el 
 ## Pruebas y verificación
 
 - Lógica pura (formato, cálculos de presentación, mapeo de estados) con pruebas en Vitest junto al archivo (`*.test.ts`). `lib/natillera.test.ts` comprueba que la versión TypeScript se comporta igual que `bundle.js`.
-- Antes de decir que algo está listo: `npm run verificar` en verde y `npm run capturas` revisadas en 360, 768, 1024 y 1280, claro y oscuro. Si no pudiste correr algo, dilo.
+- Antes de decir que algo está listo: `npm run verificar` en verde y `npm run capturas` revisadas en 360, 768, 1024 y 1280 (con el sistema en claro y en oscuro). Si no pudiste correr algo, dilo.
 - La lista completa de revisión está en [references/checklist.md](references/checklist.md).
 
 ## Reglas del equipo (hackathon)
