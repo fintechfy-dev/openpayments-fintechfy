@@ -15,3 +15,10 @@ Closes #
 - [ ] No hay claves, tokens ni archivos `.env` en el cambio
 - [ ] Guardé los prompts reales que usé en `prompts/`
 - [ ] Agregué a la tabla de `AI_USAGE.md` los archivos de este PR
+- [ ] Corrí `node scripts/revisar-entrega.mjs --rama` y actualicé `docs/checklist-entrega.md` si este PR cumple un punto
+
+## Checklist de entrega
+
+Lo que sigue faltando según el script y `docs/checklist-entrega.md`:
+
+- 
