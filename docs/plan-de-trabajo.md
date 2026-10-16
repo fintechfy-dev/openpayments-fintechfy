@@ -16,13 +16,12 @@ flowchart LR
   WEB -->|estado, búsqueda, créditos| EXT
   EXT -->|avisos| WEB
   BOT -->|índice · pide avisos · pide permisos| WEB
-  MA["Mini App<br/>Mi natillera"] -->|sus datos| WEB
   EXT -->|cobrar-cuota · cobrar · pagar · desembolsar ·<br/>pagar-con-permiso · aportar-con-permiso| WEB
   WEB -->|firma y paga| OP["Open Payments<br/>Test Wallet"]
 ```
 
 - **El servicio externo de lógica financiera** aplica las reglas de dinero: cupo y arranque, cobro de cada periodo, mora, actividades, crédito, ventas y liquidación. Es como un n8n que contiene la lógica financiera: no forma parte de esta hackathon y el proyecto solo lo llama por API. Sus reglas están en la [especificación funcional](discovery/4-logica-financiera/especificacion-funcional.md).
-- **El backend de la web** tiene los pagos de Open Payments (lo único que habla con Open Payments y el corazón de lo que evalúa el jurado), recibe los avisos de staging, guarda lo que staging no tiene y le da sus datos a la Mini App.
+- **El backend de la web** tiene los pagos de Open Payments (lo único que habla con Open Payments y el corazón de lo que evalúa el jurado), recibe los avisos de staging y guarda lo que staging no tiene.
 - **El bot** crea los contratos y ejecuta las acciones de cada persona. No mueve dinero.
 
 ## Quién lleva qué

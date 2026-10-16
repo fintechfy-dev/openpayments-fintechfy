@@ -9,7 +9,6 @@
 3. **Tiene los pagos de Open Payments**: staging le pide cobrar y pagar, y el bot le pide permisos. La especificación completa está en [`../pagos/README.md`](../pagos/README.md). El código va en su propio módulo, `src/lib/open-payments/` (no en `src/lib/pagos.ts`, que es la lógica de la pantalla), escrito con poca IA. Esas carpetas están protegidas: la guardia de Claude Code no deja que la IA las escriba.
 4. **Recibe los avisos de staging** y se los entrega al bot cuando este los pide, junto con sus propios avisos de pago.
 5. **Aprueba los préstamos**: al aprobar, crea el contrato de crédito en staging.
-6. **Le da los datos a la Mini App «Mi natillera»**, que corre en el celular y no puede llamar ni a staging ni al bot.
 
 ## Antes de empezar
 
@@ -24,14 +23,13 @@
 | `BILLETERA_FINANCIERA` | Billetera de la financiera, de donde salen los préstamos. Basta la dirección: no necesita llaves propias | Igual |
 | `BOT_USUARIO` | Usuario del bot, para el enlace `https://t.me/<bot>` de la vuelta del permiso (o se saca con `getMe` usando `TELEGRAM_BOT_TOKEN`) | Estiven |
 | `TASA_MENSUAL` | Tasa mensual de los préstamos de la financiera, como fracción (por ejemplo 0.02). Nadie más la entrega: ni la solicitud del bot ni staging | La financiera (el equipo la define) |
-| `TELEGRAM_BOT_TOKEN` | Ya existe. Ahora además valida los datos de la Mini App: tiene que ser el token del mismo bot que la abre | Estiven |
 
 Todas van en `web/.env.example`, sin valores. Los tokens de los permisos (los de los participantes y los de la billetera del grupo y la financiera, #67) no van en variables: van en la base.
 
 - **La capa `src/lib/servicio/` todavía habla con rutas provisionales y `X-Api-Key`.** Hay que cambiar `http.ts` para que mande `Authorization: Bearer <SERVICIO_API_KEY>` y use las rutas de staging (`/api/contracts/...`). Todo sigue en el servidor: el token nunca llega al navegador.
 - **Base persistente:** el índice, los avisos, los tokens de los permisos y las llaves de idempotencia de los pagos tienen que sobrevivir un reinicio durante la demo. Una base SQLite en un volumen persistente de Azure, con una sola copia de la app corriendo (#68).
-- **Despliegue en Azure** con dirección pública HTTPS fija (#68). La necesitan staging (pagos y avisos), el celular de cada participante (la vuelta del permiso) y la Mini App.
-- **`src/proxy.ts`:** hoy exige sesión en todo `/api/*`. Hay que excluir las rutas de máquina, que se protegen con su propia llave, firma o datos de Telegram: `/api/open-payments/*`, `/api/indice/*`, `/api/mini-app/*`, y `/api/avisos` y `/api/permisos` **con y sin subruta** (`GET /api/avisos` y `POST /api/permisos` no llevan nada después). Si no se excluyen, staging y el bot reciben 401. La vuelta del permiso es pública: la abre el navegador del participante.
+- **Despliegue en Azure** con dirección pública HTTPS fija (#68). La necesitan staging (pagos y avisos) y el celular de cada participante (la vuelta del permiso).
+- **`src/proxy.ts`:** hoy exige sesión en todo `/api/*`. Hay que excluir las rutas de máquina, que se protegen con su propia llave o firma: `/api/open-payments/*`, `/api/indice/*`, `/api/avisos` y `/api/permisos` **con y sin subruta** (`GET /api/avisos` y `POST /api/permisos` no llevan nada después). Si no se excluyen, staging y el bot reciben 401. La vuelta del permiso es pública: la abre el navegador del participante.
 - **ESLint (`eslint.config.mjs`)** solo deja leer `process.env` en `src/lib/servicio/`, `src/lib/sesion/` y `src/proxy.ts`. El módulo de Open Payments y las rutas nuevas también necesitan llaves: agrega sus carpetas a esa excepción (o lee todo en un módulo de configuración del servidor y agrégalo a ella). No quites la regla: es la que impide que una llave llegue al navegador.
 - **`scripts/revisar-entrega.mjs`:** el chequeo `b-op` ya acepta el código de Open Payments en `web/src/lib/open-payments/` y en sus rutas.
 
@@ -68,7 +66,6 @@ Las rutas del índice **no duplican por id**: el bot puede reintentar.
 
 **Del navegador del participante (pública):** `GET /api/permisos/{permisoId}/retorno`. Llega con `interact_ref` y `hash` si aprobó, o con `result=grant_rejected` o `result=grant_invalid` si no. Termina o marca el permiso y en los dos casos redirige al chat del bot (ver [`../pagos/README.md`](../pagos/README.md)).
 
-**De la Mini App «Mi natillera»:** `GET /api/mini-app/mi-natillera` con el encabezado `X-Telegram-Init-Data` (el `initData` que Telegram le da a la Mini App). La web lo valida como dice la documentación de Telegram (HMAC-SHA256 con una llave derivada de `TELEGRAM_BOT_TOKEN`, revisando que `auth_date` sea reciente), saca de ahí el id de Telegram, busca su participación en el índice y devuelve lo que muestra la Mini App: `TotalAportado`, `CuotasPagadas`, `NumeroCuotas`, `DeudaCuotas`, `MoraAcumulada` y `EstadoParticipacion`, y de la natillera `SaldoNatillera`, `PeriodoActual`, `FechaProximoCobro` y `EstadoNatillera`.
 
 ## 2. Los avisos de staging
 
@@ -125,7 +122,7 @@ Para el jurado, la venta es el flujo de un solo uso más limpio para mostrar las
 
 1. **Desplegar en Azure** con la base persistente y ajustar `proxy.ts` (#68).
 2. **Cambiar `src/lib/servicio/`** a staging con el token (#65) y ver `/natilleras` con la natillera de prueba que cree Estiven (en su mapa hay un ejemplo listo).
-3. **Armar el índice, la recepción de avisos y la ruta de la Mini App**, y entregarle a Estiven la dirección de la web (en el bot, `WEB_INDICE_URL` y `PAGOS_URL`) y la llave (en el bot, `WEB_INDICE_API_KEY`).
+3. **Armar el índice y la recepción de avisos**, y entregarle a Estiven la dirección de la web (en el bot, `WEB_INDICE_URL` y `PAGOS_URL`) y la llave (en el bot, `WEB_INDICE_API_KEY`).
 4. **Los pagos:** primero la prueba del #3; después `/api/open-payments/cobrar-cuota`, los permisos y su vuelta. Mientras no estén, las 6 rutas responden simulado y marcado.
 5. **Los permisos de la billetera del grupo y de la financiera** (#67), aprobados una vez por su dueño, **antes** de que Willy pase la API de pagos a modo real.
 6. **`/pagos` y `/bitacora`** desde los eventos y el registro de pagos.
