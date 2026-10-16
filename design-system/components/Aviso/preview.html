@@ -1,0 +1,13 @@
+<!-- @dsCard group="Componentes" height=280 subtitle="Éxito, alerta, error, información" -->
+<style>.pv{padding:24px;background:var(--superficie);color:var(--tinta);font-family:var(--font-body)}.pv h4{margin:0 0 8px;font:700 13px/18px var(--font-body);color:var(--tinta-suave)}</style>
+<div class="pv nt" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="nt-aviso nt-aviso--exito" role="status"><i data-i="check"></i><div><p class="nt-aviso__titulo">Cuota cobrada</p><p class="nt-aviso__texto">Ya quedaron tus $50.000 en la natillera.</p></div></div>
+<div class="nt-aviso nt-aviso--alerta" role="status"><i data-i="reloj"></i><div><p class="nt-aviso__titulo">Tu cuota quedó pendiente</p><p class="nt-aviso__texto">No había saldo suficiente. Lo intentamos de nuevo mañana.</p></div></div>
+<div class="nt-aviso nt-aviso--error" role="alert"><i data-i="alerta"></i><div><p class="nt-aviso__titulo">No pudimos conectar tu billetera</p><p class="nt-aviso__texto">Revisa la dirección e inténtalo otra vez.</p></div></div>
+<div class="nt-aviso nt-aviso--info" role="status"><i data-i="candado"></i><div><p class="nt-aviso__titulo">Tu plata está protegida</p><p class="nt-aviso__texto">Nadie del grupo puede sacarla, ni el administrador.</p></div></div>
+</div>
+<script>
+document.querySelectorAll('[data-i]').forEach(function(e){e.outerHTML=Natillera.icono(e.getAttribute('data-i'),e.className)});
+document.querySelectorAll('[data-b]').forEach(function(e){var p=e.getAttribute('data-b').split('.');e.outerHTML=Natillera.badge(p[0],p[1])});
+document.querySelectorAll('[data-cop]').forEach(function(e){e.textContent=Natillera.formatoCOP(+e.getAttribute('data-cop'))});
+</script>

@@ -1,0 +1,176 @@
+/* Natillera 2.0 — generado desde tokens.json con build.mjs. No editar a mano. */
+@font-face {
+  font-family: "Nunito";
+  src: url("../fonts/nunito-latin-700-normal.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Nunito";
+  src: url("../fonts/nunito-latin-800-normal.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Nunito";
+  src: url("../fonts/nunito-latin-900-normal.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("../fonts/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("../fonts/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-5: 20px;
+  --espacio-6: 24px;
+  --espacio-7: 32px;
+  --espacio-8: 48px;
+  --espacio-9: 64px;
+  --radio-sm: 8px;
+  --radio-md: 12px;
+  --radio-lg: 20px;
+  --radio-xl: 28px;
+  --radio-pildora: 999px;
+  --control-alto: 48px;
+  --control-alto-sm: 40px;
+  --font-display: Nunito, "Arial Rounded MT Bold", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --primario: #15412C;
+  --primario-hover: #0E2F20;
+  --sobre-primario: #FFFFFF;
+  --primario-suave: #E3ECE6;
+  --primario-texto: #15412C;
+  --secundario: #FAC5A9;
+  --sobre-secundario: #15412C;
+  --secundario-suave: #FDECE2;
+  --acento: #E2A431;
+  --sobre-acento: #2C342F;
+  --acento-suave: #FBF0D9;
+  --acento-texto: #7A5208;
+  --superficie: #F2EDE7;
+  --superficie-elevada: #FFFFFF;
+  --superficie-hundida: #E9E2D8;
+  --pista: #D9D2C3;
+  --borde: #D9D2C3;
+  --borde-fuerte: #7C8279;
+  --tinta: #2C342F;
+  --tinta-suave: #5B635E;
+  --foco: #1F4E85;
+  --estado-neutro-fondo: #E9E4DC;
+  --estado-neutro-texto: #4C544F;
+  --estado-info-fondo: #E3EDF8;
+  --estado-info-texto: #1F4E85;
+  --estado-exito-fondo: #E3ECE6;
+  --estado-exito-texto: #15412C;
+  --estado-aviso-fondo: #FCEBD5;
+  --estado-aviso-texto: #8A4B0F;
+  --estado-error-fondo: #FBE4E2;
+  --estado-error-texto: #A3231B;
+  --estado-celebra-fondo: #FBF0D9;
+  --estado-celebra-texto: #7A5208;
+  --sombra-1: 0 1px 2px rgba(44,52,47,0.08), 0 1px 3px rgba(44,52,47,0.06);
+  --sombra-2: 0 4px 12px rgba(44,52,47,0.10);
+  --sombra-3: 0 12px 32px rgba(44,52,47,0.16);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --primario: #6FCF9F;
+    --primario-hover: #8EDBB4;
+    --sobre-primario: #0B2418;
+    --primario-suave: #173325;
+    --primario-texto: #8EDBB4;
+    --secundario: #F2B08F;
+    --sobre-secundario: #2A140A;
+    --secundario-suave: #3A2318;
+    --acento: #EBB24A;
+    --sobre-acento: #2A1D08;
+    --acento-suave: #3A2B12;
+    --acento-texto: #F3C878;
+    --superficie: #0F1813;
+    --superficie-elevada: #17221C;
+    --superficie-hundida: #0A110D;
+    --pista: #2E3B33;
+    --borde: #2C3A32;
+    --borde-fuerte: #7F8C84;
+    --tinta: #F2EDE7;
+    --tinta-suave: #AEB8B1;
+    --foco: #9CC3EE;
+    --estado-neutro-fondo: #232C27;
+    --estado-neutro-texto: #C9CFC8;
+    --estado-info-fondo: #17283D;
+    --estado-info-texto: #9CC3EE;
+    --estado-exito-fondo: #173325;
+    --estado-exito-texto: #8EDBB4;
+    --estado-aviso-fondo: #3A2712;
+    --estado-aviso-texto: #F2B877;
+    --estado-error-fondo: #3D1A17;
+    --estado-error-texto: #F4A39B;
+    --estado-celebra-fondo: #3A2B12;
+    --estado-celebra-texto: #F3C878;
+    --sombra-1: 0 1px 2px rgba(0,0,0,0.5);
+    --sombra-2: 0 4px 14px rgba(0,0,0,0.5);
+    --sombra-3: 0 14px 36px rgba(0,0,0,0.6);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --primario: #6FCF9F;
+  --primario-hover: #8EDBB4;
+  --sobre-primario: #0B2418;
+  --primario-suave: #173325;
+  --primario-texto: #8EDBB4;
+  --secundario: #F2B08F;
+  --sobre-secundario: #2A140A;
+  --secundario-suave: #3A2318;
+  --acento: #EBB24A;
+  --sobre-acento: #2A1D08;
+  --acento-suave: #3A2B12;
+  --acento-texto: #F3C878;
+  --superficie: #0F1813;
+  --superficie-elevada: #17221C;
+  --superficie-hundida: #0A110D;
+  --pista: #2E3B33;
+  --borde: #2C3A32;
+  --borde-fuerte: #7F8C84;
+  --tinta: #F2EDE7;
+  --tinta-suave: #AEB8B1;
+  --foco: #9CC3EE;
+  --estado-neutro-fondo: #232C27;
+  --estado-neutro-texto: #C9CFC8;
+  --estado-info-fondo: #17283D;
+  --estado-info-texto: #9CC3EE;
+  --estado-exito-fondo: #173325;
+  --estado-exito-texto: #8EDBB4;
+  --estado-aviso-fondo: #3A2712;
+  --estado-aviso-texto: #F2B877;
+  --estado-error-fondo: #3D1A17;
+  --estado-error-texto: #F4A39B;
+  --estado-celebra-fondo: #3A2B12;
+  --estado-celebra-texto: #F3C878;
+  --sombra-1: 0 1px 2px rgba(0,0,0,0.5);
+  --sombra-2: 0 4px 14px rgba(0,0,0,0.5);
+  --sombra-3: 0 14px 36px rgba(0,0,0,0.6);
+  color-scheme: dark;
+}

@@ -1,0 +1,213 @@
+{
+  "name": "Natillera 2.0",
+  "temas": {
+    "light": {
+      "primario": "#15412C",
+      "primario-hover": "#0E2F20",
+      "sobre-primario": "#FFFFFF",
+      "primario-suave": "#E3ECE6",
+      "primario-texto": "#15412C",
+      "secundario": "#FAC5A9",
+      "sobre-secundario": "#15412C",
+      "secundario-suave": "#FDECE2",
+      "acento": "#E2A431",
+      "sobre-acento": "#2C342F",
+      "acento-suave": "#FBF0D9",
+      "acento-texto": "#7A5208",
+      "superficie": "#F2EDE7",
+      "superficie-elevada": "#FFFFFF",
+      "superficie-hundida": "#E9E2D8",
+      "pista": "#D9D2C3",
+      "borde": "#D9D2C3",
+      "borde-fuerte": "#7C8279",
+      "tinta": "#2C342F",
+      "tinta-suave": "#5B635E",
+      "foco": "#1F4E85",
+      "estado-neutro-fondo": "#E9E4DC",
+      "estado-neutro-texto": "#4C544F",
+      "estado-info-fondo": "#E3EDF8",
+      "estado-info-texto": "#1F4E85",
+      "estado-exito-fondo": "#E3ECE6",
+      "estado-exito-texto": "#15412C",
+      "estado-aviso-fondo": "#FCEBD5",
+      "estado-aviso-texto": "#8A4B0F",
+      "estado-error-fondo": "#FBE4E2",
+      "estado-error-texto": "#A3231B",
+      "estado-celebra-fondo": "#FBF0D9",
+      "estado-celebra-texto": "#7A5208",
+      "sombra-1": "0 1px 2px rgba(44,52,47,0.08), 0 1px 3px rgba(44,52,47,0.06)",
+      "sombra-2": "0 4px 12px rgba(44,52,47,0.10)",
+      "sombra-3": "0 12px 32px rgba(44,52,47,0.16)"
+    },
+    "dark": {
+      "primario": "#6FCF9F",
+      "primario-hover": "#8EDBB4",
+      "sobre-primario": "#0B2418",
+      "primario-suave": "#173325",
+      "primario-texto": "#8EDBB4",
+      "secundario": "#F2B08F",
+      "sobre-secundario": "#2A140A",
+      "secundario-suave": "#3A2318",
+      "acento": "#EBB24A",
+      "sobre-acento": "#2A1D08",
+      "acento-suave": "#3A2B12",
+      "acento-texto": "#F3C878",
+      "superficie": "#0F1813",
+      "superficie-elevada": "#17221C",
+      "superficie-hundida": "#0A110D",
+      "pista": "#2E3B33",
+      "borde": "#2C3A32",
+      "borde-fuerte": "#7F8C84",
+      "tinta": "#F2EDE7",
+      "tinta-suave": "#AEB8B1",
+      "foco": "#9CC3EE",
+      "estado-neutro-fondo": "#232C27",
+      "estado-neutro-texto": "#C9CFC8",
+      "estado-info-fondo": "#17283D",
+      "estado-info-texto": "#9CC3EE",
+      "estado-exito-fondo": "#173325",
+      "estado-exito-texto": "#8EDBB4",
+      "estado-aviso-fondo": "#3A2712",
+      "estado-aviso-texto": "#F2B877",
+      "estado-error-fondo": "#3D1A17",
+      "estado-error-texto": "#F4A39B",
+      "estado-celebra-fondo": "#3A2B12",
+      "estado-celebra-texto": "#F3C878",
+      "sombra-1": "0 1px 2px rgba(0,0,0,0.5)",
+      "sombra-2": "0 4px 14px rgba(0,0,0,0.5)",
+      "sombra-3": "0 14px 36px rgba(0,0,0,0.6)"
+    }
+  },
+  "fijos": {
+    "espacio-1": "4px",
+    "espacio-2": "8px",
+    "espacio-3": "12px",
+    "espacio-4": "16px",
+    "espacio-5": "20px",
+    "espacio-6": "24px",
+    "espacio-7": "32px",
+    "espacio-8": "48px",
+    "espacio-9": "64px",
+    "radio-sm": "8px",
+    "radio-md": "12px",
+    "radio-lg": "20px",
+    "radio-xl": "28px",
+    "radio-pildora": "999px",
+    "control-alto": "48px",
+    "control-alto-sm": "40px",
+    "font-display": "Nunito, \"Arial Rounded MT Bold\", system-ui, sans-serif",
+    "font-body": "\"Atkinson Hyperlegible\", system-ui, -apple-system, \"Segoe UI\", sans-serif"
+  },
+  "tipografia": [
+    {
+      "name": "Títulos y cifras",
+      "family": "display",
+      "styles": [
+        {
+          "name": "display",
+          "fontSize": "40px",
+          "lineHeight": "44px",
+          "fontWeight": 900,
+          "letterSpacing": "-0.01em",
+          "sample": "Ahorramos juntos",
+          "usage": "Portadas, pantalla de éxito, diapositivas. Máximo una vez por pantalla."
+        },
+        {
+          "name": "titulo-1",
+          "fontSize": "30px",
+          "lineHeight": "36px",
+          "fontWeight": 800,
+          "sample": "Natillera Los Primos",
+          "usage": "Título de página o tarjeta-imagen."
+        },
+        {
+          "name": "titulo-2",
+          "fontSize": "24px",
+          "lineHeight": "30px",
+          "fontWeight": 800,
+          "sample": "Así va el ahorro",
+          "usage": "Secciones."
+        },
+        {
+          "name": "titulo-3",
+          "fontSize": "20px",
+          "lineHeight": "26px",
+          "fontWeight": 800,
+          "sample": "Tus cuotas",
+          "usage": "Título de tarjeta."
+        },
+        {
+          "name": "cifra-grande",
+          "fontSize": "36px",
+          "lineHeight": "40px",
+          "fontWeight": 900,
+          "sample": "$1.800.000",
+          "usage": "Total del grupo y tu aporte. Siempre con formato $100.000 y cifras tabulares."
+        },
+        {
+          "name": "cifra",
+          "fontSize": "22px",
+          "lineHeight": "28px",
+          "fontWeight": 800,
+          "sample": "$50.000",
+          "usage": "Montos en tarjetas y filas destacadas."
+        }
+      ]
+    },
+    {
+      "name": "Texto",
+      "family": "body",
+      "styles": [
+        {
+          "name": "cuerpo-grande",
+          "fontSize": "18px",
+          "lineHeight": "28px",
+          "fontWeight": 400,
+          "sample": "La plata la guarda la financiera, no una persona.",
+          "usage": "Texto principal en móvil para mensajes clave y pantallas de una sola idea."
+        },
+        {
+          "name": "cuerpo",
+          "fontSize": "16px",
+          "lineHeight": "24px",
+          "fontWeight": 400,
+          "sample": "Tu cuota se cobra el 15 de cada mes.",
+          "usage": "Texto por defecto. Nunca menos de 16px para párrafos en móvil."
+        },
+        {
+          "name": "cuerpo-fuerte",
+          "fontSize": "16px",
+          "lineHeight": "24px",
+          "fontWeight": 700,
+          "sample": "Cuota de $50.000",
+          "usage": "Énfasis dentro de párrafos."
+        },
+        {
+          "name": "etiqueta",
+          "fontSize": "15px",
+          "lineHeight": "20px",
+          "fontWeight": 700,
+          "sample": "Total del grupo",
+          "usage": "Etiquetas de datos, encabezados de tabla, botones pequeños."
+        },
+        {
+          "name": "pequeno",
+          "fontSize": "14px",
+          "lineHeight": "20px",
+          "fontWeight": 400,
+          "sample": "Último cobro: 15 oct, 9:02 a. m.",
+          "usage": "Metadatos, fechas, ayudas."
+        },
+        {
+          "name": "nota",
+          "fontSize": "13px",
+          "lineHeight": "18px",
+          "fontWeight": 700,
+          "letterSpacing": "0.01em",
+          "sample": "En mora",
+          "usage": "Badges y textos legales cortos. Solo en negrilla."
+        }
+      ]
+    }
+  ]
+}

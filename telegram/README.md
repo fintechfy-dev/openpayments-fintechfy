@@ -4,6 +4,10 @@ El bot donde los integrantes de la natillera y su administrador hacen todo: crea
 
 **Issues:** [frente: telegram](https://github.com/fintechfy-dev/openpayments-fintechfy/issues?q=is%3Aopen+label%3A%22frente%3A+telegram%22). Empieza por #7 (esqueleto).
 
+## Mensajes e imágenes
+
+Los textos del bot siguen la [voz y tono](../design-system/docs/voz-y-tono.md) del design system. El avatar es `design-system/assets/logos/avatar-telegram.svg` (exportado a PNG de 512×512), y las tarjetas-imagen salen de `TarjetaAporte` y `TarjetaBienvenida` con los colores de `design-system/tokens/tokens.resolved.json`.
+
 ## Contratos
 
 - **Con el servicio externo de lógica financiera:** crea y consulta natilleras, participantes y préstamos. El contrato se escribe en [`../integracion/README.md`](../integracion/README.md) (#5).

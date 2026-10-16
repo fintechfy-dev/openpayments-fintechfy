@@ -1,0 +1,28 @@
+<!-- @dsCard height=288 -->
+<style>
+.cv{position:relative;width:960px;height:288px;background:var(--superficie);overflow:hidden;font-family:var(--font-body)}
+.cv svg{position:absolute;left:0;top:0}
+.cv .b-pri{fill:var(--primario)}.cv .b-sec{fill:var(--secundario)}.cv .b-acc{fill:var(--acento)}.cv .b-ink{fill:var(--tinta)}.cv .b-soft{fill:var(--secundario-suave)}
+.cv .coin{fill:var(--acento)}.cv .ring{fill:none;stroke:var(--primario-suave);stroke-width:4}
+.cv-t{position:absolute;left:48px;bottom:44px;max-width:420px}
+.cv-n{font-family:var(--font-display);font-weight:900;font-size:80px;line-height:.95;color:var(--tinta);margin:0;letter-spacing:-.01em}
+.cv-n span{color:var(--primario-texto)}
+.cv-g{font-size:14px;line-height:20px;color:var(--tinta-suave);margin:12px 0 0}
+</style>
+<div class="cv">
+<svg width="960" height="288" viewBox="0 0 960 288" aria-hidden="true">
+<!-- blocks: primario 288×240 (slab), secundario 176×136, acento 120×96, tinta 64×96, secundario-suave 160×56; radios radio-xl 28 -->
+<!-- arrangement: one tall green slab with warm satellites stacked on its right, bleeding off the top and right edges -->
+<!-- pattern: discs — 12 coins = 12 cuotas, 7 paid (acento) and 5 to come (ring); chosen because the brand is soft, round and literally about coins filling up -->
+<!-- steps/radii: pitch 56 (espacio-8 48 + espacio-2 8), coin r 16 (radio-md 12 + espacio-1 4), block gap espacio-2 8, corners radio-xl 28 -->
+<rect class="b-pri" x="496" y="24" width="288" height="240" rx="28"/>
+<rect class="b-sec" x="792" y="-28" width="196" height="152" rx="28"/>
+<rect class="b-acc" x="792" y="132" width="120" height="96" rx="28"/>
+<rect class="b-ink" x="920" y="132" width="68" height="96" rx="28"/>
+<rect class="b-soft" x="792" y="236" width="196" height="80" rx="28"/>
+<circle class="coin" cx="556" cy="88" r="16"/><circle class="coin" cx="612" cy="88" r="16"/><circle class="coin" cx="668" cy="88" r="16"/><circle class="coin" cx="724" cy="88" r="16"/>
+<circle class="coin" cx="556" cy="144" r="16"/><circle class="coin" cx="612" cy="144" r="16"/><circle class="coin" cx="668" cy="144" r="16"/><circle class="ring" cx="724" cy="144" r="14"/>
+<circle class="ring" cx="556" cy="200" r="14"/><circle class="ring" cx="612" cy="200" r="14"/><circle class="ring" cx="668" cy="200" r="14"/><circle class="ring" cx="724" cy="200" r="14"/>
+</svg>
+<div class="cv-t"><p class="cv-n">Natillera<br><span>2.0</span></p><p class="cv-g">Ahorrar juntos, siempre.</p></div>
+</div>
