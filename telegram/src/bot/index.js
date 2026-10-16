@@ -1,4 +1,5 @@
 import { Bot, GrammyError, HttpError } from 'grammy';
+import { contieneSecreto } from '../secretos.js';
 import { start } from './comandos/start.js';
 
 // Menú de comandos que se publica en Telegram. /diag no va aquí: no se anuncia.
@@ -26,10 +27,33 @@ function manejadorDeErrores(log) {
   };
 }
 
+export class SecretoBloqueadoError extends Error {
+  constructor(method) {
+    super(`Se bloqueó ${method}: el contenido incluía un secreto.`);
+    this.name = 'SecretoBloqueadoError';
+  }
+}
+
+// Guardia de salida (US-002-SEC): ninguna llamada a Telegram puede llevar un secreto.
+// Revisa el contenido de la llamada, no la URL, que siempre lleva el token.
+function guardiaDeSecretos(secretos, log) {
+  return (prev, method, payload, signal) => {
+    if (payload && contieneSecreto(JSON.stringify(payload), secretos)) {
+      log.error(`Se bloqueó ${method}: el contenido incluía un secreto.`);
+      throw new SecretoBloqueadoError(method);
+    }
+    return prev(method, payload, signal);
+  };
+}
+
 // Arma el bot sin arrancarlo, para poder probarlo sin conexión.
-// `botInfo` es opcional: en las pruebas evita la llamada a getMe.
-export function crearBot(config, { log, botInfo } = {}) {
-  const bot = new Bot(config.botToken, botInfo ? { botInfo } : undefined);
+// `secretos`: valores que el bot nunca puede enviar (al menos el token).
+// `botInfo` y `cliente` son opcionales: en las pruebas evitan la llamada a getMe y la red.
+export function crearBot(config, { log, secretos = [config.botToken], botInfo, cliente } = {}) {
+  const bot = new Bot(config.botToken, { botInfo, client: cliente });
+
+  bot.api.config.use(guardiaDeSecretos(secretos, log));
+
   const manejarError = manejadorDeErrores(log);
 
   // bot.catch solo actúa con bot.start(); errorBoundary también cubre handleUpdate

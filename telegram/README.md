@@ -17,11 +17,10 @@ El bot no mueve dinero: eso pasa en el servicio de pagos.
 Node.js 24 o más nuevo y [grammY](https://grammy.dev). Todo se corre **dentro de esta carpeta**.
 
 1. Crea un bot con [@BotFather](https://t.me/BotFather) (`/newbot`) y copia el token. No lo pegues en ningún chat.
-2. Crea `telegram/.env` con el token (el archivo está en `.gitignore`):
+2. Copia `.env.example` a `.env` (el `.env` está en `.gitignore`) y pon tu token en `BOT_TOKEN`. Por ahora el bot solo exige esa variable; las demás se validan a partir de la tarea 3 del [plan](docs/plan-esqueleto.md).
+   ```powershell
+   Copy-Item .env.example .env
    ```
-   BOT_TOKEN=<tu token>
-   ```
-   _La lista completa de variables llega en `.env.example` con la tarea 2 del [plan](docs/plan-esqueleto.md)._
 3. Instala y arranca:
    ```bash
    cd telegram

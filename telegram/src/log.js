@@ -1,10 +1,18 @@
-// Logger mínimo con hora. En la tarea 2 se le agrega el tapado de secretos.
+import { inspect } from 'node:util';
+import { taparSecretos } from './secretos.js';
 
-function escribir(nivel, salida, partes) {
-  salida(`[${new Date().toISOString()}] ${nivel}`, ...partes);
+// Logger con hora que tapa los secretos en todo lo que escribe, también en errores y objetos.
+
+function aTexto(parte) {
+  return typeof parte === 'string' ? parte : inspect(parte, { depth: 4 });
 }
 
-export function crearLogger() {
+export function crearLogger({ secretos = [] } = {}) {
+  const escribir = (nivel, salida, partes) => {
+    const linea = partes.map(aTexto).join(' ');
+    salida(`[${new Date().toISOString()}] ${nivel} ${taparSecretos(linea, secretos)}`);
+  };
+
   return {
     info: (...partes) => escribir('INFO ', console.log, partes),
     warn: (...partes) => escribir('WARN ', console.warn, partes),

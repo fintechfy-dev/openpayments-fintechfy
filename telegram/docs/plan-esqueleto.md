@@ -1,7 +1,7 @@
 # Plan del esqueleto del bot de Telegram
 
 > Issue [#7](https://github.com/fintechfy-dev/openpayments-fintechfy/issues/7) · rama `feature/telegram-7-esqueleto-bot` · 2026-10-16.
-> Estado: **aprobado**. Tarea 1 hecha y verificada con un bot real; reacomodo hecho; tareas 2 a 5 pendientes.
+> Estado: **aprobado**. Tareas 1 y 2 hechas; reacomodo hecho; tareas 3 a 5 pendientes (la 5, bloqueada por #5).
 
 ## 0. Reacomodo del 16 de octubre (después del plan de trabajo del equipo)
 
@@ -135,15 +135,15 @@ Cada paso termina en algo que se puede verificar. Todos los comandos se corren d
 - [x] 1.10 Verificado a mano por Estiven el 2026-10-16 con un bot real. Sin token sale con código 1 y «Falta la variable BOT_TOKEN».
 - [x] 1.11 Arnés de pruebas sin red (`test/helpers/bot-prueba.js`) y pruebas de `/start` y del error. → `npm test`: 3/3.
 
-### Tarea 2: secretos fuera del repositorio (US-002-SEC, #14)
+### Tarea 2: secretos fuera del repositorio (US-002-SEC, #14) ✅
 
-- [ ] 2.1 Crear `telegram/.env.example` con las variables de la sección 5, sin valores y con un comentario por variable.
-- [ ] 2.2 Agregar `data/` a `.gitignore`.
+- [x] 2.1 Crear `telegram/.env.example` con las variables de la sección 5, sin valores y con un comentario por variable.
+- [x] 2.2 Agregar a `.gitignore` la carpeta `telegram/data/` y los archivos `*.db`, `*.db-wal` y `*.db-shm`. *Cambio:* se usa `telegram/data/` y no `data/` a secas, para no ignorar por accidente una carpeta `data/` de `web/` o `pagos/`.
 - [x] 2.3 Leer `.env` con `process.loadEnvFile()` si existe. *Adelantado a la tarea 1.*
-- [ ] 2.4 En `src/log.js`, tapar con `***` el token y la llave del servicio externo.
-- [ ] 2.5 Guardia de salida (`bot.api.config.use`): si una llamada a Telegram incluye un secreto, se bloquea y se registra.
-- [ ] 2.6 Pruebas: un mensaje con el token no se envía; el log tapa el token.
-- [ ] 2.7 Verificar: `git status` no muestra `.env` ni `data/`.
+- [x] 2.4 `src/secretos.js` (lista, tapar y detectar) y `src/log.js` con `crearLogger({ secretos })`: tapa con `***` el token y `EXTERNO_API_KEY` en textos, errores (con su traza) y objetos. Los secretos vacíos se descartan para no tapar cualquier texto.
+- [x] 2.5 Guardia de salida (`bot.api.config.use`): si el contenido de una llamada a Telegram incluye un secreto, lanza `SecretoBloqueadoError` y lo registra sin el secreto. Revisa el contenido, no la URL (que siempre lleva el token).
+- [x] 2.6 Pruebas (`test/secretos.test.js`, 6): el log tapa el token en texto, error y objeto; un mensaje con el token o con otro secreto no llega a Telegram; un mensaje normal sí sale. *Cambio en el arnés:* ahora intercepta con un `fetch` falso por debajo de los transformadores, así la guardia también se prueba. → `npm test`: 9/9.
+- [x] 2.7 Verificado: `git check-ignore` confirma `telegram/.env` y `telegram/data/bot.db`; `git status` no los muestra. Arranque real con el `.env` de Estiven: el log muestra `Bot @… escuchando` sin secretos.
 
 ### Tarea 3: configuración del bot (parte del bot de US-001-CFG)
 

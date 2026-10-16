@@ -1,5 +1,7 @@
 import { crearBot } from '../../src/bot/index.js';
 
+export const TOKEN_DE_PRUEBA = '123456:token-de-prueba';
+
 const BOT_INFO = {
   id: 1,
   is_bot: true,
@@ -14,14 +16,23 @@ const BOT_INFO = {
 
 export const logSilencioso = { info() {}, warn() {}, error() {} };
 
-// Bot sin red: cada llamada a la API de Telegram se guarda en `llamadas` en vez de enviarse.
-export function crearBotDePrueba({ config = {}, log = logSilencioso } = {}) {
-  const bot = crearBot({ botToken: 'token-de-prueba', ...config }, { log, botInfo: BOT_INFO });
+// Bot sin red: un `fetch` falso guarda cada llamada a Telegram en `llamadas` en vez de enviarla.
+// Va por debajo de los transformadores del bot, así que la guardia de secretos sí se ejerce.
+export function crearBotDePrueba({ config = {}, log = logSilencioso, secretos } = {}) {
   const llamadas = [];
-  bot.api.config.use(async (_prev, method, payload) => {
+  const fetchFalso = async (url, init) => {
+    const method = String(url).split('/').at(-1);
+    const payload = init?.body ? JSON.parse(init.body) : undefined;
     llamadas.push({ method, payload });
-    return { ok: true, result: true };
-  });
+    return new Response(JSON.stringify({ ok: true, result: true }), {
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const bot = crearBot(
+    { botToken: TOKEN_DE_PRUEBA, ...config },
+    { log, secretos, botInfo: BOT_INFO, cliente: { fetch: fetchFalso } },
+  );
   return { bot, llamadas };
 }
 

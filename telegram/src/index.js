@@ -1,11 +1,14 @@
 import { existsSync } from 'node:fs';
 import { crearLogger } from './log.js';
+import { listaDeSecretos } from './secretos.js';
 import { crearBot, COMANDOS } from './bot/index.js';
 
 // Si no hay .env, se usan las variables del sistema.
 if (existsSync('.env')) process.loadEnvFile('.env');
 
-const log = crearLogger();
+// Lo que nunca puede salir en el log ni en un mensaje. En la tarea 3 sale de loadConfig().
+const secretos = listaDeSecretos(process.env.BOT_TOKEN, process.env.EXTERNO_API_KEY);
+const log = crearLogger({ secretos });
 
 // Validación provisional: en la tarea 3 la reemplaza loadConfig().
 const botToken = process.env.BOT_TOKEN;
@@ -14,7 +17,7 @@ if (!botToken) {
   process.exit(1);
 }
 
-const bot = crearBot({ botToken }, { log });
+const bot = crearBot({ botToken }, { log, secretos });
 
 // Enganche de la tarea 10: aquí se montará el servidor HTTP del retorno de Open Payments.
 

@@ -33,3 +33,11 @@ revisa los nuevos cambios y ve si afectan nuestro trabajo ahoruita con elñ bot
 ```text
 haz el reacomodo
 ```
+
+```text
+haz el commit
+```
+
+```text
+continua con la 2
+```
