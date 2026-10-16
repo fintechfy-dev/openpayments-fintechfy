@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
+import { Aviso } from "@/components/Aviso";
 import { Badge } from "@/components/Badge";
 import { BloqueCustodia } from "@/components/BloqueCustodia";
 import { Dinero } from "@/components/Dinero";
@@ -41,10 +42,13 @@ interface Props {
   inicial: Pago[];
   /** Cuándo leyó el servidor los datos iniciales (ISO). */
   leidoEn: string;
+  /** Con staging: los cobros que muestra los dio por hechos el motor, sin pasar por Open Payments.
+   *  TODO(#4): retirarlo cuando el servicio de pagos ejecute los cobros. */
+  sinOpenPayments?: boolean;
 }
 
 /** Registro de pagos para el jurado (US-007-RPT): se refresca solo cada 3 s y anuncia solo pagos que terminan. */
-export function RegistroPagos({ inicial, leidoEn: leidoInicial }: Props) {
+export function RegistroPagos({ inicial, leidoEn: leidoInicial, sinOpenPayments = false }: Props) {
   const [pagos, setPagos] = useState<Pago[]>(() => ordenarRecientes(inicial));
   const [leidoEn, setLeidoEn] = useState(leidoInicial);
   const [fallo, setFallo] = useState(false);
@@ -122,6 +126,12 @@ export function RegistroPagos({ inicial, leidoEn: leidoInicial }: Props) {
           Actualizado a las <time dateTime={leidoEn}>{formatoHora(leidoEn)}</time>
         </p>
       </EncabezadoPagina>
+
+      {sinOpenPayments ? (
+        <Aviso tipo="info" titulo="Estos cobros todavía no pasan por Open Payments" anunciar={false}>
+          Staging los da por hechos. La ejecución real, con cotización y pago saliente, llega con el servicio de pagos.
+        </Aviso>
+      ) : null}
 
       {fallo ? (
         <p className="registro__fallo" role="status">

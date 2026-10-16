@@ -28,6 +28,8 @@ Esta guía queda como referencia del servicio externo.
 
 **Autenticación:** `Authorization: Bearer <JWT>` con el token de la organización del sandbox. Lo comparte Willy por canal privado y va en `integracion/.env`, nunca en el repo.
 
+**Especificación completa:** [`FND-20261015-natillera-2.openapi.json`](FND-20261015-natillera-2.openapi.json) (OpenAPI 3.1: rutas, parámetros de cada contrato y trigger, y los 110 webhooks). Para regenerarla: `curl -H "Authorization: Bearer $TOKEN" https://sandbox-staging.corebank.ai/api/ecosystems/FND-20261015-natillera-2/openapi > FND-20261015-natillera-2.openapi.json`.
+
 | Operación | Ruta |
 |---|---|
 | Crear un contrato | `POST /api/contracts` con `{ "templateName", "parameters" }` → devuelve `contractId` |

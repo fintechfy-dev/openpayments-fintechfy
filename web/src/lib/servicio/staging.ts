@@ -4,7 +4,10 @@
 
 import type { LectorIndice, RegistroNatillera, RegistroParticipacion } from "@/lib/indice/tipos";
 
+import { bitacoraDeNatillera } from "./bitacora-staging";
+import { leerEventos, type EventoContrato } from "./eventos-staging";
 import { ErrorServicio } from "./http";
+import { pagosDeParticipacion } from "./pagos-staging";
 import type {
   EstadoNatillera,
   EstadoParticipante,
@@ -32,9 +35,12 @@ interface Contrato {
 }
 
 const TIEMPO_LIMITE_MS = 10_000;
+// /api/pagos se consulta cada 3 s y cada consulta lee las natilleras dos veces (natillerasVisibles y
+// listarPagos): sin esto son N·(3M+2) GET por refresco. Corto para que un pago nuevo se vea enseguida.
+const CACHE_MS = 2_000;
 
-// Todavía no se ha visto una respuesta real de staging: cada valor puede venir crudo (5000, "ACTIVA"),
-// como texto numérico ("5000") o tipado como en la escritura ({ type: "Currency", value: 5000 }).
+// Staging manda { type, value, assigned } (visto el 16 oct); se acepta también el valor crudo (5000, "ACTIVA")
+// o como texto numérico ("5000"), por si otro contrato o versión del motor lo manda así.
 
 /** Quita el envoltorio { type, value } si lo trae. */
 export function valorPlano(valor: unknown): unknown {
@@ -64,7 +70,10 @@ export function leerTexto(valor: unknown): string | undefined {
 export function fechaStaging(valor: unknown): FechaISO | undefined {
   const texto = leerTexto(valor);
   if (!texto) return undefined;
-  return /^\d{4}-\d{2}-\d{2}$/.test(texto) ? `${texto}T17:00:00Z` : texto;
+  // El motor devuelve un Date como "2026-11-01T00:00:00" (visto en staging el 16 oct): medianoche
+  // sin zona, que JavaScript lee en la hora local del servidor y en UTC sería el día anterior en Bogotá.
+  const dia = /^(\d{4}-\d{2}-\d{2})(T00:00:00(\.0+)?Z?)?$/.exec(texto);
+  return dia ? `${dia[1]}T17:00:00Z` : texto;
 }
 
 /** En staging un Percentage es una fracción (1 % = 0.01). Redondeado a 2 decimales: 0.025 → 2.5, no 2.4999999. */
@@ -143,6 +152,16 @@ function comoCampos(valor: unknown): Campos {
   return valor !== null && typeof valor === "object" && !Array.isArray(valor) ? (valor as Campos) : {};
 }
 
+/** Junta los resultados de cada elemento; uno que falla se omite con registro (no tumba la pantalla
+ *  frente al jurado). Si fallan todos, se lanza el primer error para que la pantalla lo diga. */
+async function reunir<T, R>(que: string, elementos: T[], armar: (elemento: T) => Promise<R[]>): Promise<R[]> {
+  const resultados = await Promise.allSettled(elementos.map(armar));
+  const fallas = resultados.flatMap((r) => (r.status === "rejected" ? [r.reason as unknown] : []));
+  for (const f of fallas) console.error(`Se omitió una parte de ${que}: ${f instanceof Error ? f.message : String(f)}`);
+  if (elementos.length > 0 && fallas.length === elementos.length) throw fallas[0];
+  return resultados.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+}
+
 export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
   const base = opciones.urlBase.replace(/\/+$/, "");
   const { token, indice } = opciones;
@@ -155,7 +174,36 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
 
   /** null si staging responde 404 (el contrato no existe). */
   async function leerContrato(contractId: string): Promise<Contrato | null> {
-    const ruta = `/api/contracts/${encodeURIComponent(contractId)}`;
+    const cuerpo = await pedirJson(`/api/contracts/${encodeURIComponent(contractId)}`);
+    if (cuerpo === null) return null;
+    const c = comoCampos(cuerpo);
+    return { raw: comoCampos(c.currentStateRaw), labels: comoCampos(c.currentStateLabels) };
+  }
+
+  /** Un contrato que no existe da lista vacía (con registro), como en las lecturas de estado. */
+  async function eventosDe(contractId: string): Promise<EventoContrato[]> {
+    const cuerpo = await pedirJson(`/api/contracts/${encodeURIComponent(contractId)}/events`);
+    if (cuerpo === null) console.error(`Contrato ${contractId} sin eventos en staging: no existe`);
+    return leerEventos(contractId, cuerpo);
+  }
+
+  const cache = new Map<string, { hasta: number; cuerpo: Promise<unknown> }>();
+
+  /** El cuerpo JSON de un GET a staging; null si responde 404. Reusa la misma respuesta por CACHE_MS. */
+  function pedirJson(ruta: string): Promise<unknown> {
+    const ahora = Date.now();
+    const guardado = cache.get(ruta);
+    if (guardado && guardado.hasta > ahora) return guardado.cuerpo;
+    const cuerpo = pedirJsonSinCache(ruta);
+    cache.set(ruta, { hasta: ahora + CACHE_MS, cuerpo });
+    // Un fallo no se guarda: el siguiente refresco lo vuelve a intentar.
+    cuerpo.catch(() => {
+      if (cache.get(ruta)?.cuerpo === cuerpo) cache.delete(ruta);
+    });
+    return cuerpo;
+  }
+
+  async function pedirJsonSinCache(ruta: string): Promise<unknown> {
     let res: Response;
     try {
       res = await pedirHttp(`${base}${ruta}`, {
@@ -169,14 +217,11 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
     }
     if (res.status === 404) return null;
     if (!res.ok) throw new ErrorServicio(sinToken(`Staging respondió ${res.status} en ${ruta}`), res.status);
-    let cuerpo: unknown;
     try {
-      cuerpo = await res.json();
+      return (await res.json()) as unknown;
     } catch {
       throw new ErrorServicio(sinToken(`Staging respondió algo que no es JSON en ${ruta}`), res.status);
     }
-    const c = comoCampos(cuerpo);
-    return { raw: comoCampos(c.currentStateRaw), labels: comoCampos(c.currentStateLabels) };
   }
 
   /** Las participaciones cuyo contrato no existe en staging se omiten (con registro), igual que las natilleras. */
@@ -199,8 +244,8 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
     throw new ErrorServicio(`La natillera ${registro.natilleraId} no tiene ${campo} en staging.`);
   }
 
-  /** NumeroCuotas es parámetro de `natillera-participacion`, no de la cuenta (integracion/…openapi.json):
-   *  se toma de la cuenta si lo trae y, si no, de sus participaciones. Sin ninguna, 0 y queda registrado. */
+  /** La especificación solo lo declara en `natillera-participacion`, pero la cuenta lo calcula (visto el
+   *  16 oct): se toma de la cuenta y, si no lo trae, de sus participaciones. Sin ninguna, 0 y queda registrado. */
   function cuotasTotales(c: Contrato, participaciones: { contrato: Contrato }[]): number {
     const deLaCuenta = leerNumero(c.raw.NumeroCuotas);
     if (deLaCuenta !== undefined) return deLaCuenta;
@@ -298,7 +343,47 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
     },
     listarSolicitudesCredito: sinConectar,
     responderSolicitud: sinConectar,
-    listarPagos: sinConectar,
-    listarBitacora: sinConectar,
+    async listarPagos() {
+      return reunir("pagos", await indice.natilleras(), async (registro) => {
+        const a = await armar(registro);
+        if (!a) return [];
+        const natillera = { id: registro.natilleraId, nombre: leerTexto(a.contrato.raw.NombreNatillera) ?? registro.nombre };
+        const valorCuota = numeroObligatorio(a.contrato, "ValorCuota", registro);
+        return reunir(`pagos de ${registro.natilleraId}`, a.participaciones.encontradas, async ({ registro: p, contrato }) =>
+          pagosDeParticipacion({
+            natillera,
+            participanteNombre: p.nombre,
+            valorCuota,
+            deudaActual: numero(contrato, "DeudaCuotas") + numero(contrato, "MoraAcumulada"),
+            eventos: await eventosDe(p.contractId),
+          }));
+      }).then((pagos) => pagos.sort((x, y) => y.creado.localeCompare(x.creado)));
+    },
+    async listarBitacora() {
+      return reunir("bitácora", await indice.natilleras(), async (registro) => {
+        const [contrato, eventosCuenta, actividades] = await Promise.all([
+          leerContrato(registro.contractId),
+          eventosDe(registro.contractId),
+          indice.actividades(registro.natilleraId),
+        ]);
+        if (!contrato) return [];
+        // Si fallan las actividades, la bitácora de la natillera igual se muestra con lo de la cuenta.
+        const conEventos = await reunir(`actividades de ${registro.natilleraId}`, actividades, async (r) => [{ registro: r, eventos: await eventosDe(r.contractId) }])
+          .catch((e: unknown) => {
+            console.error(`Bitácora de ${registro.natilleraId} sin actividades: ${e instanceof Error ? e.message : String(e)}`);
+            return [];
+          });
+        return bitacoraDeNatillera({
+          natillera: {
+            id: registro.natilleraId,
+            nombre: leerTexto(contrato.raw.NombreNatillera) ?? registro.nombre,
+            administrador: registro.administrador.nombre,
+            valorCuota: numeroObligatorio(contrato, "ValorCuota", registro),
+          },
+          eventosCuenta,
+          actividades: conEventos,
+        });
+      }).then((eventos) => eventos.sort((x, y) => y.fecha.localeCompare(x.fecha)));
+    },
   };
 }

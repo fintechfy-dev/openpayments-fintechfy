@@ -104,5 +104,8 @@ export function crearAlmacen(ruta: string): Almacen {
     async participaciones(natilleraId) {
       return Object.values((await leer(ruta)).participaciones).filter((p) => p.natilleraId === natilleraId);
     },
+    async actividades(natilleraId) {
+      return Object.values((await leer(ruta)).actividades).filter((a) => a.natilleraId === natilleraId);
+    },
   };
 }

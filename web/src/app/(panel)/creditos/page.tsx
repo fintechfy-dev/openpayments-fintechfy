@@ -6,7 +6,7 @@ import { Icono } from "@/components/Icono";
 import { formatoFecha } from "@/lib/fechas";
 import { redirect } from "next/navigation";
 import { PantallaSinConectar } from "@/components/PantallaSinConectar";
-import { listarSolicitudesCredito, pantallasSinConectar, type SolicitudCredito } from "@/lib/servicio";
+import { listarSolicitudesCredito, creditosSinConectar, type SolicitudCredito } from "@/lib/servicio";
 import { requerirSesion } from "@/lib/sesion";
 import { puedeResponderCreditos } from "@/lib/sesion/acceso";
 import { AvisoRespuestas } from "./AvisoRespuestas";
@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 export default async function Pagina() {
   // Solo la financiera presta; un administrador no ve solicitudes de otras personas.
   if (!puedeResponderCreditos(await requerirSesion())) redirect("/natilleras");
-  if (pantallasSinConectar) return <PantallaSinConectar titulo="Solicitudes de crédito" />;
+  if (creditosSinConectar) return <PantallaSinConectar titulo="Solicitudes de crédito" />;
   const solicitudes = await listarSolicitudesCredito();
   const { porResponder, respondidas } = agruparSolicitudes(solicitudes);
 

@@ -154,3 +154,101 @@ ya tienes el token admin revisalo por favor
 ```
 
 La segunda revisión dio `CAMBIOS-MENORES` (solo ⚪); Claude Code los corrigió. Antes del commit apareció en `web/INTEGRACION.md` una nota de otra persona o sesión, contrastada contra staging: `NumeroCuotas` es parámetro de `natillera-participacion`, no de la cuenta. Claude Code dejó de exigirlo en la cuenta (se toma de la cuenta o de sus participaciones, con prueba) para que la lista no cayera con datos reales. Esa nota y `integracion/` no van en este commit: no son de este trabajo.
+
+El token admin estaba en `web/.env.local` (`JWT_TOKEN`, `org_role: "admin"`). Con él, `POST /api/contracts` respondió 201: Claude Code creó `natillera-cuenta` `0650899a-5af5-46ee-bc3b-0f21da6fce9e` y `natillera-participacion` `30acc57f-279e-4024-9e38-d4e01fe9e429` («Prueba web #53»), leyó su estado y eventos, encontró que las fechas llegan como `"AAAA-MM-DDT00:00:00"` sin zona y corrigió `fechaStaging` con su prueba. Probó `crearServicioStaging` en vivo con un archivo de prueba temporal (borrado después).
+
+## 2026-10-16 · 17:25 (hora de Bogotá) · Claude Code (Claude Opus 5.5)
+
+Comando `/director-web` con este encargo:
+
+```text
+podemos integrar al proyecto como una api intermedia de esto https://github.com/interledger/open-payments
+```
+
+Claude Code respondió que la API intermedia de Open Payments es `pagos/` (#4), que la escribe el equipo a mano, y ofreció guiar y revisar.
+
+## 2026-10-16 · 17:33 (hora de Bogotá) · Claude Code (Claude Opus 5.5)
+
+Comando `/director-web` con este encargo:
+
+```text
+bueno dejemos eso un lado puedes rellenar la informacion de la web con las apis ya que tienes?
+```
+
+## 2026-10-16 · 17:39 (hora de Bogotá) · Claude Code (Claude Opus 5.5) → subagente `web-implementador` (pagos)
+
+```text
+Repo: /Users/octopus/Proyectos Johan/openpayments-fintechfy. Issue #53 (Web: integrar con staging), parte "/pagos desde los eventos de staging".
+
+**Tus archivos (solo estos):** `web/src/lib/servicio/pagos-staging.ts` y `web/src/lib/servicio/pagos-staging.test.ts`.
+
+**Qué construir:** `export function pagosDeParticipacion(entrada: { natillera: { id: string; nombre: string }; participanteNombre: string; valorCuota: number; eventos: EventoContrato[] }): Pago[]` (tipos de `./tipos` y `./eventos-staging`).
+
+- Un `Pago` por cada solicitud de cobro: `CobrarCuota` (tipo "cuota", periodo = parametros.Periodo, monto = valorCuota) y `PagarDeuda` (tipo "deuda"; monto de parametros si lo trae, si no 0 con un console.warn). Dirección "entrante". id estable = `${contractId}-${secuencia}`. creado = fecha de la solicitud.
+- Etapas (en el orden de `ETAPAS`):
+  - solicitud: "hecha" con la fecha del evento de solicitud.
+  - autorización: "hecha" si antes de la solicitud hay un evento que puso GrantId no vacío (detalle = "Permiso <grantId>"; fecha de ese evento); si no, "fallida" con motivo "El participante no ha autorizado el cobro".
+  - ejecución y finalización: buscar el primer evento POSTERIOR a la solicitud que la responde (mismo Periodo en parametros para cuotas). Éxito → ejecución "hecha" (detalle "Lo ejecuta el servicio de pagos (#4)", fecha del evento) y finalización "hecha" (detalle con el nombre de la función, por ejemplo "PrimeraCuotaCobrada"); monto = parametros.MontoCobrado si viene. Fallo → ejecución "fallida", finalización "pendiente", motivo en palabras simples ("El cobro no se pudo hacer"). Sin respuesta todavía → ejecución "actual", finalización "pendiente".
+- estado del Pago: completado si finalización hecha; fallido si alguna etapa fallida; autorizado si la autorización está hecha; si no, pendiente.
+- Ordena del más reciente al más antiguo.
+
+**Pruebas:** con `EVENTOS_PARTICIPACION` sale exactamente 1 pago "cuota" de $50.000 completado con las 4 etapas hechas y el detalle "Permiso grant-prueba-web-53"; casos a mano: cobro sin respuesta (ejecución actual), cobro fallido, cobro sin permiso previo, dos periodos que no se cruzan las respuestas, PagarDeuda.
+
+**Estás en paralelo con otro agente.** No corras `npm run build`, `npm run verificar` ni `npm run dev` (comparten .next/ y la copia del design system); verifica con `npm --prefix web run typecheck`, `npm --prefix web run lint` y `npm --prefix web run test`. No edites `web/src/lib/servicio/staging.ts`, `index.ts`, `tipos.ts`, `eventos-staging.ts` ni `eventos-staging.fixtures.ts` (los conecta quien coordina); si necesitas algo fuera de tus archivos, repórtalo. Sin dependencias nuevas, sin `server-only` (las pruebas lo importan). Lógica pura: tu función recibe datos ya leídos y no hace fetch.
+
+Ya existe (léelo, no lo reescribas): `web/src/lib/servicio/eventos-staging.ts` (`EventoContrato`: contractId, secuencia, fecha, tipo "Initialized"|"StateChanged", funcion, disparador, cambios [{concepto, antes, despues}] en formato para mostrar "$50.000,00", parametros sin envoltorio, actor null si lo disparó el motor) y `eventos-staging.fixtures.ts` con eventos REALES de staging del 16 oct: participación = Initialized, ConfirmarAutorizacion (EstadoParticipacion 0→1, GrantId ""→"grant-prueba-web-53"), CobrarCuota (parametros {Periodo:1}; PeriodoEnCobro 0→1), PrimeraCuotaCobrada (disparador "CuotaCobrada", actor null, parametros {Periodo:1, MontoCobrado:50000}; CuotasPagadas 0→1, TotalAportado → "$50.000,00", EstadoParticipacion 1→2); cuenta = Initialized y RegistrarValidado (ParticipantesValidados 0→1). Los tipos de salida están en `web/src/lib/servicio/tipos.ts`; los registros del índice en `web/src/lib/indice/tipos.ts`. Lee `web/INTEGRACION.md` (sección "Lo que confirma la especificación" y "Las cuatro etapas") y, para nombres de funciones, `integracion/FND-20261015-natillera-2.openapi.json` (esquemas `Trigger_natillera_*`). OJO: los nombres de las funciones que registran la RESPUESTA de un pago (como PrimeraCuotaCobrada) no están en la especificación: no inventes una lista cerrada; reconoce el éxito por los cambios (CuotasPagadas sube) o por `MontoCobrado` en los parámetros, y el fallo por cambios como PagoFallidoPendiente 0→1 o funciones con "Fallo"/"Fallida" en el nombre.
+
+Pruebas con Vitest, sin red, usando los fixtures reales más casos armados a mano. Antes de dar una prueba por buena, rompe a propósito la línea que protege y mírala fallar (.claude/rules/pruebas.md). Textos en español con tildes, voz de design-system/docs/voz-y-tono.md. Sigue `.claude/agents/web-implementador.md` y las skills natillera-web y natillera-design-system. Devuelve tu veredicto (`LISTO` · `LISTO-CON-PENDIENTES` · `BLOQUEADO`) con el informe del formato del agente, incluida la salida final de typecheck, lint y test.
+```
+
+## 2026-10-16 · 17:39 (hora de Bogotá) · Claude Code (Claude Opus 5.5) → subagente `web-implementador` (bitácora)
+
+```text
+Repo: /Users/octopus/Proyectos Johan/openpayments-fintechfy. Issue #53 (Web: integrar con staging), parte "/bitacora desde los eventos de staging".
+
+**Tus archivos (solo estos):** `web/src/lib/servicio/bitacora-staging.ts` y `web/src/lib/servicio/bitacora-staging.test.ts`.
+
+**Qué construir:** `export function bitacoraDeNatillera(entrada: { natillera: { id: string; nombre: string; administrador: string; valorCuota: number }; eventosCuenta: EventoContrato[]; actividades: { registro: RegistroActividad; eventos: EventoContrato[] }[] }): EventoBitacora[]` (tipos de `./tipos`, `./eventos-staging` y `@/lib/indice/tipos`).
+
+- Natillera (eventos de la cuenta), por `tipo`/`funcion`: Initialized → "Creó la natillera" (actor = administrador; detalle con la cuota formateada con `formatoCOP` de `@/lib/natillera` si existe, si no como la usa la web); RegistrarValidado → "Se validó un participante" (actor "Sistema"); Iniciar → "La natillera arrancó"; VerificarCupo con EstadoNatillera hacia CERRADA_SIN_CUPO (6) → "Cerró sin cupo"; AbrirPeriodo → "Abrió el periodo <n>"; IniciarLiquidacion → "Inició la liquidación"; un evento con EstadoNatillera → 5 → "Cerró la natillera". Los eventos de dinero de la cuenta (RegistrarAporte, RegistrarPagoLiquidacion, RegistrarComision… y cualquiera cuyo nombre empiece por "Registrar" salvo RegistrarValidado) NO van a la bitácora: son de /pagos.
+- Actividades: Initialized → "Creó una actividad" (detalle = registro.descripcion); IndicarGanador → "Indicó al ganador"; CerrarSinPremioOSinGanador → "Cerró la actividad sin premio"; CerrarEnLiquidacion → "Cerró la actividad al liquidar".
+- Una función desconocida no se inventa ni se descarta en silencio: entra como accion "Acción en staging", detalle = nombre de la función.
+- actor: el administrador si el evento trae actor (lo pidió alguien con el JWT), "Sistema" si actor es null.
+- id estable `${contractId}-${secuencia}`; ordenado del más reciente al más antiguo.
+
+**Pruebas:** con `EVENTOS_CUENTA` salen 2 entradas ("Creó la natillera" y "Se validó un participante", en ese orden de más reciente primero) con el actor correcto; casos a mano para actividad creada, ganador, función desconocida, RegistrarAporte omitido y cierre sin cupo.
+
+**Estás en paralelo con otro agente.** No corras `npm run build`, `npm run verificar` ni `npm run dev` (comparten .next/ y la copia del design system); verifica con `npm --prefix web run typecheck`, `npm --prefix web run lint` y `npm --prefix web run test`. No edites `web/src/lib/servicio/staging.ts`, `index.ts`, `tipos.ts`, `eventos-staging.ts` ni `eventos-staging.fixtures.ts` (los conecta quien coordina); si necesitas algo fuera de tus archivos, repórtalo. Sin dependencias nuevas, sin `server-only` (las pruebas lo importan). Lógica pura: tu función recibe datos ya leídos y no hace fetch.
+
+Ya existe (léelo, no lo reescribas): `web/src/lib/servicio/eventos-staging.ts` (`EventoContrato`: contractId, secuencia, fecha, tipo "Initialized"|"StateChanged", funcion, disparador, cambios [{concepto, antes, despues}] en formato para mostrar "$50.000,00", parametros sin envoltorio, actor null si lo disparó el motor) y `eventos-staging.fixtures.ts` con eventos REALES de staging del 16 oct: participación = Initialized, ConfirmarAutorizacion (EstadoParticipacion 0→1, GrantId ""→"grant-prueba-web-53"), CobrarCuota (parametros {Periodo:1}; PeriodoEnCobro 0→1), PrimeraCuotaCobrada (disparador "CuotaCobrada", actor null, parametros {Periodo:1, MontoCobrado:50000}; CuotasPagadas 0→1, TotalAportado → "$50.000,00", EstadoParticipacion 1→2); cuenta = Initialized y RegistrarValidado (ParticipantesValidados 0→1). Los tipos de salida están en `web/src/lib/servicio/tipos.ts`; los registros del índice en `web/src/lib/indice/tipos.ts`. Lee `web/INTEGRACION.md` (sección "Lo que confirma la especificación" y "Las cuatro etapas") y, para nombres de funciones, `integracion/FND-20261015-natillera-2.openapi.json` (esquemas `Trigger_natillera_*`). OJO: los nombres de las funciones que registran la RESPUESTA de un pago (como PrimeraCuotaCobrada) no están en la especificación: no inventes una lista cerrada; reconoce el éxito por los cambios (CuotasPagadas sube) o por `MontoCobrado` en los parámetros, y el fallo por cambios como PagoFallidoPendiente 0→1 o funciones con "Fallo"/"Fallida" en el nombre.
+
+Pruebas con Vitest, sin red, usando los fixtures reales más casos armados a mano. Antes de dar una prueba por buena, rompe a propósito la línea que protege y mírala fallar (.claude/rules/pruebas.md). Textos en español con tildes, voz de design-system/docs/voz-y-tono.md. Sigue `.claude/agents/web-implementador.md` y las skills natillera-web y natillera-design-system. Devuelve tu veredicto (`LISTO` · `LISTO-CON-PENDIENTES` · `BLOQUEADO`) con el informe del formato del agente, incluida la salida final de typecheck, lint y test.
+```
+
+## 2026-10-16 · 17:47 (hora de Bogotá) · Claude Code (Claude Opus 5.5) → subagente `web-revisor`
+
+```text
+Repo: /Users/octopus/Proyectos Johan/openpayments-fintechfy. Revisa el trabajo no comiteado del issue #53 (web contra staging) en la rama feature/web-53-integracion-staging: `git status` y `git diff -- web/` más los archivos nuevos sin seguimiento de `web/src/lib/servicio/` (eventos-staging.ts, eventos-staging.fixtures.ts, eventos-staging.test.ts, pagos-staging.ts, pagos-staging.test.ts, bitacora-staging.ts, bitacora-staging.test.ts). Lo importante: `fechaStaging` (las fechas de staging llegan como "AAAA-MM-DDT00:00:00" sin zona), `pedirJson`/`eventosDe`/`listarPagos`/`listarBitacora` en staging.ts, `actividades()` en el lector del índice (lib/indice/tipos.ts, almacen.ts, index.ts) y las dos funciones puras de pagos y bitácora.
+
+**No compiles: corre solo typecheck, lint y test** (`npm --prefix web run typecheck`, `lint`, `test`); el build ya pasó.
+
+Contexto: web/INTEGRACION.md, sección "Lo que confirma la especificación" (formas reales de staging del 16 oct), y integracion/FND-20261015-natillera-2.openapi.json. Fíjate en especial en: que el token no salga en ningún error ni log; que `/pagos` (pantalla del jurado) no presente como pago de Open Payments algo que staging marcó como cobrado sin que pase por pagos/; el emparejamiento heurístico de respuestas de cobro en pagos-staging.ts; llamadas en paralelo sin tope (N natilleras × M participaciones) y qué pasa si un GET de eventos falla (¿tumba toda la lista?); y que /creditos siga avisando que no está conectado. Sigue `.claude/agents/web-revisor.md` y devuelve su veredicto y hallazgos con severidad y ruta:línea.
+```
+
+## 2026-10-16 · 17:59 (hora de Bogotá) · Claude Code (Claude Opus 5.5) → subagente `web-revisor` (segunda pasada)
+
+```text
+Repo: /Users/octopus/Proyectos Johan/openpayments-fintechfy. Segunda pasada sobre el issue #53 (rama feature/web-53-integracion-staging, trabajo no comiteado). En la primera devolviste CAMBIOS-NECESARIOS con 5 🟠, 2 🟡 y 2 ⚪. Verifica que estén corregidos y que la corrección no haya roto nada:
+
+1. /pagos y /bitacora apagadas con staging → `pantallasSinConectar` pasó a `usaStaging` + `creditosSinConectar` en web/src/lib/servicio/index.ts; pagos/page.tsx y bitacora/page.tsx ya no cortan; creditos/page.tsx usa creditosSinConectar.
+2. Un GET que falla tumbaba la lista → helper `reunir` (allSettled) en web/src/lib/servicio/staging.ts, usado por natillera, participación y actividad.
+3. Consultas sin tope → caché de 2 s por ruta dentro del servicio (`pedirJson`, CACHE_MS), los fallos no se guardan.
+4. Cobro de staging presentado como de Open Payments → `Aviso` info en web/src/app/(panel)/pagos/RegistroPagos.tsx (prop `sinOpenPayments`, la pasa pagos/page.tsx con usaStaging) y detalle de ejecución honesto en pagos-staging.ts; además un cobro sin permiso ya no sale completado (estadoDe).
+5. Deuda en $0 → `deudaActual` (DeudaCuotas + MoraAcumulada) en la entrada de pagosDeParticipacion; una deuda solo la cierra una respuesta con "Deuda" en el nombre.
+⚪8 medianoche con Z en fechaStaging; ⚪9 comentarios al día y ValorCuota con numeroObligatorio.
+Queda abierto a propósito el 🟡7 (actor de la bitácora con JWT compartido): solo dime si lo ves 🟠.
+
+**No compiles: corre solo typecheck, lint y test** (el build ya pasó). Revisa también accesibilidad y design system del Aviso nuevo (que no se anuncie dos veces dentro de la región viva del registro). Sigue `.claude/agents/web-revisor.md` y devuelve veredicto y hallazgos con severidad y ruta:línea.
+```
+
+Resultado (18:04): `web-revisor` dio CAMBIOS-NECESARIOS (5 🟠) y, tras las correcciones de Claude Code, CAMBIOS-MENORES; Claude Code corrigió también los 🟡 1-3 y los ⚪ 5-6. Quedan anotados el ⚪ 4 (línea de tiempo de un cobro sin permiso) y el 🟡 7 (actor de la bitácora con el JWT compartido). `npm --prefix web run verificar`: 166 pruebas, build compilado.

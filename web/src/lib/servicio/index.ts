@@ -50,9 +50,11 @@ function crearServicio(): Servicio {
 
 const servicio = crearServicio();
 
-/** true con staging: /creditos, /pagos y /bitacora todavía no leen de allí (#53) y lo dicen.
- *  Solo si staging quedó bien configurado; si falta el token, todas las pantallas muestran ese error. */
-export const pantallasSinConectar = Boolean(process.env.SERVICIO_EXTERNO_URL?.trim() && process.env.SERVICIO_EXTERNO_TOKEN?.trim());
+/** true si la web lee de staging bien configurado; si falta el token, todas las pantallas muestran ese error. */
+export const usaStaging = Boolean(process.env.SERVICIO_EXTERNO_URL?.trim() && process.env.SERVICIO_EXTERNO_TOKEN?.trim());
+
+/** Con staging, /creditos todavía no lee de allí (#53) y lo dice. */
+export const creditosSinConectar = usaStaging;
 
 /** true cuando la web muestra datos de prueba (sin SERVICIO_EXTERNO_URL ni SERVICIO_URL). */
 export const usaDatosDePrueba = servicio === servicioDePrueba;

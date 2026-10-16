@@ -19,6 +19,20 @@
 
 **Para leer:** usa siempre `currentStateRaw` (valores sin formato). El nombre de cada estado viene listo en `currentStateLabels`. La proyección `currentState` es texto formateado para mostrar: no sirve para calcular.
 
+### Lo que confirma la especificación (16 oct, 17:00)
+
+La especificación OpenAPI del ecosistema está en [`../integracion/FND-20261015-natillera-2.openapi.json`](../integracion/FND-20261015-natillera-2.openapi.json). Se contrastó contra staging con el JWT del equipo:
+
+- **URL base:** `https://sandbox-staging.corebank.ai`, sin prefijo. `GET /api/contracts/{id}` responde; un id que no existe da 404 `application/problem+json` (`title`, `status`, `detail`, `instance`).
+- **`currentStateRaw`** trae cada concepto como `{ type, value, assigned }`. Una fecha sin valor llega como `value: null`; **una fecha con valor llega como `"2026-11-01T00:00:00"`** (medianoche sin zona), no como `AAAA-MM-DD`. `fechaStaging` la pasa a mediodía de Bogotá.
+- **Crear contratos exige un JWT con `org_role: "admin"`**; con uno sin rol, `POST /api/contracts` da 403 sin cuerpo. `GET` funciona con los dos.
+- **Verificado con un contrato vivo** (`natillera-cuenta` `0650899a-5af5-46ee-bc3b-0f21da6fce9e` y `natillera-participacion` `30acc57f-279e-4024-9e38-d4e01fe9e429`, nombre «Prueba web #53», datos de prueba): existen todos los conceptos que lee la web, incluido `NumeroCuotas` en la cuenta (lo calcula el motor: 6 de nov. a abr.). `currentStateLabels` trae `EstadoNatillera: "CREADA"` y `EstadoParticipacion: "PENDIENTE_VALIDACION"`. `crearServicioStaging` contra esos dos contratos devuelve la natillera y su participante bien mapeados.
+- **Eventos:** `GET /api/contracts/{id}/events` → `{ contractId, templateName, totalEvents, events: [{ sequenceNumber, occurredAt, type, functionName, trigger, changes: [{ concept, previousValue, newValue }], parameters, correlationId, actorId }] }`. Los `changes` vienen en formato para mostrar (`"$50.000,00"`): para montos, leer el estado. `parameters` llega como texto JSON (`'{"type": "Integer", "value": 1}'`). `actorId` es el usuario del JWT que pidió la acción, o `null` si la disparó el motor (cascada o respuesta de un pago); con el JWT compartido del equipo, toda acción pedida sale a nombre del administrador. La cascada (`GET /api/contracts/correlation/{id}`) trae los mismos eventos agrupados en `contracts[].events[]`.
+- **Cada acción deja un evento `StateChanged`** con `functionName` y sus cambios; **los eventos de negocio** (`ParticipanteValidado`, `CobroCuotaSolicitado`…) **no salen en `/events`**, solo en la respuesta del trigger y en los webhooks. Por eso `/pagos` y `/bitacora` se arman por función y cambios. Visto en la participación de prueba: `ConfirmarAutorizacion` (con `GrantId` de prueba) disparó solo `RegistrarValidado` en la cuenta; `CobrarCuota` (periodo 1) y, 3 s después y sin actor, `PrimeraCuotaCobrada` (disparador `CuotaCobrada`, `MontoCobrado` 50000).
+- **Por verificar:** esa cuota quedó cobrada sin que exista `pagos/`. O el sandbox simula la respuesta del cobro o hay otra URL de pagos configurada: no es un pago de Open Payments y no sirve de evidencia para el jurado.
+- `GET /api/correlations/recent` da 404 en ese host, aunque la especificación lo declara.
+- **Triggers:** 51 de 71 son privados («requiere rol admin»). La web no ejecuta triggers; los públicos son los del participante (`ConfirmarAutorizacion`, `PagarDeuda`, `PagoRecibido`, `AutorizarPago`…).
+
 ## 1. Lo que la web recibe del bot (rutas nuevas)
 
 Todas con `X-Api-Key: <WEB_INDICE_API_KEY>` y **sin duplicar por id**, porque el bot puede reintentar.

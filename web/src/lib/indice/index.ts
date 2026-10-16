@@ -26,6 +26,7 @@ export const lectorIndice: LectorIndice = {
   natilleras: () => almacen().natilleras(),
   natillera: (natilleraId) => almacen().natillera(natilleraId),
   participaciones: (natilleraId) => almacen().participaciones(natilleraId),
+  actividades: (natilleraId) => almacen().actividades(natilleraId),
 };
 
 export type ResultadoRegistro = { ok: true; resultado: ResultadoGuardar } | { ok: false; errores: string[] };

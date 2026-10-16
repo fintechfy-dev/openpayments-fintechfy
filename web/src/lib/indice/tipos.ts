@@ -55,4 +55,5 @@ export interface LectorIndice {
   natilleras(): Promise<RegistroNatillera[]>;
   natillera(natilleraId: string): Promise<RegistroNatillera | null>;
   participaciones(natilleraId: string): Promise<RegistroParticipacion[]>;
+  actividades(natilleraId: string): Promise<RegistroActividad[]>;
 }

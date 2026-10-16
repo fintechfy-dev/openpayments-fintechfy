@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { LectorIndice, RegistroNatillera, RegistroParticipacion } from "@/lib/indice/tipos";
 
+import { EVENTOS_CUENTA, EVENTOS_PARTICIPACION } from "./eventos-staging.fixtures";
 import { ErrorServicio } from "./http";
 import {
   crearServicioStaging,
@@ -35,6 +36,7 @@ function indiceCon(nats: RegistroNatillera[], parts: RegistroParticipacion[]): L
     natilleras: async () => nats,
     natillera: async (id) => nats.find((n) => n.natilleraId === id) ?? null,
     participaciones: async (id) => parts.filter((p) => p.natilleraId === id),
+    actividades: async () => [],
   };
 }
 
@@ -145,6 +147,11 @@ describe("fechas y porcentajes", () => {
   it("AAAA-MM-DD pasa a mediodía de Bogotá; con hora se deja igual", () => {
     expect(fechaStaging("2026-10-16")).toBe("2026-10-16T17:00:00Z");
     expect(fechaStaging({ type: "Date", value: "2026-10-16" })).toBe("2026-10-16T17:00:00Z");
+    // Formas reales de staging: currentStateRaw y los parámetros de los eventos.
+    expect(fechaStaging({ type: "Date", value: "2026-11-01T00:00:00", assigned: true })).toBe("2026-11-01T17:00:00Z");
+    expect(fechaStaging("2026-11-01T00:00:00.0000000")).toBe("2026-11-01T17:00:00Z");
+    expect(fechaStaging("2026-10-16T00:00:00.0000000Z")).toBe("2026-10-16T17:00:00Z");
+    expect(fechaStaging({ type: "Date", value: null, assigned: false })).toBeUndefined();
     expect(fechaStaging("2026-10-16T09:30:00Z")).toBe("2026-10-16T09:30:00Z");
     expect(fechaStaging("")).toBeUndefined();
   });
@@ -278,11 +285,57 @@ describe("crearServicioStaging", () => {
     expect(registrado()).not.toContain(TOKEN);
   });
 
-  it("las pantallas sin conectar avisan con #53", async () => {
+  it("pagos: lee los eventos de cada participación y usa el nombre del índice", async () => {
+    const f = fetchFalso({ ...contratos, "c-p1/events": EVENTOS_PARTICIPACION });
+    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: f });
+    const pagos = await s.listarPagos();
+    expect(pagos).toHaveLength(1);
+    expect(pagos[0]).toMatchObject({ natilleraNombre: "Natillera del barrio", participanteNombre: "Ana", monto: 50000, estado: "completado" });
+    expect(f).toHaveBeenCalledWith("https://staging.ejemplo/api/contracts/c-p1/events", expect.anything());
+  });
+
+  it("pagos: una participación que falla se omite y las demás se muestran; si fallan todas, se informa", async () => {
+    const respuestas = { ...contratos, "c-p1/events": EVENTOS_PARTICIPACION, "c-p2/events": {} };
+    const unaMala = fetchFalso(respuestas, { "c-p2/events": 500 });
+    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: unaMala });
+    expect(await s.listarPagos()).toHaveLength(1);
+    expect(registrado()).toContain("Se omitió una parte de pagos de nat-1");
+    expect(registrado()).not.toContain(TOKEN);
+
+    const todas = fetchFalso(contratos, { "c-p1/events": 500, "c-p2/events": 500, "c-p3/events": 500 });
+    const s2 = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: todas });
+    await expect(s2.listarPagos()).rejects.toThrow(ErrorServicio);
+  });
+
+  it("no repite el mismo GET dentro de la ventana de caché (la lista y los pagos piden lo mismo)", async () => {
+    const f = fetchFalso({ ...contratos, "c-p1/events": EVENTOS_PARTICIPACION });
+    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: f });
+    await s.listarNatilleras();
+    const despuesDeLaLista = f.mock.calls.length;
+    await s.listarPagos();
+    // Solo los eventos de las 3 participaciones son nuevos; los contratos salen de la caché.
+    expect(f.mock.calls.length - despuesDeLaLista).toBe(3);
+  });
+
+  it("bitácora: si fallan las actividades, igual muestra lo de la cuenta", async () => {
+    const f = fetchFalso({ ...contratos, "c-nat/1/events": EVENTOS_CUENTA }, { "c-act/events": 500 });
+    const indice = { ...indiceCon([natillera], []), actividades: async () => [{ natilleraId: "nat-1", actividadId: "a-1", contractId: "c-act", descripcion: "Rifa", obligaciones: [] }] };
+    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice, fetch: f });
+    expect(await s.listarBitacora()).toHaveLength(2);
+    expect(registrado()).toContain("Bitácora de nat-1 sin actividades");
+  });
+
+  it("bitácora: lee los eventos de la cuenta y el administrador sale del índice", async () => {
+    const f = fetchFalso({ ...contratos, "c-nat/1/events": EVENTOS_CUENTA });
+    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], []), fetch: f });
+    const bitacora = await s.listarBitacora();
+    expect(bitacora.map((b) => b.accion)).toEqual(["Se validó un participante", "Creó la natillera"]);
+    expect(bitacora[1]).toMatchObject({ actor: "Doña Rosa", natilleraNombre: "Natillera del barrio" });
+  });
+
+  it("los créditos todavía no están conectados y avisan con #53", async () => {
     const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([], []), fetch: fetchFalso({}) });
-    await expect(s.listarPagos()).rejects.toThrow("#53");
-    await expect(s.listarBitacora()).rejects.toThrow(ErrorServicio);
-    await expect(s.listarSolicitudesCredito()).rejects.toThrow(ErrorServicio);
+    await expect(s.listarSolicitudesCredito()).rejects.toThrow("#53");
     await expect(s.responderSolicitud("x", "aprobar")).rejects.toThrow(ErrorServicio);
   });
 });
