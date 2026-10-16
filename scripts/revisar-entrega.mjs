@@ -82,9 +82,11 @@ const usaSdk = git("ls-files", "*package.json")
   .split("\n")
   .filter(Boolean)
   .some((f) => /"@interledger\/open-payments"/.test(leer(f) ?? ""));
-const codigoPagos = git("ls-files", "pagos").split("\n").filter((f) => f && !/README\.md$/.test(f));
-if (usaSdk && codigoPagos.length) ok("b-op", "pagos/ tiene código y el SDK de Open Payments está declarado");
-else aviso("b-op", `Ningún paquete usa todavía @interledger/open-payments${codigoPagos.length ? "" : " y pagos/ solo tiene su README"}. Sin la API de Open Payments el proyecto no entra a evaluación (#3, #4)`);
+// Desde el 16 de octubre el código de Open Payments vive en el backend de la web; pagos/ guarda la especificación.
+const RUTAS_OPEN_PAYMENTS = ["pagos/", "web/src/lib/open-payments/", "web/src/app/api/open-payments/", "web/src/app/api/permisos/"];
+const codigoPagos = git("ls-files", ...RUTAS_OPEN_PAYMENTS).split("\n").filter((f) => f && !/\.md$/.test(f));
+if (usaSdk && codigoPagos.length) ok("b-op", "Hay código de Open Payments y el SDK está declarado");
+else aviso("b-op", `Ningún paquete usa todavía @interledger/open-payments${codigoPagos.length ? "" : " y todavía no hay código de Open Payments (web/src/lib/open-payments/)"}. Sin la API de Open Payments el proyecto no entra a evaluación (#3, #4)`);
 
 // --- Uso de IA (s-aiusage, s-prompts, b-prompts) ---
 
@@ -146,7 +148,7 @@ if (conRama) {
     else ok("b-prompts", "La rama agrega prompts");
     if (!cambiados.includes("AI_USAGE.md")) aviso("s-aiusage", "La rama cambia código pero no toca AI_USAGE.md");
     else ok("s-aiusage", "La rama actualiza AI_USAGE.md");
-    if (deCodigo.some((f) => f.startsWith("pagos/"))) aviso("b-servicio", "La rama toca pagos/: debe estar escrito por el equipo con poca o ninguna IA, y AI_USAGE.md lo declara con precisión");
+    if (deCodigo.some((f) => RUTAS_OPEN_PAYMENTS.some((p) => f.startsWith(p)) && !f.endsWith(".md"))) aviso("b-servicio", "La rama toca el código de Open Payments: debe estar escrito por el equipo con poca o ninguna IA, y AI_USAGE.md lo declara con precisión");
   }
 }
 

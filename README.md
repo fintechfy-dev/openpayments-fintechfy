@@ -16,8 +16,8 @@ Un bot de Telegram donde el grupo arma su natillera, cada participante autoriza 
 |---|---|---|
 | Bot de Telegram | [`telegram/`](telegram/) | Integrantes de la natillera y su administrador |
 | Página web | [`web/`](web/) | La financiera y el administrador: gestionar natilleras y ver solicitudes de crédito |
-| Servicio de pagos | [`pagos/`](pagos/) | Lo único que habla con Open Payments: cobrar, pagar y desembolsar |
-| Integración | [`integracion/`](integracion/) | La conexión con el servicio externo de lógica financiera |
+| Pagos de Open Payments | En el backend de [`web/`](web/); especificación en [`pagos/`](pagos/) | Lo único que habla con Open Payments: cobrar, pagar, desembolsar y los pagos de las ventas |
+| Integración | [`integracion/`](integracion/) | Referencia del servicio externo de lógica financiera y de cómo se conecta todo |
 
 Las reglas de dinero (cobros, mora, crédito, liquidación) las aplica un **servicio externo de lógica financiera**, como un n8n que contiene esa lógica. No forma parte de esta hackathon: el proyecto lo llama por API.
 
