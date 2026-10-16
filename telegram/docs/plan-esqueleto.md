@@ -1,7 +1,7 @@
 # Plan del esqueleto del bot de Telegram
 
 > Issue [#7](https://github.com/fintechfy-dev/openpayments-fintechfy/issues/7) · rama `feature/telegram-7-esqueleto-bot` · 2026-10-16.
-> Estado: **aprobado**. Tareas 1 y 2 hechas; tarea 3 hecha (falta la prueba manual de `/diag`); tareas 4 y 5 pendientes (la 5, bloqueada por #5).
+> Estado: **aprobado**. Tareas 1 y 2 hechas; tareas 3 y 4 hechas (faltan las pruebas a mano de `/diag` y del reinicio con `/eco`); tarea 5 bloqueada por #5.
 
 ## 0. Reacomodo del 16 de octubre (después del plan de trabajo del equipo)
 
@@ -100,6 +100,8 @@ telegram/
       index.js              crearBot(): límite de errores, sesión, comandos
       sesion-storage.js     adaptador de sesiones de grammY sobre SQLite (tarea 4)
       flujo.js              motor de flujos (tarea 4)
+      flujos/
+        eco.js              flujo de prueba /eco (tarea 4; se quita con /crear)
       comandos/
         start.js            bienvenida y enganche del enlace de invitación
         cancelar.js         cancela el flujo en curso (tarea 4)
@@ -168,21 +170,21 @@ Cada paso termina en algo que se puede verificar. Todos los comandos se corren d
 
 ### Tarea 4: conversaciones que sobreviven a un reinicio
 
-- [ ] 4.1 Crear `src/db.js`: abrir SQLite en `DB_PATH` (crear la carpeta si no existe), modo WAL y tabla `sesiones (clave TEXT PRIMARY KEY, valor TEXT, actualizado TEXT)`.
-- [ ] 4.2 Crear `src/bot/sesion-storage.js`: adaptador `{ read, write, delete }` que guarda la sesión de grammY como JSON.
-- [ ] 4.3 Conectar `session({ initial: () => ({ flujo: null }), storage })`.
-- [ ] 4.4 Crear `src/bot/flujo.js`:
-  - `registrarFlujo(def)`: guarda `{ id, pasos, alTerminar }` por id.
-  - `iniciarFlujo(ctx, id)`: pone `{ id, paso: 0, datos: {} }` y hace la primera pregunta con su ejemplo.
-  - `avanzarFlujo(ctx, texto)`: valida; si no sirve, explica por qué y repite la pregunta sin perder lo respondido; si sirve, pasa a la siguiente.
-  - Al terminar llama a `alTerminar(ctx, datos)` una sola vez y limpia el flujo (D-12).
+- [x] 4.1 Crear `src/db.js`: abrir SQLite en `DB_PATH` (crear la carpeta si no existe), modo WAL y tabla `sesiones (clave TEXT PRIMARY KEY, valor TEXT, actualizado TEXT)`. También `contarSesiones(db)` para `/diag`. → Verificado: `node:sqlite` en Node 24.17 no muestra aviso de función experimental, y `git check-ignore` confirma `telegram/data/bot.db` y su `-wal`.
+- [x] 4.2 Crear `src/bot/sesion-storage.js`: adaptador `{ read, write, delete }` que guarda la sesión de grammY como JSON.
+- [x] 4.3 Conectar `session({ initial: () => ({ flujo: null }), storage })`. `crearBot` recibe `db` en `deps`; sin `db` (algunas pruebas) las sesiones quedan en memoria.
+- [x] 4.4 Crear `src/bot/flujo.js`. *Cambio:* en vez de funciones sueltas con un registro global, `crearMotorDeFlujos()` devuelve `{ registrar, iniciar, middleware }`; cada bot tiene su motor y las pruebas no se pisan.
+  - `registrar(def)`: guarda `{ id, pasos, alTerminar }` por id.
+  - `iniciar(ctx, id)`: pone `{ id, paso: 0, datos: {} }` y hace la primera pregunta con su ejemplo.
+  - Al avanzar: `validar(texto, ctx)` devuelve `{ valor }` o `{ error }`; si no sirve, explica por qué y repite la pregunta sin perder lo respondido; si sirve, pasa a la siguiente.
+  - Al terminar limpia el flujo y llama a `alTerminar(ctx, datos)` una sola vez (D-12). Si `alTerminar` lanza un error, grammY no guarda la sesión: el flujo sigue en la última pregunta y la persona puede reintentar.
   - Si la sesión apunta a un flujo que ya no existe, lo limpia y avisa.
-- [ ] 4.5 Middleware: con un flujo en curso, los textos que no son comandos van a `avanzarFlujo`.
-- [ ] 4.6 Comando `/cancelar` (y al menú): borra el flujo en curso y confirma; si no había, lo dice.
-- [ ] 4.7 Cerrar la BD en el apagado limpio.
-- [ ] 4.8 Flujo de ejemplo `eco` (2 preguntas) para probar el motor sin #13; se quita cuando exista `/crear`.
-- [ ] 4.9 Pruebas: el adaptador lee lo que escribió; la sesión sobrevive a cerrar y reabrir la BD; el flujo rechaza una respuesta inválida conservando los datos; `alTerminar` se llama una vez; `/cancelar` no lo llama.
-- [ ] 4.10 Verificar a mano: empezar `eco`, responder la primera, `Ctrl+C`, `npm start`, responder la segunda → termina bien.
+- [x] 4.5 Middleware (`motor.middleware()`): con un flujo en curso, los textos que no son comandos van al motor. Los comandos siguen funcionando y no borran el flujo.
+- [x] 4.6 Comando `/cancelar` (`src/bot/comandos/cancelar.js`, y al menú): borra el flujo en curso y confirma; si no había, lo dice.
+- [x] 4.7 Cerrar la BD en el apagado limpio: en `src/index.js`, después de que `bot.start()` termina, para que ninguna actualización en curso escriba en una base cerrada.
+- [x] 4.8 Flujo de prueba `/eco` (`src/bot/flujos/eco.js`, fuera del menú): nombre de la natillera y cuota dentro de `CUOTA_MIN`–`CUOTA_MAX` (acepta `20000`, `20.000` o `$20.000`). Se quita cuando exista `/crear`.
+- [x] 4.9 Pruebas: `test/sesiones.test.js` (3) y `test/flujo.test.js` (7), más una de `/diag`: el adaptador lee lo que escribió; la sesión sobrevive a cerrar y reabrir la BD; un flujo a medias sobrevive a un bot nuevo con la base reabierta; una respuesta inválida explica y conserva los datos; `alTerminar` se llama una vez; `/cancelar` no lo llama; si `alTerminar` falla se puede reintentar; flujo perdido; comandos con flujo en curso; textos según la guía; `/diag` cuenta las sesiones. → `npm test`: 36/36.
+- [ ] 4.10 Verificar a mano: `/eco`, responder la primera, `Ctrl+C`, `npm start`, responder la segunda → termina bien. **Pendiente de Estiven.**
 
 ### Tarea 5: conexión de prueba con el servicio externo (#7) — bloqueada por #5
 
@@ -202,7 +204,7 @@ Cada paso termina en algo que se puede verificar. Todos los comandos se corren d
 
 | Para | Dónde | Qué queda listo |
 |---|---|---|
-| #13 crear la natillera | `flujo.js` | Flujo con pasos y validaciones de rango; `alTerminar` muestra el resumen y llama al servicio externo. Ojo: la especificación suma «días de espera» |
+| #13 crear la natillera | `flujo.js` | Flujo con pasos y validaciones de rango (`validarCuota` de `flujos/eco.js` sirve de base); `alTerminar` muestra el resumen y llama al servicio externo. Se registra en `crearBot` con `motor.registrar(...)` y reemplaza a `/eco`. Ojo: la especificación suma «días de espera» |
 | #16 enlace de invitación | `comandos/start.js` | El payload de `/start` ya se lee |
 | #19 y #18 autorización | `servicios/` | Cliente de `pagos/` para iniciar el permiso; el retorno de la billetera lo recibe `pagos/` y el bot se entera por un aviso |
 | #6 avisos | `crearBot` recibe `deps` | Se inyecta el `notifier`. **Pendiente del equipo:** webhook del bot o consulta periódica. Si es webhook, el bot necesita un servidor HTTP propio |

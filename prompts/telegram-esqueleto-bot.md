@@ -81,3 +81,15 @@ hagamos el commit, tambien hay que bajar los cambios que hay en develop
 ```text
 dejemos primero esto listo y alineado con el proyecto y sus convenciones
 ```
+
+13:29
+
+```text
+sigamos con las tareas del bot, en que parte vamos, analiza y pide autorizacion antes de seguir
+```
+
+13:32
+
+```text
+empieza con la tarea 4
+```

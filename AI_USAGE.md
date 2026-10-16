@@ -32,7 +32,8 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 | `telegram/src/secretos.js`, guardia de salida y logger que tapa secretos | Claude Code (Claude Opus 5.5) | US-002-SEC (#14): ningún secreto en logs ni en mensajes; `telegram/.env.example` | Mucho; el equipo verificó el arranque con su `.env` |
 | `telegram/src/formato.js` y textos de `/start` | Claude Code (Claude Opus 5.5) | Montos con el mismo formato que `formatoCOP` del design system y mensajes según la guía de voz y tono | Mucho |
 | `telegram/src/config.js` y `/diag` | Claude Code (Claude Opus 5.5) | Parte del bot de US-001-CFG (#12): configuración validada al arrancar y diagnóstico del equipo | Mucho |
-| `telegram/test/` | Claude Code (Claude Opus 5.5) | Arnés de pruebas sin red y pruebas de `/start`, secretos, configuración y `/diag` | Mucho |
+| `telegram/src/db.js`, `telegram/src/bot/sesion-storage.js`, `flujo.js`, `/cancelar` y el flujo de prueba `/eco` | Claude Code (Claude Opus 5.5) | Parte del bot de US-007-BCK (#21): sesiones en SQLite y motor de preguntas que sobrevive a un reinicio | Mucho |
+| `telegram/test/` | Claude Code (Claude Opus 5.5) | Arnés de pruebas sin red y pruebas de `/start`, secretos, configuración, `/diag`, sesiones y flujos | Mucho |
 | `telegram/README.md` («Cómo correrlo») | Claude Code (Claude Opus 5.5) | Instrucciones para correr el bot | Mucho |
 | `CLAUDE.md`, `.claude/skills/`, `.claude/agents/`, `.claude/commands/director-web.md` | Claude Code (Claude Opus 5.5) | Skills del design system y de la web, agentes implementador, revisor y verificador visual, y el comando que los orquesta | Mucho |
 | `web/` (configuración, `src/lib/`, `src/components/`, layout, `scripts/`) | Claude Code (Claude Opus 5.5) | Esqueleto de Next.js (#8), capa de datos del servicio externo con datos de prueba, componentes sobre el design system, script de capturas | Mucho |
