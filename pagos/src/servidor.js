@@ -1,0 +1,128 @@
+import { timingSafeEqual } from "node:crypto";
+import { createServer } from "node:http";
+import { leerCredenciales, sinCredenciales } from "./credenciales.js";
+import { ErrorHttp } from "./errores.js";
+import { llaveIdempotencia } from "./idempotencia.js";
+
+// Staging da por fallida una llamada sin respuesta en 30 s. Se responde antes, a los ~20 s de
+// consultar, con un 503: el pago sigue por detrás y el reintento recibe el resultado.
+const LIMITE_RESPUESTA_MS = 20_000;
+const CUERPO_MAXIMO = 64 * 1024;
+
+export function crearServidor({ config, almacen, permisos, operaciones, pagos, avisos, idempotencia, clientes, limiteRespuestaMs = LIMITE_RESPUESTA_MS }) {
+  // Las llaves de Open Payments llegan en cada llamada (ver credenciales.js). Se leen solo cuando la
+  // operación de verdad le habla a Open Payments: una respuesta repetida por idempotencia no las necesita.
+  const cuentaDe = (req, cuerpo) => async () => {
+    const credenciales = leerCredenciales(req.headers, cuerpo);
+    return { op: await clientes.para(credenciales), huella: credenciales.huella };
+  };
+
+  const rutas = [
+    ["GET", /^\/api\/salud$/, async () => ({
+      cuerpo: { ok: true, almacen: almacen.nombre, walletGrupo: config.walletGrupo, walletFinanciera: config.walletFinanciera, simuladas: [...config.simuladas] },
+    })],
+
+    // Lo que llama staging: los cobros y los pagos.
+    ["POST", /^\/api\/open-payments\/([a-z-]+)$/, async (req, [operacion]) => {
+      exigirLlave(req, config.llaveStaging);
+      const crudo = await leerJson(req);
+      const cuerpo = sinCredenciales(crudo);
+      const llave = llaveIdempotencia(`/api/open-payments/${operacion}`, cuerpo);
+      const promesa = idempotencia.ejecutar(llave, () => operaciones.ejecutar(operacion, cuerpo, cuentaDe(req, crudo)));
+      return { cuerpo: await conLimite(promesa, limiteRespuestaMs) };
+    }],
+
+    // Lo que llama el bot: los permisos de cada participante.
+    ["POST", /^\/api\/permisos$/, async (req) => {
+      exigirLlave(req, config.llaveClientes);
+      const crudo = await leerJson(req);
+      const cuenta = await cuentaDe(req, crudo)();
+      return { estado: 201, cuerpo: await permisos.pedir(sinCredenciales(crudo) ?? {}, cuenta) };
+    }],
+    ["GET", /^\/api\/permisos\/(p[0-9a-f]{16})$/, async (req, [id]) => {
+      exigirLlave(req, config.llaveClientes);
+      return { cuerpo: await permisos.estado(id, cuentaDe(req, null)) };
+    }],
+    ["POST", /^\/api\/permisos\/(p[0-9a-f]{16})\/cancelar$/, async (req, [id]) => {
+      exigirLlave(req, config.llaveClientes);
+      return { cuerpo: await permisos.cancelar(id, cuentaDe(req, null)) };
+    }],
+    // Pública: la abre el navegador del participante al volver de su billetera.
+    ["GET", /^\/api\/permisos\/(p[0-9a-f]{16})\/retorno$/, async (req, [id], url) => {
+      return { redirigir: await permisos.retorno(id, url.searchParams) };
+    }],
+
+    // Lo que leen el bot y la web: los avisos de pago y el registro de las cuatro etapas.
+    ["GET", /^\/api\/avisos$/, async (req, _, url) => {
+      exigirLlave(req, config.llaveClientes);
+      return { cuerpo: await avisos.desde(url.searchParams.get("desde")) };
+    }],
+    ["GET", /^\/api\/registro$/, async (req) => {
+      exigirLlave(req, config.llaveClientes);
+      return { cuerpo: await pagos.registro() };
+    }],
+  ];
+
+  return createServer(async (req, res) => {
+    const inicio = Date.now();
+    const url = new URL(req.url, "http://local");
+    let estado = 500;
+    try {
+      const ruta = rutas.find(([metodo, patron]) => metodo === req.method && patron.test(url.pathname));
+      if (!ruta) throw new ErrorHttp(404, "Ruta desconocida");
+      const parametros = url.pathname.match(ruta[1]).slice(1);
+      const resultado = await ruta[2](req, parametros, url);
+      if (resultado.redirigir) {
+        estado = 302;
+        res.writeHead(302, { Location: resultado.redirigir, "Cache-Control": "no-store" }).end();
+      } else {
+        estado = resultado.estado ?? 200;
+        responder(res, estado, resultado.cuerpo);
+      }
+    } catch (error) {
+      const http = error instanceof ErrorHttp ? error : new ErrorHttp(500, "Error interno");
+      if (!(error instanceof ErrorHttp)) console.error(error);
+      estado = http.estado;
+      responder(res, estado, { error: http.motivo }, estado === 503 ? { "Retry-After": "2" } : {});
+    } finally {
+      // Sin la query: la vuelta del permiso trae interact_ref y hash.
+      console.log(`${req.method} ${url.pathname} ${estado} ${Date.now() - inicio}ms`);
+    }
+  });
+}
+
+function responder(res, estado, cuerpo, encabezados = {}) {
+  res.writeHead(estado, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...encabezados });
+  res.end(JSON.stringify(cuerpo));
+}
+
+function exigirLlave(req, esperada) {
+  const dada = Buffer.from(req.headers["x-api-key"] ?? "");
+  const correcta = Buffer.from(esperada);
+  if (dada.length !== correcta.length || !timingSafeEqual(dada, correcta)) throw new ErrorHttp(401, "Falta X-Api-Key o no es la correcta");
+}
+
+async function leerJson(req) {
+  const partes = [];
+  let tamano = 0;
+  for await (const parte of req) {
+    tamano += parte.length;
+    if (tamano > CUERPO_MAXIMO) throw new ErrorHttp(413, "Cuerpo demasiado grande");
+    partes.push(parte);
+  }
+  try {
+    return JSON.parse(Buffer.concat(partes).toString("utf8") || "null");
+  } catch {
+    throw new ErrorHttp(400, "El cuerpo no es JSON");
+  }
+}
+
+function conLimite(promesa, ms) {
+  let reloj;
+  const limite = new Promise((_, rechazar) => {
+    reloj = setTimeout(() => rechazar(new ErrorHttp(503, "El pago sigue en curso; staging lo reintenta")), ms);
+  });
+  // Si el límite gana, el pago sigue y su fallo no debe quedar como rechazo sin atender.
+  promesa.catch(() => {});
+  return Promise.race([promesa, limite]).finally(() => clearTimeout(reloj));
+}
