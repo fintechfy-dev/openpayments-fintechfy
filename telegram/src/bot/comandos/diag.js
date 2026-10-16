@@ -1,9 +1,8 @@
 import { Composer } from 'grammy';
+import { formatoCOP, formatoPorcentaje } from '../../formato.js';
 
 // Diagnóstico del equipo (US-001-CFG). Solo responde en TEAM_CHAT_ID; en otro chat no dice nada,
 // para no revelar que existe. Nunca muestra secretos: de las URL solo enseña el origen.
-
-const numero = new Intl.NumberFormat('es-CO');
 
 function duracion(ms) {
   const minutos = Math.floor(ms / 60_000);
@@ -20,8 +19,8 @@ export function textoDiagnostico(config, { encendidoMs }) {
   return [
     'Diagnóstico del bot',
     `Encendido hace: ${duracion(encendidoMs)}`,
-    `Cuota: mínimo ${numero.format(config.cuota.min)} · máximo ${numero.format(config.cuota.max)}`,
-    `Mora diaria máxima: ${numero.format(config.moraDiariaMaxPct)} %`,
+    `Cuota: mínimo ${formatoCOP(config.cuota.min)} · máximo ${formatoCOP(config.cuota.max)}`,
+    `Mora diaria máxima: ${formatoPorcentaje(config.moraDiariaMaxPct)}`,
     `Servicio externo: ${config.externo.url ? servicio(config.externo.url, llave) : 'sin configurar'} · conexión: sin probar (tarea 5)`,
     `Servicio de pagos: ${servicio(config.pagosUrl)}`,
     `Base de datos: ${config.dbPath} (llega en la tarea 4)`,

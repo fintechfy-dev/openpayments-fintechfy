@@ -13,7 +13,7 @@ test('/diag en el chat del equipo muestra la configuración en uso', async () =>
   const texto = llamadas[0].payload.text;
   assert.match(texto, /^Diagnóstico del bot/);
   assert.match(texto, /Encendido hace: 1 h 15 min/);
-  assert.match(texto, /Cuota: mínimo 10\.000 · máximo 500\.000/);
+  assert.match(texto, /Cuota: mínimo \$10\.000 · máximo \$500\.000/);
   assert.match(texto, /Mora diaria máxima: 2,5 %/);
   assert.match(texto, /Servicio externo: sin configurar/);
 });

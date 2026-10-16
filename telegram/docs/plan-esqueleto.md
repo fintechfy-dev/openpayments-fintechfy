@@ -21,6 +21,17 @@ Lo que se hizo en el reacomodo:
 - [x] R.5 Filas del bot en la tabla de `AI_USAGE.md`.
 - [x] R.6 «Cómo correrlo» en `telegram/README.md`.
 
+### Alineación con las convenciones (después de traer el PR #42 a la rama)
+
+- [x] A.1 `develop` fusionado en la rama (`git merge origin/develop`, como pide `CONTRIBUTING.md`); el único conflicto fue en la tabla de `AI_USAGE.md` y se dejaron las filas de los dos lados.
+- [x] A.2 Montos con `formatoCOP` (`src/formato.js`), copia del de `design-system/components/bundle.js`: `$10.000`, no `10.000` con `Intl.NumberFormat`, que el design system desaconseja.
+- [x] A.3 Textos de `/start` y del error según la guía de voz y tono: tuteo con el nombre, 👋 solo en la bienvenida, «La plata la guarda Financiera Aliada», sin emoji ni culpa en el error. Una prueba revisa las 3 líneas máximas y las palabras prohibidas.
+- [x] A.4 Prompts con su hora real (de Bogotá), sacada del registro de la sesión, como pide `prompts/README.md`.
+- [x] A.5 `AI_USAGE.md`: fila de los textos y del formato, y lo que hizo el equipo en el bot.
+- [x] A.6 README raíz: «Correr la demo» y «Secretos» apuntan a `telegram/`.
+- [ ] A.7 Avatar del bot en @BotFather (`/setuserpic`) con `design-system/assets/logos/kit/05_avatar/avatar_verde_oscuro_512px.png`. **Lo hace Estiven** (no se puede desde el código).
+- Nota: el primer commit de la rama (`51e08e8`) quedó con un mensaje en inglés y sin id al inicio. No se reescribe: ya hay un merge encima y la regla es no usar `--force`. Los siguientes llevan el id (`#7:`, `US-002-SEC:`, `US-001-CFG:`).
+
 ## 1. Qué se construye y qué no
 
 **Entra:** el proyecto del bot listo para que el frente Telegram le agregue flujos encima (issue #7).
@@ -57,7 +68,7 @@ Lo que se hizo en el reacomodo:
 | D-16 | **Pruebas con `node:test`** (integrado), solo `test/**/*.test.js` | Cero dependencias; `npm test` | Jest/Vitest |
 | D-17 | **La base de datos va en `telegram/data/`**, ignorada por git | Guarda ids de chats de personas reales; el repo es público | — |
 | D-18 | **Errores con `errorBoundary` además de `bot.catch`** | `bot.catch` solo actúa con `bot.start()`; el límite de errores también cubre `handleUpdate` (pruebas o webhook) | Solo `bot.catch` |
-| D-19 | **Los textos siguen la [guía de voz y tono](https://github.com/fintechfy-dev/openpayments-fintechfy/blob/feature/transversal-design-system/design-system/docs/voz-y-tono.md)** del design system (aún sin fusionar): tuteo, máximo 3 líneas, un emoji, sin «wallet», «token», «grant» ni «payment pointer» | Coherencia con la marca y con el premio a la Inclusión | — |
+| D-19 | **Los textos siguen la [guía de voz y tono](../../design-system/docs/voz-y-tono.md)** del design system (en `develop` desde el PR #42): tuteo, máximo 3 líneas, un emoji, sin «wallet», «token», «grant» ni «payment pointer» | Coherencia con la marca y con el premio a la Inclusión | — |
 | D-20 | **El servicio externo y `pagos/` se llaman por HTTP con un cliente pequeño** en `src/servicios/`, con su URL y su llave en `.env` | Contratos del plan de trabajo: bot → servicio externo (#5) y bot → pagos (#4) | — |
 
 ## 3. Qué se usa
@@ -203,5 +214,5 @@ Cada paso termina en algo que se puede verificar. Todos los comandos se corren d
 - **Moneda de la Test Wallet (R-02):** fija `CUOTA_MIN` y `CUOTA_MAX`.
 - **¿Una persona en varias natilleras?** Si sí, `/estado` necesitará un selector.
 - **Clave de sesión:** hoy es el id del chat (chats privados). Si se usa en grupos, chat + usuario.
-- **La bienvenida** se ajusta a la guía de voz y tono cuando se fusione el design system (D-19).
+- **Nombre de la financiera:** los textos usan «Financiera Aliada», como la guía de voz y tono. Si el equipo usa otro nombre en el pitch, se cambia en un solo lugar por mensaje.
 - Resuelto por la especificación: el redondeo de la liquidación (al centavo hacia abajo; lo que sobra, al último).

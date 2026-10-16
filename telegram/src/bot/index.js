@@ -8,7 +8,8 @@ export const COMANDOS = [
   { command: 'start', description: 'Empezar' },
 ];
 
-export const MENSAJE_ERROR = 'Algo falló, intenta de nuevo.';
+// Sin emoji ni culpa (guía de voz y tono): el problema es nuestro, no de la persona.
+export const MENSAJE_ERROR = 'Algo no salió bien de nuestro lado. Intenta de nuevo en un momento.';
 
 function manejadorDeErrores(log) {
   return async ({ ctx, error }) => {

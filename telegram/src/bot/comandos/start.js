@@ -1,13 +1,22 @@
 import { Composer } from 'grammy';
 
-export const BIENVENIDA =
-  'Hola, soy el bot de Natillera 2.0. Aquí tu grupo ahorra junto para diciembre, ' +
-  'y el dinero lo guarda una financiera, no una persona: nadie del grupo puede moverlo ' +
-  'por fuera de las reglas, ni siquiera el administrador.';
+// Textos según la guía de voz y tono (design-system/docs/voz-y-tono.md): tuteo, el nombre al inicio,
+// máximo 3 líneas, la plata siempre ubicada y a lo sumo un emoji (ninguno en errores).
 
-export const INVITACION_PRONTO =
-  'Recibí tu enlace de invitación, pero unirse a una natillera todavía no está disponible. ' +
-  'Vuelve a abrir el enlace en un rato.';
+export function bienvenida(nombre) {
+  const saludo = nombre ? `👋 ¡Hola, ${nombre}!` : '👋 ¡Hola!';
+  return [
+    `${saludo} Aquí tu grupo ahorra junto para diciembre.`,
+    'La plata la guarda Financiera Aliada, no una persona. Nadie del grupo la puede sacar, ni el administrador.',
+  ].join('\n');
+}
+
+export function invitacionPronto(nombre) {
+  return [
+    nombre ? `Hola, ${nombre}. Recibí tu invitación.` : 'Hola. Recibí tu invitación.',
+    'Todavía no puedes unirte desde aquí. Vuelve a abrir el enlace en un rato.',
+  ].join('\n');
+}
 
 export function start({ log }) {
   const comandos = new Composer();
@@ -16,14 +25,16 @@ export function start({ log }) {
     // Sirve para averiguar el TEAM_CHAT_ID: escribir /start desde el chat del equipo y mirar el log.
     log.info(`/start desde chat ${ctx.chat.id} (${ctx.chat.type})`);
 
+    const nombre = ctx.from?.first_name;
+
     // El payload del enlace profundo (t.me/<bot>?start=<payload>) llega en ctx.match.
-    // Enganche de la tarea 7: aquí se resolverá la natillera del enlace de invitación.
+    // Enganche de #16: aquí se resolverá la natillera del enlace de invitación.
     if (ctx.match) {
-      await ctx.reply(INVITACION_PRONTO);
+      await ctx.reply(invitacionPronto(nombre));
       return;
     }
 
-    await ctx.reply(BIENVENIDA);
+    await ctx.reply(bienvenida(nombre));
   });
 
   return comandos;
