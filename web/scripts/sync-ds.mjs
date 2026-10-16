@@ -16,6 +16,7 @@ const copias = [
   [estilos, "components/bundle.css", "components/bundle.css"],
   [estilos, "fonts", "fonts"],
   [publico, "assets/logos/kit/01_simbolo", "logos/01_simbolo"],
+  [publico, "assets/logos/kit/02_vertical", "logos/02_vertical"],
   [publico, "assets/logos/kit/03_horizontal", "logos/03_horizontal"],
   [publico, "assets/logos/kit/04_logotipo", "logos/04_logotipo"],
   [publico, "assets/logos/kit/05_avatar", "logos/05_avatar"],

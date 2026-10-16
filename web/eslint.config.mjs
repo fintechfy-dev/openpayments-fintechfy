@@ -10,11 +10,11 @@ const config = [
       // La llave del servicio externo no puede llegar al navegador.
       "no-restricted-properties": [
         "error",
-        { object: "process", property: "env", message: "Lee variables de entorno solo en src/lib/servicio (servidor)." },
+        { object: "process", property: "env", message: "Lee variables de entorno solo en src/lib/servicio, src/lib/sesion o src/proxy.ts (servidor)." },
       ],
     },
   },
-  { files: ["src/lib/servicio/**", "scripts/**", "*.config.*"], rules: { "no-restricted-properties": "off" } },
+  { files: ["src/lib/servicio/**", "src/lib/sesion/**", "src/proxy.ts", "scripts/**", "*.config.*"], rules: { "no-restricted-properties": "off" } },
 ];
 
 export default config;
