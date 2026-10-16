@@ -1,0 +1,21 @@
+<!-- @dsCard group="Piezas aplicadas" height=420 width=960 subtitle="Web de la financiera: aprobar o no aprobar préstamos" page -->
+<style>.pv{padding:24px;background:var(--superficie);color:var(--tinta);font-family:var(--font-body)}.pv h4{margin:0 0 8px;font:700 13px/18px var(--font-body);color:var(--tinta-suave)}
+.sc-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.sc-t{display:flex;gap:10px;align-items:center;font:800 24px/30px var(--font-display);margin:0}
+.sc-acc{display:flex;gap:8px;justify-content:flex-end}.sc-acc .nt-btn{white-space:nowrap}.sc-sub{display:block;font-size:14px;line-height:20px;color:var(--tinta-suave);font-weight:400}</style>
+<div class="pv nt">
+<div class="sc-h"><p class="sc-t"><i data-i="credito"></i>Solicitudes de crédito</p><span class="nt-muted">2 por responder</span></div>
+<div class="nt-tabla-marco"><table class="nt-tabla">
+<thead><tr><th>Participante</th><th>Ahorro</th><th class="nt-tabla__num">Pide</th><th class="nt-tabla__num">Cuota mensual</th><th>Estado</th><th></th></tr></thead>
+<tbody>
+<tr><td class="nt-tabla__principal">Marta Restrepo<span class="sc-sub">Los Primos</span></td><td>6 de 12 cuotas al día<span class="sc-sub">Máximo <b data-cop="300000"></b></span></td><td class="nt-tabla__num" data-cop="200000"></td><td class="nt-tabla__num"><span data-cop="35705"></span><span class="sc-sub">6 meses · 2% mensual</span></td><td><span data-b="credito.solicitado"></span></td>
+<td><div class="sc-acc"><button class="nt-btn nt-btn--secundario nt-btn--sm">No aprobar</button><button class="nt-btn nt-btn--primario nt-btn--sm">Aprobar</button></div></td></tr>
+<tr><td class="nt-tabla__principal">Don Jairo Gómez<span class="sc-sub">Los Primos</span></td><td>6 de 12 · 1 pendiente<span class="sc-sub">Máximo <b data-cop="300000"></b></span></td><td class="nt-tabla__num" data-cop="300000"></td><td class="nt-tabla__num"><span data-cop="53558"></span><span class="sc-sub">6 meses · 2% mensual</span></td><td><span data-b="credito.solicitado"></span></td>
+<td><div class="sc-acc"><button class="nt-btn nt-btn--secundario nt-btn--sm">No aprobar</button><button class="nt-btn nt-btn--primario nt-btn--sm">Aprobar</button></div></td></tr>
+<tr><td class="nt-tabla__principal">Luisa Fernanda<span class="sc-sub">Compañeros del taller</span></td><td>8 de 10 cuotas al día<span class="sc-sub">Máximo <b data-cop="400000"></b></span></td><td class="nt-tabla__num" data-cop="150000"></td><td class="nt-tabla__num"><span data-cop="26779"></span><span class="sc-sub">6 meses · 2% mensual</span></td><td><span data-b="credito.por_desembolsar"></span></td><td></td></tr>
+</tbody></table></div>
+</div>
+<script>
+document.querySelectorAll('[data-i]').forEach(function(e){e.outerHTML=Natillera.icono(e.getAttribute('data-i'),e.className)});
+document.querySelectorAll('[data-b]').forEach(function(e){var p=e.getAttribute('data-b').split('.');e.outerHTML=Natillera.badge(p[0],p[1])});
+document.querySelectorAll('[data-cop]').forEach(function(e){e.textContent=Natillera.formatoCOP(+e.getAttribute('data-cop'))});
+</script>

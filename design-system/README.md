@@ -39,6 +39,8 @@ Para ver la galería: `python3 -m http.server -d design-system 8080` y abrir <ht
 - El tema oscuro sigue al sistema; se fuerza con `data-theme="dark"` o `data-theme="light"` en `<html>`.
 - Dinero siempre con `Natillera.formatoCOP(valor)`, que da `$100.000`. No usen `Intl.NumberFormat("es-CO")` a secas: mete un espacio después del `$` y a veces no agrupa números de 4 cifras.
 
+**Crédito:** la financiera aprueba préstamos en `SolicitudesCredito` (web) y el participante ve el suyo en `TarjetaCredito` (bot y web). Los estados están en [estados del producto](docs/estados.md#crédito) y los mensajes en [voz y tono](docs/voz-y-tono.md#crédito).
+
 **Bot de Telegram:** los textos siguen [voz y tono](docs/voz-y-tono.md). Para las tarjetas-imagen (aporte, bienvenida) usen los colores de `tokens.resolved.json` y la maqueta de `components/TarjetaAporte/preview.html`. El avatar del bot es `assets/logos/kit/05_avatar/avatar_verde_oscuro_512px.png`.
 
 ## Principios
@@ -51,10 +53,11 @@ Para ver la galería: `python3 -m http.server -d design-system 8080` y abrir <ht
 
 ## Color
 
-- **Primario `primario`** (verde del logo, `#15412C`): acciones, progreso del ahorro, cifras positivas. Texto encima con `sobre-primario`.
+- **Primario `primario`** (verde del nombre en el logo, `#113A26`): acciones, progreso del ahorro, cifras positivas. Texto encima con `sobre-primario`.
 - **Secundario `secundario`** (rosado del marranito): rellenos cálidos y bloques de marca, nunca texto. Fondos suaves con `secundario-suave` para custodia y bienvenida.
-- **Acento `acento`** (mostaza de la moneda y del "2.0"): diciembre, liquidación, celebración y las monedas de la marca. Solo como relleno; el texto dorado es `acento-texto`.
-- **Superficies:** `superficie` (página, `#F2EDE7`), `superficie-elevada` (tarjetas), `superficie-hundida` (campos, filas, fondos de mockup).
+- **Marca `marca-fondo`** (verde oscuro de los fondos del kit, `#06472E`): portadas, encabezados y bloques de marca oscuros, con texto blanco.
+- **Acento `acento`** (mostaza del "2.0", `#E7A402`): diciembre, liquidación, celebración y las monedas de la marca. Solo como relleno; el texto dorado es `acento-texto`.
+- **Superficies:** `superficie` (página, la crema del kit `#FFF8EC`), `superficie-elevada` (tarjetas), `superficie-hundida` (campos, filas, fondos de mockup).
 - **Texto:** `tinta` para todo lo importante y `tinta-suave` para fechas y ayudas. Ambos pasan AA sobre las tres superficies en los dos temas.
 - **Bordes:** `borde` es decorativo; usa `borde-fuerte` en controles y marcadores (≥3:1).
 - **Foco:** anillo sólido de 3px `foco` con 2px de separación en todo elemento interactivo (ya está en `.nt :focus-visible`).
@@ -96,4 +99,4 @@ Mayúscula inicial en títulos y botones ("Volver a Telegram"), nunca TODO EN MA
 
 ## Iconografía
 
-Línea de 2px, puntas redondeadas, 24×24, sin relleno. Set base: cuota, grupo, billetera, candado, calendario, premio, alerta, check; más reloj y punto (solo inline) para estados. El candado significa siempre "la plata está protegida", nunca "bloqueado". Para íconos nuevos usen Lucide con el mismo trazo. Emoji solo en mensajes del bot, nunca en la interfaz web.
+Línea de 2px, puntas redondeadas, 24×24, sin relleno. Set base: cuota, grupo, billetera, candado, calendario, premio, alerta, check; más reloj y punto (solo inline) para estados, y `credito` (mano con moneda, solo inline) para el préstamo. El candado significa siempre "la plata está protegida", nunca "bloqueado". Para íconos nuevos usen Lucide con el mismo trazo. Emoji solo en mensajes del bot, nunca en la interfaz web.

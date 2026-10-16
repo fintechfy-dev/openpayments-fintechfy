@@ -34,6 +34,17 @@
       autorizado: { variante: "info", icono: "candado", texto: "Autorizado" },
       completado: { variante: "exito", icono: "check", texto: "Completado" },
       fallido: { variante: "error", icono: "alerta", texto: "Fallido" }
+    },
+    /** Solicitud y vida del préstamo. Del servicio externo: DESEMBOLSO_PENDIENTE → por_desembolsar, ACTIVO → al_dia, MORA → en_mora, PAGADO → pagado. */
+    credito: {
+      solicitado: { variante: "neutro", icono: "reloj", texto: "Solicitado" },
+      aprobado: { variante: "info", icono: "check", texto: "Aprobado" },
+      rechazado: { variante: "neutro", icono: "punto", texto: "No aprobado" },
+      por_desembolsar: { variante: "info", icono: "reloj", texto: "Por desembolsar" },
+      al_dia: { variante: "exito", icono: "check", texto: "Al día" },
+      en_mora: { variante: "aviso", icono: "reloj", texto: "En mora" },
+      pagado: { variante: "celebra", icono: "premio", texto: "Pagado" },
+      descontado: { variante: "neutro", icono: "cuota", texto: "Descontado al liquidar" }
     }
   };
   /** Trazos de los íconos (viewBox 0 0 24 24, sin relleno, trazo 2). */
@@ -47,7 +58,8 @@
     alerta: '<path d="M10.3 4.3a2 2 0 0 1 3.4 0l7.6 13.2a2 2 0 0 1-1.7 3H4.4a2 2 0 0 1-1.7-3z"/><path d="M12 9.5v4"/><path d="M12 17h.01"/>',
     check: '<circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.8 2.8L16 9.6"/>',
     reloj: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/>',
-    punto: '<circle cx="12" cy="12" r="4"/>'
+    punto: '<circle cx="12" cy="12" r="4"/>',
+    credito: '<circle cx="15" cy="6" r="3.5"/><path d="M2 13h3v8H2"/><path d="M5 14h4l3 1.5h2.5a1.5 1.5 0 0 1 0 3H10"/><path d="M14.5 18.5 19 16a1.6 1.6 0 0 1 2 2.4L16 21.5H9.5L5 20"/>'
   };
   function icono(nombre, clase) {
     return '<svg class="nt-ico' + (clase ? " " + clase : "") + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICONOS[nombre] || "") + "</svg>";

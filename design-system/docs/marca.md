@@ -10,7 +10,7 @@ Lo que se ajustó del tablero original en el redibujo vectorial:
 - **Vector:** todo el sistema está redibujado en SVG (antes era una imagen), con el logotipo convertido a trazos en Nunito Black.
 - **Una sola marca:** la hojita del tablero (arriba a la derecha y en el pie) se retiró; competía con el marranito como segundo logo.
 - **Tamaños pequeños:** `simbolo-pequeno.svg` quita rayitas, sombra y detalles de la cara para leerse a 16–32px; el avatar del bot usa un marranito más grande dentro del círculo.
-- **Paleta:** los tokens del sistema ahora salen del logo: verde `#15412C`, mostaza `#E2A431`, neutro oscuro `#2C342F`, neutro claro `#D9D2C3`, fondo `#F2EDE7` y el rosado `#FAC5A9`.
+- **Paleta:** los tokens salen de los colores medidos en el kit original: verde del nombre `#113A26` (`primario`), verde oscuro de fondo `#06472E` (`marca-fondo`), mostaza del "2.0" `#E7A402` (`acento`), rosado del marranito `#FCB798` (`secundario`), crema `#FFF8EC` (`superficie`) y el gris de la tagline `#23272D` (`tinta`). El `LEEME.json` del kit da un mostaza `#B87900` "referencial", pero en la imagen el "2.0" mide `#E7A402`: se usó lo medido.
 
 Direcciones que se exploraron antes y quedan como referencia: la ronda (personas en círculo alrededor de una moneda) y el árbol (una rama por persona). El marranito gana porque es el único que se reconoce al instante y funciona a 40px.
 

@@ -30,6 +30,23 @@ Cada estado tiene variante de color, ícono y palabra (`Natillera.ESTADOS`). Nun
 | Completado | `nt-badge--exito` | check | Recibido en la billetera de la natillera |
 | Fallido | `nt-badge--error` | alerta | No se pudo ejecutar; siempre con motivo |
 
+## Crédito
+
+El préstamo lo da la financiera, no la natillera. La solicitud se ve en la web de la financiera y en el bot; la vida del préstamo viene del servicio externo de lógica financiera.
+
+| Estado | Badge | Ícono | Cuándo | Del servicio externo |
+| --- | --- | --- | --- | --- |
+| Solicitado | `nt-badge--neutro` | reloj | El participante lo pidió; la financiera no ha respondido | — |
+| Aprobado | `nt-badge--info` | check | La financiera lo aprobó | — |
+| No aprobado | `nt-badge--neutro` | punto | La financiera no lo aprobó. Neutro, nunca rojo | — |
+| Por desembolsar | `nt-badge--info` | reloj | Aprobado, esperando que llegue a la billetera | `DESEMBOLSO_PENDIENTE` |
+| Al día | `nt-badge--exito` | check | Desembolsado y con las cuotas al día | `ACTIVO` |
+| En mora | `nt-badge--aviso` | reloj | Tiene una cuota del préstamo vencida | `MORA` |
+| Pagado | `nt-badge--celebra` | premio | Saldado por completo | `PAGADO` |
+| Descontado al liquidar | `nt-badge--neutro` | cuota | La deuda se descontó de su parte en la liquidación | `PAGADO` vía descuento |
+
+Generar: `Natillera.badge("credito", "en_mora")`. El ícono propio del crédito es `credito` (mano con moneda), para encabezados y botones de "Pedir préstamo".
+
 ## Reglas
 
 - Verde (`exito`) y rojo (`error`) nunca se distinguen solo por color: el ícono y la palabra cambian siempre.

@@ -13,7 +13,7 @@ La página de la financiera y del administrador: gestionar las natilleras, ver l
 
 ## Estilos
 
-La página usa el [design system](../design-system/): carga `design-system/tokens/tokens.css`, `design-system/components/bundle.css` y `bundle.js`, y arma las pantallas con los componentes `PanelJurado`, `Tabla`, `BadgeEstado` y `LineaTiempoPago`. Montos siempre con `Natillera.formatoCOP`.
+La página usa el [design system](../design-system/): carga `design-system/tokens/tokens.css`, `design-system/components/bundle.css` y `bundle.js`, y arma las pantallas con los componentes `PanelJurado`, `Tabla`, `BadgeEstado`, `LineaTiempoPago`, `SolicitudesCredito` (#10) y `TarjetaCredito`. Montos siempre con `Natillera.formatoCOP`.
 
 ## Contratos
 

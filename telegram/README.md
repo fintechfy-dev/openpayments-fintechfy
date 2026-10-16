@@ -6,7 +6,7 @@ El bot donde los integrantes de la natillera y su administrador hacen todo: crea
 
 ## Mensajes e imágenes
 
-Los textos del bot siguen la [voz y tono](../design-system/docs/voz-y-tono.md) del design system. El avatar es `design-system/assets/logos/kit/05_avatar/avatar_verde_oscuro_512px.png`, y las tarjetas-imagen salen de `TarjetaAporte` y `TarjetaBienvenida` con los colores de `design-system/tokens/tokens.resolved.json`.
+Los textos del bot siguen la [voz y tono](../design-system/docs/voz-y-tono.md) del design system. El avatar es `design-system/assets/logos/kit/05_avatar/avatar_verde_oscuro_512px.png`, y las tarjetas-imagen salen de `TarjetaAporte`, `TarjetaBienvenida` y `TarjetaCredito` con los colores de `design-system/tokens/tokens.resolved.json`.
 
 ## Contratos
 

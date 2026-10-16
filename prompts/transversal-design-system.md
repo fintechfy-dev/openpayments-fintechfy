@@ -27,3 +27,7 @@ descarga la nueva rama develop actualizate mira si hay algo importante haz un PR
 ```text
 acabo de descargarte la simagenes del logo de la ntallera estan ac apodemos usar estos para el proyecto /Users/octopus/Downloads/Natillera_2.0_Logo_Kit por favor
 ```
+
+```text
+hazlo y cierra la brecha que mencionaste al descargar lo de develop tambien
+```

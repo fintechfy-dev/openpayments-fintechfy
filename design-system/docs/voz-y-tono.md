@@ -45,6 +45,35 @@ Permitidos: ✅ cobro hecho · 👋 bienvenida · ☀️ recordatorio · 📅 fe
 > 🎉 ¡Llegó diciembre, Marta! Te pagamos $600.000 en tu billetera.
 > Ahorraste 12 de 12 cuotas con Los Primos. ¡Gracias por cumplir! 🐷
 
+## Crédito
+
+El préstamo es un logro por ahorrar con constancia, no un favor. Siempre se dice quién presta (la financiera, no la natillera ni el grupo), el monto, la cuota y cuándo se paga.
+
+**Ya puedes pedir préstamo**
+> 🐷 ¡Marta, llevas 6 cuotas al día! Por tu constancia, Financiera Aliada te puede prestar hasta $300.000.
+> El préstamo es aparte de la natillera: tu ahorro sigue intacto.
+> [Pedir préstamo]
+
+**Solicitud recibida**
+> Listo, Marta. Le enviamos a Financiera Aliada tu solicitud de $200.000.
+> Te avisamos por aquí apenas responda.
+
+**Aprobado y desembolsado**
+> ✅ ¡Aprobado! Ya te llegaron $200.000 a tu billetera.
+> Pagas $35.700 cada mes durante 6 meses. La primera cuota es el 15 de noviembre.
+
+**No aprobado**
+> Hola, Marta. Esta vez Financiera Aliada no pudo aprobar tu préstamo.
+> Tu ahorro en la natillera sigue igual. Puedes volver a pedirlo más adelante.
+
+**Cuota del préstamo vencida**
+> Hola, Marta. La cuota de $35.700 de tu préstamo quedó pendiente.
+> Si no se paga, se descuenta de tu parte en diciembre. Escribe /prestamo para ver cómo vas.
+
+**Descuento en la liquidación**
+> 🎉 ¡Llegó diciembre, Marta! Te pagamos $480.000 en tu billetera.
+> De tu parte se descontaron $120.000 del préstamo con Financiera Aliada, que ya quedó saldado.
+
 ## Lo que nunca decimos
 
 | En vez de | Decimos |
@@ -53,3 +82,5 @@ Permitidos: ✅ cobro hecho · 👋 bienvenida · ☀️ recordatorio · 📅 fe
 | "Usted se encuentra en mora" | "Tienes una cuota pendiente." |
 | "Grant de pago recurrente aprobado" | "Autorizaste el cobro de tus cuotas." |
 | "Los fondos están en el smart contract" | "La plata la guarda Financiera Aliada, a nombre de la natillera." |
+| "Solicitud de crédito rechazada" | "Esta vez Financiera Aliada no pudo aprobar tu préstamo." |
+| "La natillera te presta" | "Financiera Aliada te presta." |
