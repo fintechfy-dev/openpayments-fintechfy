@@ -22,10 +22,12 @@ const PROHIBIDAS = /interledger|ilp|grant|wallet|token|blockchain|cripto|transac
 
 // Bot mínimo con un motor propio, para probar el motor con un flujo hecho a la medida.
 // SQLite y no la memoria de grammY: esa devuelve el mismo objeto y no simula bien un error a medias.
-function botConFlujo(def) {
+function botConFlujo(def, { memoria = false } = {}) {
   const llamadas = [];
   const bot = new Bot(TOKEN_DE_PRUEBA, { botInfo: BOT_INFO, client: { fetch: crearFetchFalso(llamadas) } });
-  bot.use(session({ initial: () => ({ flujo: null }), storage: almacenDeSesiones(abrirBaseDeDatos(EN_MEMORIA)) }));
+  // memoria: la sesión por defecto de grammY, la que usa el bot cuando no tiene base de datos.
+  const storage = memoria ? undefined : almacenDeSesiones(abrirBaseDeDatos(EN_MEMORIA));
+  bot.use(session({ initial: () => ({ flujo: null }), ...(storage ? { storage } : {}) }));
 
   const motor = crearMotorDeFlujos();
   motor.registrar(def);
@@ -162,6 +164,29 @@ test('si alTerminar falla, el flujo sigue en la última pregunta y se puede rein
   await bot.handleUpdate(mensaje('dos otra vez'));
 
   assert.deepEqual(terminados, [{ a: 'uno', b: 'dos otra vez' }]);
+});
+
+test('sin base de datos (sesión en memoria), si alTerminar falla también se puede reintentar', async () => {
+  let intentos = 0;
+  const terminados = [];
+  const { bot } = botConFlujo(
+    {
+      id: 'prueba',
+      pasos: [paso('a')],
+      alTerminar: (ctx, datos) => {
+        intentos += 1;
+        if (intentos === 1) throw new Error('el servicio no responde');
+        terminados.push(datos);
+      },
+    },
+    { memoria: true },
+  );
+
+  await bot.handleUpdate(mensaje('/probar'));
+  await assert.rejects(bot.handleUpdate(mensaje('uno')));
+  await bot.handleUpdate(mensaje('uno otra vez'));
+
+  assert.deepEqual(terminados, [{ a: 'uno otra vez' }]);
 });
 
 test('resumen: confirmar, corregir un dato y volver, con lo escrito escapado', async () => {

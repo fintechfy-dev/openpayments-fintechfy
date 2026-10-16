@@ -23,8 +23,11 @@ const copias = [
   [publico, "assets/logos/kit/06_monocromos", "logos/06_monocromos"],
 ];
 
-if (!existsSync(join(ds, "tokens", "tokens.css"))) {
-  console.error("No encuentro design-system/tokens/tokens.css. Corre: node design-system/tokens/build.mjs");
+// Todas las fuentes se revisan antes de borrar nada: si falta una, las copias actuales siguen sirviendo.
+const faltantes = copias.map(([, de]) => de).filter((de) => !existsSync(join(ds, de)));
+if (faltantes.length) {
+  console.error(`Faltan en design-system/: ${faltantes.join(", ")}.`);
+  if (faltantes.includes("tokens/tokens.css")) console.error("Para tokens.css corre: node design-system/tokens/build.mjs");
   process.exit(1);
 }
 for (const d of [estilos, publico]) rmSync(d, { recursive: true, force: true });

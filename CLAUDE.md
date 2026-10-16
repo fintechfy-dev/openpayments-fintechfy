@@ -35,6 +35,8 @@ GitFlow (`CONTRIBUTING.md`): rama `feature/<frente>-<issue>-<tema>` desde `devel
 |---|---|
 | `design-system/` | Marca, tokens, componentes y voz y tono. Skill: `natillera-design-system` |
 | `web/` | Web de la financiera y el administrador (Next.js). Skill: `natillera-web`; agentes `web-implementador`, `web-revisor`, `web-verificador-visual`; comando `/director-web` |
-| `telegram/` | Bot de Telegram |
-| `pagos/`, `integracion/` | Servicio de Open Payments y conexión con el servicio externo |
+| `telegram/` | Bot de Telegram (Node + grammY). Skill: `natillera-telegram` |
+| `pagos/`, `integracion/` | Servicio de Open Payments y conexión con el servicio externo. Skill: `natillera-open-payments` (explica y revisa; el código de `pagos/` lo escribe el equipo) |
 | `docs/discovery/` | Historias, criterios y escenarios (`3-bdd/`), reglas de dinero (`4-logica-financiera/`) |
+
+Para cerrar cualquier trabajo (prompts, `AI_USAGE.md`, secretos, pruebas y PR): skill `natillera-pr`.

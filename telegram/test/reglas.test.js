@@ -6,6 +6,7 @@ import {
   formatoFechaCorta,
   hoyEnBogota,
   leerFecha,
+  leerMonto,
   primeroDelMesSiguiente,
   resumenNatillera,
   sugerenciasCuota,
@@ -126,4 +127,21 @@ test('sugerencias para los botones', () => {
   assert.deepEqual(sugerenciasFinal('2026-11-01', 'semanal')[0], { fecha: '2026-11-15', cuotas: 3 });
   assert.ok(sugerenciasFinal('2026-11-01', 'semanal').some((o) => o.diciembre && o.cuotas === 9));
   assert.deepEqual(sugerenciasFinal(undefined, 'mensual'), []);
+});
+
+test('leerMonto: el punto solo separa miles; un punto decimal se rechaza en vez de multiplicar', () => {
+  assert.equal(leerMonto('50000'), 50000);
+  assert.equal(leerMonto('50.000'), 50000);
+  assert.equal(leerMonto('$1.250.000'), 1250000);
+  assert.ok(Number.isNaN(leerMonto('5000.00')));
+  assert.ok(Number.isNaN(leerMonto('50.5')));
+  assert.ok(Number.isNaN(leerMonto('5.0000')));
+});
+
+test('validarFinal: una fecha sin año se lee después de la primera cuota, no de hoy', () => {
+  const base = { hoy: HOY, inicio: '2026-11-01' };
+  assert.deepEqual(validarFinal('31/10', base), { valor: '2027-10-31' });
+  assert.deepEqual(validarFinal('15/12', base), { valor: '2026-12-15' });
+  // El mismo mes de inicio, después del día: ese mismo año.
+  assert.deepEqual(validarFinal('2/11', base), { valor: '2026-11-02' });
 });

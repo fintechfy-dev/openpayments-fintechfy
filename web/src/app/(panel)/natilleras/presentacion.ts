@@ -64,7 +64,9 @@ export interface AvanceAhorro {
 
 /** Avance del ahorro del grupo frente a la meta (cuota × cuotas × participantes). */
 export function avanceAhorro(n: Pick<Natillera, "participantes" | "valorCuota" | "cuotasTotales" | "periodoActual">): AvanceAhorro {
-  const ahorrado = n.participantes.reduce((s, p) => s + p.aportado, 0);
+  // Solo cuotas pagadas: `aportado` también trae la mora y las deudas, y con eso la barra pasaría
+  // de la meta (que es de cuotas) aunque falten cuotas.
+  const ahorrado = n.participantes.reduce((s, p) => s + Math.min(p.cuotasPagadas, n.cuotasTotales) * n.valorCuota, 0);
   const meta = n.valorCuota * n.cuotasTotales * n.participantes.length;
   const porcentaje = meta > 0 ? Math.min(100, Math.round((ahorrado / meta) * 100)) : 0;
   return { ahorrado, meta, porcentaje, cuotasFaltantes: Math.max(0, n.cuotasTotales - n.periodoActual) };
