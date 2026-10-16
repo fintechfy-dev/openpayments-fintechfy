@@ -34,7 +34,7 @@ export function crearUnirse({ servicio, registro, web, log, nuevoId = randomUUID
 
       let inscritos;
       try {
-        registro.guardarParticipacion({ participacionId, contractId, natilleraId, telegramId });
+        registro.guardarParticipacion({ participacionId, contractId, natilleraId, telegramId, nombre });
         inscritos = registro.contarParticipaciones(natilleraId);
       } catch (error) {
         log.error(`Participación ${participacionId} (contrato ${contractId}) creada en staging pero no se guardó en el registro:`, error);

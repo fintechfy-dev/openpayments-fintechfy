@@ -45,6 +45,8 @@ export function abrirBaseDeDatos(ruta) {
   `);
   // Columnas que llegaron después de la primera versión: las bases que ya existen las ganan aquí.
   agregarColumna(db, 'natilleras', 'codigo_invitacion', 'TEXT');
+  // El nombre de Telegram de quien se unió: para que el administrador sepa quién es quién.
+  agregarColumna(db, 'participaciones', 'nombre', 'TEXT');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS natilleras_codigo ON natilleras (codigo_invitacion);');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS participaciones_unica ON participaciones (natillera_id, telegram_id);');
   return db;

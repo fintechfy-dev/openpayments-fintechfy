@@ -9,6 +9,7 @@ import { crear, flujoCrear } from './flujos/crear.js';
 import { miNatillera } from './comandos/mi-natillera.js';
 import { cobros } from './comandos/cobros.js';
 import { invitar } from './comandos/invitar.js';
+import { administrar } from './comandos/administrar.js';
 import { crearUnirseBot, flujoUnirse } from './flujos/unirse.js';
 
 // Menú de comandos que se publica en Telegram. /diag no va aquí: no se anuncia.
@@ -16,6 +17,7 @@ export const COMANDOS = [
   { command: 'start', description: 'Empezar' },
   { command: 'mi_natillera', description: 'Ver mi ahorro, las reglas y mis cobros' },
   { command: 'crear', description: 'Crear una natillera' },
+  { command: 'administrar', description: 'Ver y administrar tus natilleras' },
   { command: 'invitar', description: 'Compartir el enlace de tu natillera' },
   { command: 'cancelar', description: 'Cancelar lo que estás haciendo' },
 ];
@@ -96,10 +98,13 @@ export function crearBot(config, { log, db, crearNatillera, servicio, registro, 
   app.use(start({ log, abrirInvitacion: unirseBot?.abrirInvitacion }));
   app.use(cancelar({ motor }));
   app.use(diag({ config, db, inicio, ahora }));
-  app.use(miNatillera({ config }));
-  if (servicio && registro) app.use(cobros({ servicio, registro, log }));
+  app.use(miNatillera({ config, registro, servicio, log }));
+  if (registro) app.use(invitar({ registro }));
+  if (servicio && registro) {
+    app.use(cobros({ servicio, registro, log }));
+    app.use(administrar({ config, registro, servicio, log, ahora }));
+  }
   if (conUnirse) {
-    app.use(invitar({ registro }));
     app.use(unirseBot.comandos);
   }
   // Antes del motor: «Responder aquí» y el formulario de la Mini App no son respuestas de un flujo.
