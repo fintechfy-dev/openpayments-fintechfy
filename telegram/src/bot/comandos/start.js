@@ -1,4 +1,4 @@
-import { Composer } from 'grammy';
+import { Composer, InlineKeyboard } from 'grammy';
 
 // Textos según la guía de voz y tono (design-system/docs/voz-y-tono.md): tuteo, el nombre al inicio,
 // máximo 3 líneas, la plata siempre ubicada y a lo sumo un emoji (ninguno en errores).
@@ -34,7 +34,10 @@ export function start({ log }) {
       return;
     }
 
-    await ctx.reply(bienvenida(nombre));
+    // El botón lo atiende flujos/crear.js, igual que /crear.
+    await ctx.reply(bienvenida(nombre), {
+      reply_markup: new InlineKeyboard().text('Crear natillera', 'menu:crear'),
+    });
   });
 
   return comandos;

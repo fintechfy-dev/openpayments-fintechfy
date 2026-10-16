@@ -5,7 +5,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { abrirBaseDeDatos, contarSesiones, EN_MEMORIA } from '../src/db.js';
 import { almacenDeSesiones } from '../src/bot/sesion-storage.js';
-import { textoEcoTerminado } from '../src/bot/flujos/eco.js';
 import { crearBotDePrueba, mensaje } from './helpers/bot-prueba.js';
 
 function carpetaTemporal(t) {
@@ -47,21 +46,22 @@ test('la sesión sobrevive a cerrar y reabrir la base, y la carpeta se crea sola
 test('un flujo a medias sobrevive a un reinicio del bot', async (t) => {
   const ruta = join(carpetaTemporal(t), 'bot.db');
 
-  // Primer arranque: empieza /eco y responde la primera pregunta.
+  // Primer arranque: empieza /crear y responde la primera pregunta.
   const db1 = abrirBaseDeDatos(ruta);
   const antes = crearBotDePrueba({ db: db1 });
-  await antes.bot.handleUpdate(mensaje('/eco'));
-  await antes.bot.handleUpdate(mensaje('Natillera de la familia'));
-  assert.match(antes.llamadas.at(-1).payload.text, /^¿De cuánto es la cuota/);
+  await antes.bot.handleUpdate(mensaje('/crear'));
+  await antes.bot.handleUpdate(mensaje('Los Primos'));
+  assert.match(antes.llamadas.at(-1).payload.text, /Paso 2 de 7.*\n¿De cuánto es la cuota/);
   db1.close();
 
-  // Segundo arranque, con otro bot y la base reabierta: responde la segunda y termina.
+  // Segundo arranque, con otro bot y la base reabierta: responde la segunda y sigue con la tercera.
   const db2 = abrirBaseDeDatos(ruta);
   const despues = crearBotDePrueba({ db: db2 });
   await despues.bot.handleUpdate(mensaje('$20.000'));
 
-  assert.equal(despues.llamadas.length, 1);
-  assert.equal(despues.llamadas[0].payload.text, textoEcoTerminado({ nombre: 'Natillera de la familia', cuota: 20000 }));
-  assert.deepEqual(almacenDeSesiones(db2).read('100'), { flujo: null });
+  assert.match(despues.llamadas.at(-1).payload.text, /Paso 3 de 7.*\n¿Cada cuánto se cobra la cuota\?/);
+  // La tarjeta anterior (del primer arranque) pierde sus botones: su id quedó guardado en la sesión.
+  assert.equal(despues.llamadas[0].method, 'editMessageReplyMarkup');
+  assert.deepEqual(almacenDeSesiones(db2).read('100').flujo.datos, { nombre: 'Los Primos', cuota: 20000 });
   db2.close();
 });

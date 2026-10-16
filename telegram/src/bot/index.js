@@ -5,11 +5,12 @@ import { diag } from './comandos/diag.js';
 import { cancelar } from './comandos/cancelar.js';
 import { crearMotorDeFlujos } from './flujo.js';
 import { almacenDeSesiones } from './sesion-storage.js';
-import { eco, flujoEco } from './flujos/eco.js';
+import { crear, flujoCrear } from './flujos/crear.js';
 
-// Menú de comandos que se publica en Telegram. /diag y /eco no van aquí: no se anuncian.
+// Menú de comandos que se publica en Telegram. /diag no va aquí: no se anuncia.
 export const COMANDOS = [
   { command: 'start', description: 'Empezar' },
+  { command: 'crear', description: 'Crear una natillera' },
   { command: 'cancelar', description: 'Cancelar lo que estás haciendo' },
 ];
 
@@ -56,9 +57,10 @@ function guardiaDeSecretos(secretos, log) {
 // Arma el bot sin arrancarlo, para poder probarlo sin conexión.
 // `config` sale de loadConfig(); sus `secretos` nunca se pueden enviar.
 // `db` es la base de abrirBaseDeDatos(); sin ella, las sesiones quedan en memoria y se pierden al
-// reiniciar. `botInfo`, `cliente`, `inicio` y `ahora` son opcionales: en las pruebas evitan getMe y
-// la red y fijan el reloj.
-export function crearBot(config, { log, db, botInfo, cliente, inicio, ahora } = {}) {
+// reiniciar. `crearNatillera(datos, ctx)` llega con el contrato de #5; sin ella, /crear termina en una
+// vista previa. `botInfo`, `cliente`, `inicio`, `ahora` y `hoy` son opcionales: en las pruebas evitan
+// getMe y la red y fijan el reloj y la fecha.
+export function crearBot(config, { log, db, crearNatillera, botInfo, cliente, inicio, ahora, hoy } = {}) {
   const bot = new Bot(config.botToken, { botInfo, client: cliente });
 
   bot.api.config.use(guardiaDeSecretos(config.secretos, log));
@@ -74,12 +76,13 @@ export function crearBot(config, { log, db, botInfo, cliente, inicio, ahora } = 
   app.use(session({ initial: () => ({ flujo: null }), storage: db ? almacenDeSesiones(db) : undefined }));
 
   const motor = crearMotorDeFlujos();
-  motor.registrar(flujoEco(config));
+  motor.registrar(flujoCrear(config, { hoy, crearNatillera }));
 
   app.use(start({ log }));
-  app.use(cancelar());
+  app.use(cancelar({ motor }));
   app.use(diag({ config, db, inicio, ahora }));
-  app.use(eco({ motor }));
+  // Antes del motor: «Responder aquí» y el formulario de la Mini App no son respuestas de un flujo.
+  app.use(crear({ config, motor, log, hoy }));
   app.use(motor.middleware());
 
   return bot;

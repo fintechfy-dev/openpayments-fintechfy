@@ -1,0 +1,95 @@
+/* Mini App de Telegram: formulario para crear la natillera. Solo usa los tokens y componentes del
+   design system (tokens.css y bundle.css); aquí va el acomodo de la pantalla y los controles. */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--superficie);
+  color: var(--tinta);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ma {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--espacio-5) var(--espacio-4) var(--espacio-8);
+}
+
+.ma-cabeza { display: flex; gap: var(--espacio-3); align-items: center; margin-bottom: var(--espacio-5); }
+.ma-logo { flex: none; border-radius: var(--radio-md); }
+.ma-titulo { margin: 0; font-family: var(--font-display); font-weight: 900; font-size: 24px; line-height: 1.2; }
+.ma-sub { margin: var(--espacio-1) 0 0; font-size: 14px; }
+
+.ma-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--espacio-4); }
+.ma-campo { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--espacio-3); }
+/* Los campos de fecha traen un ancho mínimo propio: sin esto empujan la pantalla hacia los lados. */
+.ma-campo > *, .ma-fecha > * { min-width: 0; }
+.ma-sub { overflow-wrap: anywhere; }
+
+.ma-etiqueta {
+  display: flex; gap: var(--espacio-2); align-items: center;
+  font-family: var(--font-display); font-weight: 800; font-size: 16px;
+}
+.ma-etiqueta .nt-ico { color: var(--primario-texto); }
+
+.ma-input {
+  width: 100%;
+  min-height: var(--control-alto);
+  padding: 0 var(--espacio-4);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-md);
+  background: var(--superficie-elevada);
+  color: var(--tinta);
+  font: inherit;
+}
+.ma-input:focus-visible, .ma-rango:focus-visible, .ma-chip:focus-visible, .ma-segmento:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+.ma-input[aria-invalid="true"] { border-color: var(--estado-error-texto); }
+
+.ma-grande { font-family: var(--font-display); font-weight: 900; font-size: 32px; line-height: 1.1; color: var(--primario-texto); }
+
+.ma-rango { width: 100%; accent-color: var(--primario); min-height: 32px; }
+
+.ma-chips { display: flex; flex-wrap: wrap; gap: var(--espacio-2); }
+.ma-chips:empty { display: none; }
+.ma-chip, .ma-segmento {
+  min-height: var(--control-alto-sm);
+  padding: 0 var(--espacio-4);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-pildora);
+  background: var(--superficie-elevada);
+  color: var(--tinta);
+  font: inherit; font-weight: 700; font-size: 14px;
+  cursor: pointer;
+}
+.ma-chip[aria-pressed="true"], .ma-segmento[aria-checked="true"] {
+  background: var(--primario); border-color: var(--primario); color: var(--sobre-primario);
+}
+
+.ma-segmentos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--espacio-2); }
+.ma-segmento { padding: 0 var(--espacio-2); }
+
+.ma-fechas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--espacio-3); }
+.ma-fecha { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--espacio-1); }
+.ma-fecha .ma-input { padding: 0 var(--espacio-3); }
+@media (max-width: 360px) { .ma-fechas { grid-template-columns: minmax(0, 1fr); } }
+
+.ma-stepper { display: flex; align-items: center; justify-content: center; gap: var(--espacio-5); }
+.ma-paso { width: var(--control-alto); padding: 0; font-size: 24px; }
+.ma-stepper .ma-grande { min-width: 2ch; text-align: center; }
+
+.ma-ayuda { margin: 0; font-size: 14px; }
+.ma-error { margin: 0; color: var(--estado-error-texto); font-size: 14px; font-weight: 700; }
+
+.ma-resumen { display: grid; gap: var(--espacio-2); }
+.ma-resumen .nt-dato__valor { font-size: 36px; }
+.ma-resumen__linea { margin: 0; }
+.ma-resumen .nt-cuotas:empty { display: none; }
+
+.nt-aviso p { margin: 0; }

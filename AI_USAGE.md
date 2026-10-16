@@ -33,7 +33,9 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 | `telegram/src/formato.js` y textos de `/start` | Claude Code (Claude Opus 5.5) | Montos con el mismo formato que `formatoCOP` del design system y mensajes según la guía de voz y tono | Mucho |
 | `telegram/src/config.js` y `/diag` | Claude Code (Claude Opus 5.5) | Parte del bot de US-001-CFG (#12): configuración validada al arrancar y diagnóstico del equipo | Mucho |
 | `telegram/src/db.js`, `telegram/src/bot/sesion-storage.js`, `flujo.js`, `/cancelar` y el flujo de prueba `/eco` | Claude Code (Claude Opus 5.5) | Parte del bot de US-007-BCK (#21): sesiones en SQLite y motor de preguntas que sobrevive a un reinicio | Mucho |
-| `telegram/test/` | Claude Code (Claude Opus 5.5) | Arnés de pruebas sin red y pruebas de `/start`, secretos, configuración, `/diag`, sesiones y flujos | Mucho |
+| `telegram/src/natillera/reglas.js`, `telegram/src/bot/flujos/crear.js` y botones del motor de flujos | Claude Code (Claude Opus 5.5) | US-001 (#13): `/crear` con botones en el chat, resumen con confirmar o corregir, y reglas compartidas con la Mini App | Mucho |
+| `telegram/miniapp/` | Claude Code (Claude Opus 5.5) | Formulario de la Mini App de Telegram para crear la natillera, con el design system; revisado en Chrome sin ventana en claro y oscuro | Mucho |
+| `telegram/test/` | Claude Code (Claude Opus 5.5) | Arnés de pruebas sin red y pruebas de `/start`, secretos, configuración, `/diag`, sesiones, flujos, reglas de US-001 y `/crear` | Mucho |
 | `telegram/README.md` («Cómo correrlo») | Claude Code (Claude Opus 5.5) | Instrucciones para correr el bot | Mucho |
 
 ## Servicios externos

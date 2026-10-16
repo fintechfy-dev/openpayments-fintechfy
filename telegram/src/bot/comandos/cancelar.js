@@ -1,21 +1,12 @@
 import { Composer } from 'grammy';
 
 // /cancelar borra el flujo en curso sin llamar a su `alTerminar` (D-12): no queda nada creado.
+// El botón «Cancelar» de cada pregunta hace lo mismo desde el motor.
 
-export const MENSAJE_CANCELADO = 'Listo, lo dejamos así. No se guardó nada de lo que respondiste.';
-export const MENSAJE_NADA_QUE_CANCELAR = 'No tienes nada en curso para cancelar.';
+export { MENSAJE_CANCELADO, MENSAJE_NADA_QUE_CANCELAR } from '../flujo.js';
 
-export function cancelar() {
+export function cancelar({ motor }) {
   const comandos = new Composer();
-
-  comandos.command('cancelar', async (ctx) => {
-    if (!ctx.session.flujo) {
-      await ctx.reply(MENSAJE_NADA_QUE_CANCELAR);
-      return;
-    }
-    ctx.session.flujo = null;
-    await ctx.reply(MENSAJE_CANCELADO);
-  });
-
+  comandos.command('cancelar', (ctx) => motor.cancelar(ctx));
   return comandos;
 }

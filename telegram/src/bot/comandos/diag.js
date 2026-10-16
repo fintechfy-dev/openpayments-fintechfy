@@ -25,6 +25,7 @@ export function textoDiagnostico(config, { encendidoMs, sesiones }) {
     `Mora diaria máxima: ${formatoPorcentaje(config.moraDiariaMaxPct)}`,
     `Servicio externo: ${config.externo.url ? servicio(config.externo.url, llave) : 'sin configurar'} · conexión: sin probar (tarea 5)`,
     `Servicio de pagos: ${servicio(config.pagosUrl)}`,
+    `Formulario (Mini App): ${servicio(config.miniappUrl)}`,
     `Base de datos: ${baseDeDatos(config, sesiones)}`,
   ].join('\n');
 }

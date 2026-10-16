@@ -63,7 +63,7 @@ Lo que se hizo en el reacomodo:
 | D-11 | **Los flujos se registran por id**: la sesión guarda solo el id y los datos | Tras un reinicio el bot reencuentra la definición por su id | — |
 | D-12 | **Nada se crea hasta el último paso**; `/cancelar` borra el flujo | US-001: si el administrador abandona a mitad, no queda ninguna natillera creada. Al terminar, el bot llama al servicio externo una sola vez | — |
 | D-13 | **`/diag` responde solo en `TEAM_CHAT_ID`**; en otro chat no responde nada | No revela que el comando existe | Responder «sin permiso» |
-| D-14 | **Mensajes en texto plano** (sin `parse_mode`) en el esqueleto | Evita errores por caracteres sin escapar | Se puede cambiar por flujo |
+| D-14 | **Mensajes en texto plano** (sin `parse_mode`) en el esqueleto. *Cambió en #13 (D-23): los flujos usan HTML con lo escrito escapado* | Evita errores por caracteres sin escapar | Se puede cambiar por flujo |
 | D-15 | ~~Congelar la configuración en cada natillera~~ → **Lo hace el servicio externo** | El bot no guarda natilleras; solo valida rangos antes de enviar | — |
 | D-16 | **Pruebas con `node:test`** (integrado), solo `test/**/*.test.js` | Cero dependencias; `npm test` | Jest/Vitest |
 | D-17 | **La base de datos va en `telegram/data/`**, ignorada por git | Guarda ids de chats de personas reales; el repo es público | — |
@@ -101,7 +101,7 @@ telegram/
       sesion-storage.js     adaptador de sesiones de grammY sobre SQLite (tarea 4)
       flujo.js              motor de flujos (tarea 4)
       flujos/
-        eco.js              flujo de prueba /eco (tarea 4; se quita con /crear)
+        crear.js            /crear con botones y Mini App (#13)
       comandos/
         start.js            bienvenida y enganche del enlace de invitación
         cancelar.js         cancela el flujo en curso (tarea 4)
@@ -182,7 +182,7 @@ Cada paso termina en algo que se puede verificar. Todos los comandos se corren d
 - [x] 4.5 Middleware (`motor.middleware()`): con un flujo en curso, los textos que no son comandos van al motor. Los comandos siguen funcionando y no borran el flujo.
 - [x] 4.6 Comando `/cancelar` (`src/bot/comandos/cancelar.js`, y al menú): borra el flujo en curso y confirma; si no había, lo dice.
 - [x] 4.7 Cerrar la BD en el apagado limpio: en `src/index.js`, después de que `bot.start()` termina, para que ninguna actualización en curso escriba en una base cerrada.
-- [x] 4.8 Flujo de prueba `/eco` (`src/bot/flujos/eco.js`, fuera del menú): nombre de la natillera y cuota dentro de `CUOTA_MIN`–`CUOTA_MAX` (acepta `20000`, `20.000` o `$20.000`). Se quita cuando exista `/crear`.
+- [x] 4.8 ~~Flujo de prueba `/eco`~~ → **reemplazado por `/crear` en #13** ([crear-natillera.md](crear-natillera.md)). Era `src/bot/flujos/eco.js`, fuera del menú: nombre de la natillera y cuota dentro de `CUOTA_MIN`–`CUOTA_MAX` (acepta `20000`, `20.000` o `$20.000`). Se quita cuando exista `/crear`.
 - [x] 4.9 Pruebas: `test/sesiones.test.js` (3) y `test/flujo.test.js` (7), más una de `/diag`: el adaptador lee lo que escribió; la sesión sobrevive a cerrar y reabrir la BD; un flujo a medias sobrevive a un bot nuevo con la base reabierta; una respuesta inválida explica y conserva los datos; `alTerminar` se llama una vez; `/cancelar` no lo llama; si `alTerminar` falla se puede reintentar; flujo perdido; comandos con flujo en curso; textos según la guía; `/diag` cuenta las sesiones. → `npm test`: 36/36.
 - [ ] 4.10 Verificar a mano: `/eco`, responder la primera, `Ctrl+C`, `npm start`, responder la segunda → termina bien. **Pendiente de Estiven.**
 
