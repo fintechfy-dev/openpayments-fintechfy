@@ -46,6 +46,8 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 | `web/` (configuración, `src/lib/`, `src/components/`, layout, `scripts/`) | Claude Code (Claude Opus 5.5) | Esqueleto de Next.js (#8), capa de datos del servicio externo con datos de prueba, componentes sobre el design system, script de capturas | Mucho |
 | `web/src/app/page.tsx`, `inicio.css`, `ingresar/`, `(panel)/layout.tsx`, `src/lib/sesion/`, `src/proxy.ts` | Claude Code (Claude Opus 5.5) | Página de inicio con el propósito, inicio de sesión con código por Telegram (OTP), roles y protección del panel | Mucho |
 | `web/src/app/natilleras/`, `creditos/`, `pagos/`, `bitacora/`, `api/pagos/` | Claude Code (Claude Opus 5.5, subagentes) | Pantallas de #9, #10, US-007-RPT y US-012-AUD, revisadas por un agente revisor y uno visual | Mucho |
+| `docs/arquitectura.md`, `docs/README.md`, `scripts/README.md`, `.claude/README.md`, `*/CLAUDE.md`, secciones "Estructura" y "Variables" de `telegram/README.md` y `web/README.md` | Claude Code (Claude Opus 5.5, con dos subagentes de lectura) | Documentación de cada carpeta y vista de arquitectura contrastadas con el código | Mucho |
+| `.claude/rules/documentacion.md`, aviso `[docs]` de `scripts/revisar-entrega.mjs` | Claude Code (Claude Opus 5.5) | Regla para que README y arquitectura cambien en el mismo PR que el código, y el aviso que lo señala | Mucho |
 
 ## Servicios externos
 
