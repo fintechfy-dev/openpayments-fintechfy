@@ -50,3 +50,5 @@ Sé conciso pero completo; solo hechos verificados con ruta:línea.
 ```
 
 Con esos informes (y verificando a mano los hallazgos de las capturas y del tema), Claude Code escribió `docs/arquitectura.md`, los índices `docs/README.md`, `.claude/README.md` y `scripts/README.md`, la estructura y las variables en `telegram/README.md` y `web/README.md`, un `CLAUDE.md` por carpeta, la regla `.claude/rules/documentacion.md` y el aviso `[docs]` de `scripts/revisar-entrega.mjs`, que probó rompiéndolo a propósito.
+
+Al traer `develop` (ya con el PR #63 fusionado), Claude Code aplicó la regla nueva a lo que llegó: documentó los hooks en `.claude/README.md`, `secretos.mjs` en `scripts/README.md` y la CI en `docs/arquitectura.md`. También corrigió dos falsos positivos de su propio trabajo: el hook de commit negaba el commit de merge por "mezclar" `.claude/` con código, y `revisar-entrega.mjs` contaba `pagos/CLAUDE.md` como código de `pagos/`.

@@ -1,11 +1,12 @@
 # Scripts del repositorio
 
-Herramientas que no son de ningún frente. Se corren desde la raíz con Node 24, sin dependencias.
+Herramientas que no son de ningún frente. Se corren desde la raíz con Node 24, sin dependencias. La CI (`.github/workflows/calidad.yml`) corre `revisar-entrega.mjs --rama` en cada PR.
 
 ## Estructura
 
-| Archivo | Qué hace | Cuándo |
+| Archivo | Qué hace | Cuándo se usa o se cambia |
 |---|---|---|
+| [`secretos.mjs`](secretos.mjs) | Qué cuenta como secreto (patrones y nombres de archivo). Lo importan `revisar-entrega.mjs` y los hooks de `.claude/hooks/`, para que la checklist y la guardia no diverjan | Al agregar un formato de llave nuevo |
 | [`revisar-entrega.mjs`](revisar-entrega.mjs) | Revisa los puntos de [`docs/checklist-entrega.md`](../docs/checklist-entrega.md) que se pueden comprobar desde el repo: secretos en el árbol, los cambios y el historial; Open Payments; `AI_USAGE.md`; prompts; README; repositorio público; `main` contra `develop`; el próximo hito. Con `--rama`, además, lo que le falta al diff de la rama contra `develop`: prompts, `AI_USAGE.md`, `pagos/` y la documentación al día (`[docs]`) | Antes de cada commit y de cada PR (`.claude/rules/checklist-entrega.md`) |
 
 ```bash

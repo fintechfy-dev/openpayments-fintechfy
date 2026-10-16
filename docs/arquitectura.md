@@ -28,6 +28,10 @@ flowchart LR
 | Servicio externo de lógica financiera | fuera del repo ([referencia](../integracion/README.md)) | Aplica las reglas de dinero: cupo y arranque, cuotas, mora, actividades, crédito y liquidación. Corre su reloj a las 06:00 | No es parte de la hackathon: el proyecto solo lo llama por API |
 | Design system | [`design-system/`](../design-system/) | Marca, tokens, componentes y voz y tono; la web lo copia con `npm run ds` y el bot usa sus colores y textos | — |
 
+## Calidad automática
+
+GitHub corre `.github/workflows/calidad.yml` en cada PR (checklist de entrega, `verificar` de la web, pruebas del bot y de `pagos/` cuando tenga código), y Claude Code tiene guardias en `.claude/hooks/` (detalle en `.claude/README.md`).
+
 ## Las puertas a sistemas externos
 
 Una sola puerta por sistema (`.claude/rules/codigo.md`). Si algo llama a un sistema externo desde otro sitio, está mal ubicado.

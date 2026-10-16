@@ -82,9 +82,9 @@ const usaSdk = git("ls-files", "*package.json")
   .split("\n")
   .filter(Boolean)
   .some((f) => /"@interledger\/open-payments"/.test(leer(f) ?? ""));
-const codigoPagos = git("ls-files", "pagos").split("\n").filter((f) => f && !/README\.md$/.test(f));
+const codigoPagos = git("ls-files", "pagos").split("\n").filter((f) => f && !f.endsWith(".md"));
 if (usaSdk && codigoPagos.length) ok("b-op", "pagos/ tiene código y el SDK de Open Payments está declarado");
-else aviso("b-op", `Ningún paquete usa todavía @interledger/open-payments${codigoPagos.length ? "" : " y pagos/ solo tiene su README"}. Sin la API de Open Payments el proyecto no entra a evaluación (#3, #4)`);
+else aviso("b-op", `Ningún paquete usa todavía @interledger/open-payments${codigoPagos.length ? "" : " y pagos/ solo tiene documentación"}. Sin la API de Open Payments el proyecto no entra a evaluación (#3, #4)`);
 
 // --- Uso de IA (s-aiusage, s-prompts, b-prompts) ---
 
@@ -146,7 +146,7 @@ if (conRama) {
     else ok("b-prompts", "La rama agrega prompts");
     if (!cambiados.includes("AI_USAGE.md")) aviso("s-aiusage", "La rama cambia código pero no toca AI_USAGE.md");
     else ok("s-aiusage", "La rama actualiza AI_USAGE.md");
-    if (deCodigo.some((f) => f.startsWith("pagos/"))) aviso("b-servicio", "La rama toca pagos/: debe estar escrito por el equipo con poca o ninguna IA, y AI_USAGE.md lo declara con precisión");
+    if (deCodigo.some((f) => f.startsWith("pagos/") && !f.endsWith(".md"))) aviso("b-servicio", "La rama toca pagos/: debe estar escrito por el equipo con poca o ninguna IA, y AI_USAGE.md lo declara con precisión");
   }
 
   // Documentación al día (.claude/rules/documentacion.md): archivos agregados, borrados o movidos
