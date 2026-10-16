@@ -42,6 +42,14 @@ const REVISA_SALDO = 'Revisa que tu billetera tenga saldo y vuelve a tocar el bo
 const LO_REVISAMOS = 'Ya lo estamos revisando; no tienes que hacer nada.';
 
 export const AVISOS = Object.freeze({
+  // Viene de la natillera (por el bridge que cuenta validados): también confirma que los bridges corren.
+  ParticipanteValidadoRegistrado: {
+    a: 'admin',
+    texto: (c) => {
+      const n = monto(c.datos, 'participantesValidados') ?? 0;
+      return `✅ Ya ${n === 1 ? 'hay 1 persona lista' : `van ${n} personas listas`} en ${nombre(c)} para arrancar.`;
+    },
+  },
   NatilleraActivada: { a: 'grupo', texto: (c) => `🐷 ${nombre(c)} arrancó: se completó el cupo.\n${PLATA_UBICADA}` },
   NatilleraCerradaSinCupo: {
     a: 'grupo',

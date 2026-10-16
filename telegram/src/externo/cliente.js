@@ -31,6 +31,19 @@ export function motivoDeRechazo(respuesta) {
   return resultados[0].summary || 'precondición no cumplida';
 }
 
+// currentStateRaw trae cada concepto como { type, value, assigned }: aquí queda { Concepto: value }.
+// Las fechas llegan como '2026-11-01T00:00:00'; se dejan en 'AAAA-MM-DD', como las usa el bot.
+export function estadoDe(contrato) {
+  const crudo = contrato?.currentStateRaw ?? {};
+  return Object.fromEntries(
+    Object.entries(crudo).map(([concepto, v]) => {
+      const valor = v !== null && typeof v === 'object' && 'value' in v ? v.value : v;
+      const esFecha = v?.type === 'Date' && typeof valor === 'string';
+      return [concepto, esFecha ? valor.slice(0, 10) : valor];
+    }),
+  );
+}
+
 function detalleDelProblema(texto) {
   try {
     const problema = JSON.parse(texto);
@@ -61,6 +74,11 @@ export function crearClienteExterno({ url, token, fetch = globalThis.fetch, time
       const respuesta = await llamar('POST', '/api/contracts', { templateName, parameters });
       if (!respuesta.contractId) throw new ServicioExternoError('POST /api/contracts', 'sin contractId');
       return respuesta;
+    },
+
+    // GET /api/contracts/{id} → { currentStateRaw, currentStateLabels, ... }. Ver estadoDe().
+    leerContrato(contractId) {
+      return llamar('GET', `/api/contracts/${encodeURIComponent(contractId)}`);
     },
 
     // POST /api/contracts/{id}/triggers. Lanza AccionRechazadaError si sus reglas no la dejaron correr.

@@ -46,7 +46,7 @@ export function crearFetchFalso(llamadas) {
   };
 }
 
-export function crearBotDePrueba({ env = {}, log = logSilencioso, db, inicio, ahora, hoy, crearNatillera, servicio, registro } = {}) {
+export function crearBotDePrueba({ env = {}, log = logSilencioso, db, inicio, ahora, hoy, crearNatillera, servicio, registro, unirse } = {}) {
   const llamadas = [];
   const config = loadConfig({ ...ENV_DE_PRUEBA, ...env });
   const bot = crearBot(config, {
@@ -55,6 +55,7 @@ export function crearBotDePrueba({ env = {}, log = logSilencioso, db, inicio, ah
     crearNatillera,
     servicio,
     registro,
+    unirse,
     botInfo: BOT_INFO,
     cliente: { fetch: crearFetchFalso(llamadas) },
     inicio,
