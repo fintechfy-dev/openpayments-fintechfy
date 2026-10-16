@@ -43,4 +43,5 @@ _Por completar. La política pone como ejemplo el servicio de Open Payments._
 
 ## Registro de prompts
 
-Los prompts reales, con su texto completo, están en [`prompts/`](prompts/), un archivo por tema.
+- **Discovery:** los prompts salen de los tres sistemas de descubrimiento que guiaron a la IA; hay una ficha de cada uno en [`prompts/discovery/`](prompts/discovery/).
+- **Código de la hackathon:** el texto real de cada prompt, en [`prompts/`](prompts/), un archivo por frente y tema.
