@@ -11,7 +11,7 @@ Si el encargo viene vacío, toma los issues abiertos del frente Web (`gh issue l
 
 ## 1. Entender y planear
 
-- Carga las skills `natillera-web` y `natillera-design-system`.
+- Carga las skills `natillera-web` y `natillera-design-system` y lee `.claude/rules/`.
 - Lee `docs/plan-de-trabajo.md`, `web/README.md` y los issues del encargo (`gh issue view <n>`), incluidos los criterios de las historias enlazadas en `docs/discovery/3-bdd/`.
 - Revisa el estado actual: `git status`, rama, y qué existe ya en `web/src/`.
 - Asegúrate de estar en una rama `feature/web-<issue>-<tema>` creada desde `develop` (o desde la rama que te indiquen). Nunca trabajes en `develop` ni en `main`.
@@ -30,11 +30,11 @@ Si un agente no está disponible por nombre, usa uno general y dile que siga `.c
 
 ## 3. Integrar
 
-Cuando terminen, lee sus informes. Resuelve choques en archivos compartidos, completa lo que reportaron como pendiente y corre `cd web && npm run verificar` hasta que pase.
+Cuando terminen, lee sus informes y su veredicto (`LISTO` · `LISTO-CON-PENDIENTES` · `BLOQUEADO`); un `BLOQUEADO` se resuelve antes de seguir. Resuelve choques en archivos compartidos, completa lo que reportaron como pendiente y corre `npm --prefix web run verificar` hasta que pase.
 
 ## 4. Revisar y verificar
 
-Lanza en paralelo un `web-revisor` (sobre el diff de la rama contra `develop`) y un `web-verificador-visual`. Corrige los hallazgos graves y medios; los menores que no alcances, anótalos en el PR. Si corregiste algo visual, vuelve a correr las capturas de esa ruta.
+Lanza en paralelo un `web-revisor` (sobre el diff de la rama contra `develop`) y un `web-verificador-visual`. Con `BLOQUEADO`, `CAMBIOS-NECESARIOS` o `PROBLEMAS-VISIBLES` no se sigue: corrige los 🔴 y 🟠 siempre, y los 🟡 que alcances; los ⚪ que no alcances van anotados en el PR. Si corregiste algo visual, vuelve a correr las capturas de esa ruta.
 
 ## 5. Entregar
 
