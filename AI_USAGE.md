@@ -48,6 +48,8 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 | `web/src/app/natilleras/`, `creditos/`, `pagos/`, `bitacora/`, `api/pagos/` | Claude Code (Claude Opus 5.5, subagentes) | Pantallas de #9, #10, US-007-RPT y US-012-AUD, revisadas por un agente revisor y uno visual | Mucho |
 | `docs/arquitectura.md`, `docs/README.md`, `scripts/README.md`, `.claude/README.md`, `*/CLAUDE.md`, secciones "Estructura" y "Variables" de `telegram/README.md` y `web/README.md` | Claude Code (Claude Opus 5.5, con dos subagentes de lectura) | Documentación de cada carpeta y vista de arquitectura contrastadas con el código | Mucho |
 | `.claude/rules/documentacion.md`, aviso `[docs]` de `scripts/revisar-entrega.mjs` | Claude Code (Claude Opus 5.5) | Regla para que README y arquitectura cambien en el mismo PR que el código, y el aviso que lo señala | Mucho |
+| `.claude/hooks/`, `.claude/settings.json`, `.claude/commands/director-web.md`, `.claude/agents/web-implementador.md` | Claude Code (Claude Opus 5.5) | Guardias automáticas de Claude (no escribe código en `pagos/`, ni `.env`, ni secretos; ESLint por archivo; pruebas antes de terminar; checklist antes de cada commit o PR) y `/director-web` corregido para no compilar en paralelo y registrar prompts mientras trabaja | Mucho |
+| `.github/workflows/calidad.yml`, `scripts/secretos.mjs` | Claude Code (Claude Opus 5.5) | CI en cada PR (checklist de entrega, `verificar` de la web, pruebas del bot y de `pagos/` cuando exista) y patrones de secretos declarados una sola vez | Mucho |
 
 ## Servicios externos
 

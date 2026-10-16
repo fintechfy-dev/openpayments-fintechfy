@@ -28,6 +28,19 @@ Las reglas del proyecto viven en `.claude/rules/` y Claude Code las carga solas.
 | `checklist-entrega.md` | En cada commit y PR: `node scripts/revisar-entrega.mjs --rama` y lo que falta de la checklist (`docs/checklist-entrega.md`) |
 | `documentacion.md` | La documentación y la arquitectura cambian en el mismo PR que el código: qué README actualizar según lo que cambie |
 
+## Guardias automáticas
+
+Las reglas que más cuestan se hacen cumplir solas (`.claude/settings.json`, scripts en `.claude/hooks/`):
+
+| Cuándo | Qué hace |
+|---|---|
+| Antes de escribir un archivo | Niega código en `pagos/`, cualquier `.env` y texto con forma de secreto |
+| Después de escribir un archivo | ESLint (web) o `node --check` (bot, scripts); el error vuelve a Claude en el momento |
+| Antes de `git commit` o `gh pr create` | `revisar-entrega.mjs --rama`; niega con un bloqueo o si se mezcla `.claude/` con código |
+| Al terminar un turno | Pruebas de cada carpeta con cambios (`web/` sin build); con pruebas en rojo, Claude sigue |
+
+En GitHub, `.github/workflows/calidad.yml` corre la checklist, `verificar` de la web y las pruebas del bot en cada PR. Para revisar o apagar un hook: `/hooks`.
+
 ## Cómo se trabaja
 
 GitFlow (`CONTRIBUTING.md`): rama `feature/<frente>-<issue>-<tema>` desde `develop`, PR a `develop` con la plantilla. Nunca a `main` ni `--force`.

@@ -11,6 +11,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { esArchivoSecreto, secretosEn } from "./secretos.mjs";
 
 const RAIZ = fileURLToPath(new URL("..", import.meta.url));
 const conRama = process.argv.includes("--rama");
@@ -28,15 +29,6 @@ const HITOS = [
   ["2026-10-17T14:30:00-05:00", "Finalistas y Ronda 2"],
   ["2026-10-17T16:30:00-05:00", "Ganadores"],
 ];
-
-// Mismos patrones que la regla de secretos, más los formatos concretos que usa el proyecto.
-const PATRONES_SECRETO = [
-  ["token de bot de Telegram", /\b\d{8,10}:AA[A-Za-z0-9_-]{33}\b/],
-  ["clave privada", /-----BEGIN [A-Z ]*PRIVATE KEY-----/],
-  ["token de GitHub", /\bgh[pousr]_[A-Za-z0-9]{36,}\b/],
-  ["llave de API", /\bsk-[A-Za-z0-9_-]{20,}\b/],
-];
-const ARCHIVO_SECRETO = /(^|\/)(\.env(\.[^/]*)?|[^/]*\.pem|[^/]*\.key)$/;
 
 const resultados = [];
 const ok = (punto, detalle) => resultados.push({ nivel: "ok", punto, detalle });
@@ -58,20 +50,18 @@ function pendientesEn(texto) {
 
 // --- Secretos (s-secretos, US-002-SEC) ---
 
-const versionados = git("ls-files").split("\n").filter((f) => ARCHIVO_SECRETO.test(f) && !f.endsWith(".env.example"));
+const versionados = git("ls-files").split("\n").filter(esArchivoSecreto);
 if (versionados.length) bloqueo("s-secretos", `Archivos de secretos versionados: ${versionados.join(", ")}`);
 
 const enHistoria = new Set(
   git("log", "--all", "--name-only", "--pretty=format:")
     .split("\n")
-    .filter((f) => f && ARCHIVO_SECRETO.test(f) && !f.endsWith(".env.example")),
+    .filter((f) => f && esArchivoSecreto(f)),
 );
 if (enHistoria.size) bloqueo("s-secretos", `Archivos de secretos en el historial (hay que rotar esas claves): ${[...enHistoria].join(", ")}`);
 
 function buscarSecretos(texto, donde) {
-  for (const [nombre, patron] of PATRONES_SECRETO) {
-    if (patron.test(texto)) bloqueo("s-secretos", `Posible ${nombre} en ${donde}`);
-  }
+  for (const nombre of secretosEn(texto)) bloqueo("s-secretos", `Posible ${nombre} en ${donde}`);
 }
 buscarSecretos(git("diff", "--cached"), "los cambios preparados para commit");
 buscarSecretos(git("diff"), "los cambios sin preparar");
