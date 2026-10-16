@@ -10,6 +10,7 @@ Lo que Claude Code carga al abrir este repo: reglas del proyecto, skills por fre
 | [`skills/`](skills/) | Conocimiento por frente o por tarea | Claude las carga cuando el pedido coincide con su descripción, o con `/<nombre>` |
 | [`agents/`](agents/) | Subagentes con una tarea acotada y herramientas reducidas | Los lanza `/director-web` o se piden por nombre |
 | [`commands/`](commands/) | Comandos con `/` | `/director-web <encargo>` |
+| [`hooks/`](hooks/) y [`settings.json`](settings.json) | Guardias automáticas y permisos negados | Corren solas en cada sesión; se revisan o apagan con `/hooks` |
 
 ## Reglas
 
@@ -46,3 +47,16 @@ Lo que Claude Code carga al abrir este repo: reglas del proyecto, skills por fre
 | `/director-web` | Planea, reparte entre implementadores, revisa, verifica y entrega | Tocar `pagos/` ni `telegram/` | Las de la sesión |
 
 Cómo se escribe uno nuevo: `rules/agentes.md`.
+
+## Hooks
+
+Los registra `settings.json`; los scripts están en `hooks/` y comparten `hooks/comun.mjs`. Los patrones de secretos vienen de `scripts/secretos.mjs`.
+
+| Script | Evento | Qué hace |
+|---|---|---|
+| `guardia-edicion.mjs` | Antes de Write, Edit, MultiEdit o NotebookEdit | Niega código en `pagos/` (solo deja los `.md`), cualquier `.env` salvo `.env.example` y texto con forma de secreto |
+| `revisar-archivo.mjs` | Después de Write, Edit o MultiEdit | ESLint del archivo en `web/`; `node --check` en `telegram/`, `scripts/` y `.claude/hooks/`. El error vuelve a Claude |
+| `antes-de-commit.mjs` | Antes de un Bash con `git commit` o `gh pr create` | Corre `revisar-entrega.mjs --rama` y niega con un bloqueo; niega `--no-verify`, el `git add` en el mismo comando y mezclar `.claude/` con código (salvo en un merge). Devuelve los avisos para el reporte |
+| `verificar-al-parar.mjs` | Al terminar un turno | Pruebas de cada carpeta con cambios sin commit (`web/` sin build); con pruebas en rojo, Claude sigue una vez y después avisa a la persona |
+
+`settings.json` también niega `--force`, el push directo a `main` o `develop` y `--no-verify`.

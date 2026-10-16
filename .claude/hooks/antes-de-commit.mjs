@@ -1,6 +1,7 @@
 // PreToolUse (Bash): un commit o un PR pasan antes por la checklist de entrega y las reglas de git
 // (.claude/rules/checklist-entrega.md y git-y-entrega.md). Los demás comandos pasan sin revisar.
 import { execFileSync, spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { RAIZ, entrada, negar, recortar } from "./comun.mjs";
 
@@ -23,7 +24,9 @@ if (esCommit) {
   const preparados = execFileSync("git", ["diff", "--cached", "--name-only"], { cwd: RAIZ, encoding: "utf8" }).split("\n").filter(Boolean);
   const gobernanza = preparados.filter((f) => f.startsWith(".claude/") || f === "CLAUDE.md");
   const codigo = preparados.filter((f) => /^(web|telegram|pagos|integracion|design-system|scripts|\.github)\//.test(f));
-  if (gobernanza.length && codigo.length) {
+  // Un merge de develop trae lo que otros ya separaron en sus commits: no es mezcla propia.
+  const enMerge = existsSync(join(RAIZ, ".git", "MERGE_HEAD"));
+  if (gobernanza.length && codigo.length && !enMerge) {
     negar(
       "PreToolUse",
       `La configuración de Claude va en su propio commit, separada del código (.claude/rules/git-y-entrega.md). Preparados juntos: ${gobernanza.join(", ")} y ${codigo.join(", ")}. Saca uno de los dos grupos con \`git restore --staged\`.`,
