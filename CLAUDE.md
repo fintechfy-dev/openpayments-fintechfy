@@ -9,6 +9,22 @@ Ahorro en grupo sobre Open Payments para la Hackathon de Open Payments Medellín
 - El servicio de pagos (`pagos/`) se escribe con poca o ninguna IA: los mentores lo revisan línea por línea.
 - Repo público: secretos solo en `.env` / `.env.local`, nunca en el código ni en mensajes.
 
+## Reglas
+
+Las reglas del proyecto viven en `.claude/rules/` y Claude Code las carga solas. Si chocan, manda la más específica (la skill o la regla de la carpeta) sobre la general.
+
+| Regla | De qué trata |
+|---|---|
+| `verificar.md` | Verificar antes de afirmar; evidencia con `ruta:línea` y comandos ejecutados |
+| `secretos.md` | Repo público: dónde van las llaves y qué hacer si se filtra una |
+| `git-y-entrega.md` | Ramas desde `develop`, nada de git por inferencia, gobernanza en su propio commit |
+| `ia-y-prompts.md` | Política de IA de la hackathon: prompts reales, `AI_USAGE.md`, `pagos/` a mano |
+| `codigo.md` | Una puerta por sistema externo, datos de prueba visibles, comentarios, idioma |
+| `pruebas.md` | Qué se prueba siempre, tests que fallan de verdad, evidencia del pago real |
+| `revision.md` | Qué busca una revisión y las severidades comunes |
+| `agentes.md` | Cómo se escribe un agente o comando de Claude (frontera, veredicto, `tools` acotado) |
+| `checklist-entrega.md` | En cada commit y PR: `node scripts/revisar-entrega.mjs --rama` y lo que falta de la checklist (`docs/checklist-entrega.md`) |
+
 ## Cómo se trabaja
 
 GitFlow (`CONTRIBUTING.md`): rama `feature/<frente>-<issue>-<tema>` desde `develop`, PR a `develop` con la plantilla. Nunca a `main` ni `--force`.

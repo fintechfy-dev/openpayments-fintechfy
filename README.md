@@ -31,6 +31,8 @@ _Por completar con lo que quede construido._ El plan: un permiso de pago salient
 
 GitFlow: cada cosa por hacer es un [issue](https://github.com/fintechfy-dev/openpayments-fintechfy/issues), cada cambio una rama `feature/` desde `develop` y todo entra por pull request. Las reglas y los comandos están en [CONTRIBUTING.md](CONTRIBUTING.md).
 
+Antes de cada commit y de cada PR: `node scripts/revisar-entrega.mjs --rama`. Revisa contra el repo lo que exige la entrega (secretos, Open Payments, `AI_USAGE.md`, prompts, README y ramas) y dice cuánto falta para el próximo hito. Lo que falta de la checklist del equipo está en [docs/checklist-entrega.md](docs/checklist-entrega.md).
+
 ## Correr la demo
 
 _Por completar con la demo de punta a punta._ Cada pieza explica cómo correrla en su carpeta:
