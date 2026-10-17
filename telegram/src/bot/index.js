@@ -10,12 +10,15 @@ import { miNatillera } from './comandos/mi-natillera.js';
 import { cobros } from './comandos/cobros.js';
 import { invitar } from './comandos/invitar.js';
 import { administrar } from './comandos/administrar.js';
+import { reloj } from './comandos/reloj.js';
 import { crearUnirseBot, flujoUnirse } from './flujos/unirse.js';
+import { crearPrestamoBot, flujoPrestamo } from './flujos/prestamo.js';
 
 // Menú de comandos que se publica en Telegram. /diag no va aquí: no se anuncia.
 export const COMANDOS = [
   { command: 'start', description: 'Empezar' },
   { command: 'mi_natillera', description: 'Ver mi ahorro, las reglas y mis cobros' },
+  { command: 'prestamo', description: 'Pedir un préstamo a Financiera Aliada' },
   { command: 'crear', description: 'Crear una natillera' },
   { command: 'administrar', description: 'Ver y administrar tus natilleras' },
   { command: 'invitar', description: 'Compartir el enlace de tu natillera' },
@@ -70,7 +73,7 @@ function guardiaDeSecretos(secretos, log) {
 // con `unirse` (src/externo/unirse.js) además el enlace de invitación, unirse y autorizar.
 // `botInfo`, `cliente`, `inicio`, `ahora` y `hoy` son opcionales: en las pruebas evitan getMe y la red
 // y fijan el reloj y la fecha.
-export function crearBot(config, { log, db, crearNatillera, servicio, registro, unirse, botInfo, cliente, inicio, ahora, hoy } = {}) {
+export function crearBot(config, { log, db, crearNatillera, servicio, registro, unirse, web, botInfo, cliente, inicio, ahora, hoy } = {}) {
   const bot = new Bot(config.botToken, { botInfo, client: cliente });
 
   bot.api.config.use(guardiaDeSecretos(config.secretos, log));
@@ -94,8 +97,13 @@ export function crearBot(config, { log, db, crearNatillera, servicio, registro, 
     motor.registrar(flujoUnirse({ registro, unirse, log }));
     unirseBot = crearUnirseBot({ registro, unirse, motor, log });
   }
+  let prestamoBot;
+  if (servicio && registro) {
+    motor.registrar(flujoPrestamo({ registro, servicio, web, log, hoy, ahora }));
+    prestamoBot = crearPrestamoBot({ registro, servicio, motor, log, hoy });
+  }
 
-  app.use(start({ log, abrirInvitacion: unirseBot?.abrirInvitacion }));
+  app.use(start({ log, abrirInvitacion: unirseBot?.abrirInvitacion, abrirPrestamo: prestamoBot?.abrirPrestamo }));
   app.use(cancelar({ motor }));
   app.use(diag({ config, db, inicio, ahora }));
   app.use(miNatillera({ config, registro, servicio, log }));
@@ -103,6 +111,8 @@ export function crearBot(config, { log, db, crearNatillera, servicio, registro, 
   if (servicio && registro) {
     app.use(cobros({ servicio, registro, log }));
     app.use(administrar({ config, registro, servicio, log, ahora }));
+    app.use(prestamoBot.comandos);
+    app.use(reloj({ config, registro, servicio, log }));
   }
   if (conUnirse) {
     app.use(unirseBot.comandos);

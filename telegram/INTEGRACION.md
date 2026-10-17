@@ -41,7 +41,7 @@ Variables nuevas en `telegram/.env` (en `.env.example` sin valores):
 | 5. «Mi natillera» | ✅ En el chat (`bot/comandos/mi-natillera.js`): `/mi_natillera` lee la natillera y la participación en staging y responde un mensaje por natillera según el estado, con «Autorizar el cobro (prueba)» si falta y «Ya tengo la plata» si hay cuota pendiente. El administrador ve también las que administra sin ahorrar. ⏳ La Mini App sigue con datos de ejemplo: no puede llamar a staging (expondría el token) y necesita una ruta del bot que valide el `initData` |
 | Panel del administrador | ✅ `/administrar` (`bot/comandos/administrar.js` y `miniapp/admin/`): lee en staging cada natillera que administra la persona y la participación de cada quien, y abre la Mini App con esos datos en el fragmento del enlace (`src/natillera/panel.js`). El bot guarda el nombre de Telegram al unirse; a los que se unieron antes se lo pide a Telegram (`getChat`) la primera vez |
 | 7, 9, 10, 12. Actividades | ⏳ Faltan los flujos del administrador |
-| 11 y 3.4. Préstamo | ⏳ Falta el flujo. `PrestamoDesembolsado` ya llega (trae `participanteId`); `DesembolsoFallo` y `CreditoEnMora` solo traen `creditoId`, que el bot no conoce porque el crédito lo crea la web |
+| 11 y 3.4. Préstamo | ✅ `bot/flujos/prestamo.js` y `natillera/prestamo.js`: `/prestamo`, `/start prestamo`, el botón del aviso `ElegibleParaPrestamo` y el de «Mi natillera». Revisa en staging que se pueda (natillera `ACTIVA`, participación `ACTIVA`, `CuotasPagadas` ≥ `PagosParaPrestamo`, sin `DeudaPrestamoEnMora`, una solicitud a la vez), pregunta monto (hasta `MultiploPrestamo` × `ValorCuota`) y plazo (hasta los meses que le quedan a la natillera, máximo 12), guarda la solicitud en SQLite y avisa a la web (3.4). **Acuerdo pendiente con la web:** al aprobar, usar el `solicitudId` como `CreditoId`; así `DesembolsoFallo` y `CreditoEnMora` (que solo traen `creditoId`) le llegan a quien lo pidió. Sin eso, solo llega `PrestamoDesembolsado` (trae `participanteId`). Si la financiera no aprueba, el bot no se entera: la persona no puede pedir otro |
 
 Todas las llamadas a staging llevan `Authorization: Bearer <SERVICIO_EXTERNO_TOKEN>` y `Content-Type: application/json`.
 
@@ -66,7 +66,7 @@ Todas las llamadas a staging llevan `Authorization: Bearer <SERVICIO_EXTERNO_TOK
 | 11 | El participante pide un préstamo | US-014 | **Nada en staging**: no tiene solicitudes | — | Avisa a la web (3.4); la financiera decide allá |
 | 12 | Falló el pago de un premio y el administrador reintenta | — | `POST .../{natillera}/triggers` → `ReintentarPagoPremio` | `ActividadId`, `MontoPremio`, `GanadorParticipacionId`, `WalletGanador` | — |
 
-**Lo que el bot no dispara:** arrancar, abrir periodos, causar mora, liquidar. Son acciones del reloj; en la demo las dispara Willy (#57).
+**Lo que el bot no dispara por su cuenta:** arrancar, abrir periodos, causar mora, liquidar. Son acciones del reloj, privadas en staging (rol admin). Para probar y para la demo, el equipo las dispara desde su chat con `/reloj` (`bot/comandos/reloj.js`), con la fecha simulada en `CurrentDate`; `/reloj auto` da un paso por minuto.
 
 ### Ejemplo listo para probar: crear una natillera
 

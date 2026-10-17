@@ -4,6 +4,7 @@ import { formatoFecha } from '../../natillera/reglas.js';
 import { estadoDe } from '../../externo/cliente.js';
 import { BOTON_PAGAR_DEUDA, datoBotonDeuda } from '../../avisos/mensajes.js';
 import { BOTON_AUTORIZAR, datoAutorizar } from '../flujos/unirse.js';
+import { BOTON_PEDIR_PRESTAMO, datoPrestamo } from '../flujos/prestamo.js';
 
 // «Mi natillera» (US-008, #26). Con staging, responde en el chat con lo que hay en sus contratos: un
 // mensaje por natillera en la que está la persona (y por las que administra sin ahorrar en ellas), con
@@ -91,6 +92,12 @@ export function resumenParticipacion(n, p) {
             : 'No quedan cuotas por cobrar.',
           `La natillera tiene ${formatoCOP(n.SaldoNatillera)}. La guarda Financiera Aliada.`,
         ].join('\n'),
+        // Con las cuotas que pide la natillera y sin saldo pendiente de otro préstamo. El flujo vuelve a
+        // revisar todo en staging (src/natillera/prestamo.js).
+        teclado:
+          Number(p.CuotasPagadas) >= Number(p.PagosParaPrestamo) && !(Number(p.DeudaPrestamoEnMora) > 0)
+            ? new InlineKeyboard().text(BOTON_PEDIR_PRESTAMO, datoPrestamo(pid))
+            : undefined,
       };
     case PARTICIPACION.MORA: {
       // Sin emoji ni culpa (voz y tono, mora). Lo pendiente es la cuota más la mora que lleva.

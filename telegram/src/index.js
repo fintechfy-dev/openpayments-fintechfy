@@ -53,7 +53,7 @@ if (!servicio) log.warn('Sin SERVICIO_EXTERNO_URL: /crear termina en una vista p
 
 const unirse = servicio ? crearUnirse({ servicio, registro, web, log }) : undefined;
 
-const bot = crearBot(config, { log, db, crearNatillera, servicio, registro, unirse });
+const bot = crearBot(config, { log, db, crearNatillera, servicio, registro, unirse, web });
 
 // Avisos de staging (#6): por webhook si hay puerto, si no, por el flujo en vivo.
 const avisos = new AbortController();
