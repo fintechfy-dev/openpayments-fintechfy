@@ -36,7 +36,7 @@ web/src/
     api/                  route handlers que la página consulta desde el navegador (polling)
   components/             piezas reutilizables en React sobre las clases nt- del design system
   lib/natillera.ts        formatoCOP, ESTADOS e íconos: el mismo comportamiento que design-system/components/bundle.js
-  lib/servicio/           la ÚNICA puerta al servicio externo (tipos, datos de prueba, cliente HTTP)
+  lib/servicio/           la ÚNICA puerta a staging (el motor) y a la API de pagos; sin datos de prueba
   styles/app.css          solo el layout de la app; los componentes vienen de bundle.css
   styles/ds/              copia generada de tokens.css, bundle.css y fuentes (no se edita ni se sube)
 ```
@@ -45,19 +45,19 @@ Una pantalla nueva = una carpeta en `app/` con `page.tsx`, y si hace falta `load
 
 ## Datos: siempre por `lib/servicio`
 
-El contrato con el servicio externo se define en el issue #5. Mientras tanto, `lib/servicio` responde con datos de prueba que tienen la forma esperada. Cuando exista el contrato, se cambia solo `lib/servicio/http.ts`; las pantallas no se enteran.
+`lib/servicio` habla con staging (`staging.ts`, contrato en `integracion/FND-20261015-natillera-2.openapi.json`) y con la API de pagos (`pagos-api.ts`, `pagos/API.md`). **No hay datos de prueba**: sin configuración, cada pantalla dice qué falta. Lo verificado de cada API está en `web/INTEGRACION.md`.
 
 - En el servidor importa desde `@/lib/servicio` (`listarNatilleras()`, `obtenerNatillera(id)`, `listarSolicitudesCredito()`, `listarPagos()`, `listarBitacora()`, `responderSolicitud(...)`). Nunca hagas `fetch` al servicio externo desde una página o un componente.
 - En un componente `"use client"` importa solo **tipos y constantes** desde `@/lib/servicio/tipos` (por ejemplo `Pago`, `ETAPAS`). `@/lib/servicio` es solo de servidor: importarlo desde el cliente rompe el build a propósito.
-- Los tipos de `lib/servicio/tipos.ts` siguen los estados de `docs/discovery/4-logica-financiera/especificacion-funcional.md` y de `design-system/docs/estados.md`. Si necesitas un campo nuevo, agrégalo al tipo, a los datos de prueba y anótalo para el contrato de #5.
-- `SERVICIO_URL` vacía → datos de prueba. Con valor → cliente HTTP. Así se puede hacer la demo aunque el servicio externo no esté.
+- Los tipos de `lib/servicio/tipos.ts` siguen los estados de `docs/discovery/4-logica-financiera/especificacion-funcional.md` y de `design-system/docs/estados.md`. Si necesitas un campo nuevo, agrégalo al tipo y léelo de staging o de la API de pagos, de forma tolerante.
+- Variables en `web/.env.example`: `SERVICIO_EXTERNO_URL`/`SERVICIO_EXTERNO_TOKEN` (staging), `PAGOS_URL`/`PAGOS_API_KEY` (API de pagos) y `CREDITO_TASA_MENSUAL` (aprobar créditos).
 
 ## Sesión y roles
 
-Todo lo que está en `app/(panel)/` exige sesión: `financiera` ve todo y responde créditos; un `administrador` solo ve sus natilleras. Las páginas públicas son `/` e `/ingresar`.
+Todo lo que está en `app/(panel)/` exige sesión: `financiera` (superadmin) ve todo y responde todas las solicitudes de crédito; un `administrador` solo ve sus natilleras y responde las solicitudes de ellas. Las páginas públicas son `/` e `/ingresar`.
 
 - En cada página, Server Action y route handler nuevos del panel: `await requerirSesion()` (o `obtenerSesion()` en acciones y API, que devuelven un error en vez de redirigir). El layout y el `proxy` no bastan: una Server Action se puede llamar directo por HTTP.
-- Los criterios de acceso viven **una sola vez** en `src/lib/sesion/acceso.ts` (`puedeVerNatillera`, `puedeResponderCreditos`). Para filtrar pagos o bitácora usa `natillerasVisibles(sesion)`. No escribas `sesion.rol === "financiera"` suelto en una pantalla.
+- Los criterios de acceso viven **una sola vez** en `src/lib/sesion/acceso.ts` (`puedeVerNatillera`, `quedanVisibles`). Para filtrar pagos, bitácora o créditos usa `filtrarPorNatillera(sesion, lista)`, también en las Server Actions. No escribas `sesion.rol === "financiera"` suelto en una pantalla.
 - Una natillera ajena responde `notFound()`, igual que una inexistente.
 
 ## Seguridad: la llave no sale del servidor

@@ -5,7 +5,7 @@
 ## Funciona
 
 - [ ] `npm run verificar` pasa: tipos, lint, pruebas y build.
-- [ ] La pantalla carga con datos de prueba (`SERVICIO_URL` vacía) y muestra un estado vacío claro si no hay datos.
+- [ ] Sin configuración la pantalla dice qué falta, y con datos reales vacíos muestra un estado vacío claro (no hay datos de prueba).
 - [ ] Hay `loading.tsx` o un estado de carga, y `error.tsx` con un `nt-aviso--error` que dice qué hacer.
 - [ ] Los escenarios de la historia o del issue se cumplen (enlázalos en el PR).
 
