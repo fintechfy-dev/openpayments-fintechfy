@@ -1520,6 +1520,10 @@
   ],
   "variable": [
     {
+      "key": "baseUrl",
+      "value": "https://natillera-pagos.azurewebsites.net"
+    },
+    {
       "key": "permisoPesos",
       "value": ""
     },
