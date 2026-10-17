@@ -5,7 +5,7 @@ import "server-only";
 import path from "node:path";
 import { crearAlmacen, type Almacen } from "./almacen";
 import { compararLlave, type EstadoLlave } from "./llave";
-import type { LectorIndice, ResultadoGuardar, TipoRegistro } from "./tipos";
+import type { EscritorDecisiones, LectorIndice, ResultadoGuardar, TipoRegistro } from "./tipos";
 import { VALIDADORES, type RegistroPorTipo } from "./validacion";
 
 export type { EstadoLlave } from "./llave";
@@ -27,6 +27,13 @@ export const lectorIndice: LectorIndice = {
   natillera: (natilleraId) => almacen().natillera(natilleraId),
   participaciones: (natilleraId) => almacen().participaciones(natilleraId),
   actividades: (natilleraId) => almacen().actividades(natilleraId),
+  solicitudes: () => almacen().solicitudes(),
+  decisiones: () => almacen().decisiones(),
+};
+
+export const escritorDecisiones: EscritorDecisiones = {
+  guardarDecision: (decision) => almacen().guardarDecision(decision),
+  quitarDecision: (solicitudId) => almacen().quitarDecision(solicitudId),
 };
 
 export type ResultadoRegistro = { ok: true; resultado: ResultadoGuardar } | { ok: false; errores: string[] };

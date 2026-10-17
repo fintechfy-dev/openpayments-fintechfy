@@ -4,11 +4,9 @@ import { EncabezadoPagina } from "@/components/EncabezadoPagina";
 import { EstadoVacio } from "@/components/EstadoVacio";
 import { Icono } from "@/components/Icono";
 import { formatoFecha } from "@/lib/fechas";
-import { redirect } from "next/navigation";
 import { Aviso } from "@/components/Aviso";
-import { listarSolicitudesCredito, creditosDePrueba, type SolicitudCredito } from "@/lib/servicio";
-import { requerirSesion } from "@/lib/sesion";
-import { puedeResponderCreditos } from "@/lib/sesion/acceso";
+import { aprobarCreditosConfigurado, listarSolicitudesCredito, type SolicitudCredito } from "@/lib/servicio";
+import { filtrarPorNatillera, requerirSesion } from "@/lib/sesion";
 import { AvisoRespuestas } from "./AvisoRespuestas";
 import { agruparSolicitudes, textoAhorro, textoCondiciones, textoPendientes } from "./logica";
 import { RespuestaSolicitud } from "./RespuestaSolicitud";
@@ -22,9 +20,9 @@ export const dynamic = "force-dynamic";
 
 
 export default async function Pagina() {
-  // Solo la financiera presta; un administrador no ve solicitudes de otras personas.
-  if (!puedeResponderCreditos(await requerirSesion())) redirect("/natilleras");
-  const solicitudes = await listarSolicitudesCredito();
+  // La financiera ve todas; un administrador, las de sus natilleras (la regla es filtrarPorNatillera).
+  const sesion = await requerirSesion();
+  const solicitudes = await filtrarPorNatillera(sesion, await listarSolicitudesCredito());
   const { porResponder, respondidas } = agruparSolicitudes(solicitudes);
 
   return (
@@ -32,12 +30,12 @@ export default async function Pagina() {
       <EncabezadoPagina titulo="Solicitudes de crédito" descripcion={textoPendientes(porResponder.length)} />
 
       <div className="pila">
-        {creditosDePrueba ? (
-          <Aviso tipo="info" titulo="Créditos de prueba">
-            Son de ejemplo, sobre las natilleras y participantes reales del motor: hay uno en cada estado. Aprobar o no aprobar se
-            guarda solo en esta web y no crea el crédito en el servicio de lógica financiera.
+        {aprobarCreditosConfigurado ? null : (
+          <Aviso tipo="alerta" titulo="Todavía no se pueden aprobar créditos">
+            Falta la tasa mensual de la financiera (<code>CREDITO_TASA_MENSUAL</code> en <code>web/.env.local</code>). Las solicitudes se
+            ven, y se pueden no aprobar.
           </Aviso>
-        ) : null}
+        )}
         <p className="bloque-custodia nt-card nt-card--calida">
           <Icono nombre="candado" />
           <span>
@@ -116,7 +114,7 @@ function TablaSolicitudes({ solicitudes, conAcciones = false }: { solicitudes: S
                 <span className="celda-doble">
                   {textoAhorro(s)}
                   <span className="celda-doble__sub">
-                    Máximo <Dinero valor={s.montoMaximo} />
+                    {s.montoMaximo === null ? "Máximo sin dato" : <>Máximo <Dinero valor={s.montoMaximo} /></>}
                   </span>
                 </span>
               </td>
@@ -125,7 +123,7 @@ function TablaSolicitudes({ solicitudes, conAcciones = false }: { solicitudes: S
               </td>
               <td className="nt-tabla__num" data-etiqueta="Cuota mensual">
                 <span className="celda-doble">
-                  <Dinero valor={s.cuotaMensual} />
+                  {s.cuotaMensual !== null ? <Dinero valor={s.cuotaMensual} /> : <span className="nt-muted">{s.estado === "solicitado" ? "Al aprobar" : "—"}</span>}
                   <span className="celda-doble__sub">{textoCondiciones(s)}</span>
                 </span>
               </td>
@@ -144,7 +142,7 @@ function TablaSolicitudes({ solicitudes, conAcciones = false }: { solicitudes: S
               )}
               {conAcciones ? (
                 <td data-etiqueta="" className="tabla-creditos__acciones">
-                  <RespuestaSolicitud id={s.id} participante={s.participanteNombre} />
+                  <RespuestaSolicitud id={s.id} participante={s.participanteNombre} puedeAprobar={aprobarCreditosConfigurado} />
                 </td>
               ) : null}
             </tr>

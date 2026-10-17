@@ -44,6 +44,19 @@ export interface RegistroSolicitud {
   fechaSolicitud: FechaISO;
 }
 
+/** Lo que respondió la financiera o el administrador a una solicitud. Lo escribe solo la web (no es una ruta
+ *  del bot): staging no guarda solicitudes, y «no aprobar» no deja nada en el motor. */
+export interface RegistroDecision {
+  solicitudId: string;
+  decision: "aprobada" | "no_aprobada";
+  /** Al aprobar: el CreditoId del natillera-credito-ahorro. Se guarda ANTES de crearlo en staging (reserva
+   *  contra dos aprobaciones a la vez); el contrato se encuentra en la tabla del motor por este id. */
+  creditoId?: string;
+  /** Quién respondió (nombre de la sesión) y cuándo. */
+  respondio: string;
+  fecha: FechaISO;
+}
+
 export type TipoRegistro = "natilleras" | "participaciones" | "actividades" | "solicitudes";
 
 /** Resultado de guardar: `repetido` cuando el id ya estaba con los mismos datos (el bot reintenta;
@@ -56,4 +69,13 @@ export interface LectorIndice {
   natillera(natilleraId: string): Promise<RegistroNatillera | null>;
   participaciones(natilleraId: string): Promise<RegistroParticipacion[]>;
   actividades(natilleraId: string): Promise<RegistroActividad[]>;
+  solicitudes(): Promise<RegistroSolicitud[]>;
+  decisiones(): Promise<RegistroDecision[]>;
+}
+
+/** Guarda la respuesta a una solicitud una sola vez: `conflicto` si ya estaba respondida. */
+export interface EscritorDecisiones {
+  guardarDecision(decision: RegistroDecision): Promise<ResultadoGuardar>;
+  /** Suelta una reserva de aprobación cuando staging rechazó el contrato: la solicitud vuelve a estar por responder. */
+  quitarDecision(solicitudId: string): Promise<void>;
 }

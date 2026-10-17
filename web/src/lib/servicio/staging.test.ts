@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { LectorIndice, RegistroNatillera, RegistroParticipacion } from "@/lib/indice/tipos";
+import type { LectorIndice, RegistroDecision, RegistroNatillera, RegistroParticipacion, RegistroSolicitud } from "@/lib/indice/tipos";
 
-import { EVENTOS_CUENTA, EVENTOS_PARTICIPACION } from "./eventos-staging.fixtures";
+import { EVENTOS_CUENTA } from "./eventos-staging.fixtures";
 import { ErrorServicio } from "./http";
 import {
   crearServicioStaging,
@@ -37,6 +37,8 @@ function indiceCon(nats: RegistroNatillera[], parts: RegistroParticipacion[]): L
     natillera: async (id) => nats.find((n) => n.natilleraId === id) ?? null,
     participaciones: async (id) => parts.filter((p) => p.natilleraId === id),
     actividades: async () => [],
+    solicitudes: async () => [],
+    decisiones: async () => [],
   };
 }
 
@@ -288,36 +290,18 @@ describe("crearServicioStaging", () => {
     expect(registrado()).not.toContain(TOKEN);
   });
 
-  it("pagos: lee los eventos de cada participación y usa el nombre del índice", async () => {
-    const f = fetchFalso({ ...contratos, "c-p1/events": EVENTOS_PARTICIPACION });
-    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: f });
-    const pagos = await s.listarPagos();
-    expect(pagos).toHaveLength(1);
-    expect(pagos[0]).toMatchObject({ natilleraNombre: "Natillera del barrio", participanteNombre: "Ana", monto: 50000, estado: "completado" });
-    expect(f).toHaveBeenCalledWith("https://staging.ejemplo/api/contracts/c-p1/events", expect.anything());
+  it("pagos: sin la API de pagos dice qué falta, en vez de deducir pagos de otro lado", async () => {
+    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: fetchFalso(contratos) });
+    await expect(s.listarPagos()).rejects.toThrow("Falta configurar la API de pagos");
   });
 
-  it("pagos: una participación que falla se omite y las demás se muestran; si fallan todas, se informa", async () => {
-    const respuestas = { ...contratos, "c-p1/events": EVENTOS_PARTICIPACION, "c-p2/events": {} };
-    const unaMala = fetchFalso(respuestas, { "c-p2/events": 500 });
-    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: unaMala });
-    expect(await s.listarPagos()).toHaveLength(1);
-    expect(registrado()).toContain("Se omitió una parte de pagos de nat-1");
-    expect(registrado()).not.toContain(TOKEN);
-
-    const todas = fetchFalso(contratos, { "c-p1/events": 500, "c-p2/events": 500, "c-p3/events": 500 });
-    const s2 = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: todas });
-    await expect(s2.listarPagos()).rejects.toThrow(ErrorServicio);
-  });
-
-  it("no repite el mismo GET dentro de la ventana de caché (la lista y los pagos piden lo mismo)", async () => {
-    const f = fetchFalso({ ...contratos, "c-p1/events": EVENTOS_PARTICIPACION });
+  it("no repite el mismo GET dentro de la ventana de caché (la lista y el detalle piden lo mismo)", async () => {
+    const f = fetchFalso(contratos);
     const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: f });
     await s.listarNatilleras();
     const despuesDeLaLista = f.mock.calls.length;
-    await s.listarPagos();
-    // Solo los eventos de las 3 participaciones son nuevos; los contratos salen de la caché.
-    expect(f.mock.calls.length - despuesDeLaLista).toBe(3);
+    await s.obtenerNatillera("nat-1");
+    expect(f.mock.calls.length - despuesDeLaLista).toBe(0);
   });
 
   it("bitácora: si fallan las actividades, igual muestra lo de la cuenta", async () => {
@@ -388,26 +372,123 @@ describe("crearServicioStaging", () => {
     expect(registro).toHaveBeenCalledOnce();
   });
 
-  it("créditos de prueba: uno por estado sobre los participantes reales, con el tope del contrato", async () => {
-    const f = fetchFalso(contratos);
-    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: f });
-    const creditos = await s.listarSolicitudesCredito();
-    expect(creditos.map((c) => [c.participanteNombre, c.estado])).toEqual([
-      ["Ana", "solicitado"],
-      ["Beto", "solicitado"],
-      ["Caro", "por_desembolsar"],
-    ]);
-    expect(creditos[0]).toMatchObject({ natilleraNombre: "Natillera del barrio", montoMaximo: 150000, montoSolicitado: 100000, cuotaMensual: 34675 });
-    // No se escribe nada en staging: solo lecturas.
-    expect((f.mock.calls as unknown as [string, RequestInit?][]).every(([, init]) => !init?.method || init.method === "GET")).toBe(true);
-  });
+  describe("créditos reales", () => {
+    const solicitud: RegistroSolicitud = { solicitudId: "sol-1", natilleraId: "nat-1", participacionId: "p-1", montoMaximo: 150000, montoSolicitado: 100000, plazoMeses: 3, fechaSolicitud: "2026-10-16T20:00:00Z" };
+    const conWallet = { ...contratos, "c-p1": { currentStateRaw: { ...(contratos["c-p1"] as { currentStateRaw: object }).currentStateRaw, ParticipanteId: "111" } } };
 
-  it("responder un crédito de prueba lo cambia en la lista y no deja responderlo dos veces", async () => {
-    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: fetchFalso(contratos) });
-    const [primero] = await s.listarSolicitudesCredito();
-    expect(await s.responderSolicitud(primero!.id, "aprobar")).toMatchObject({ estado: "por_desembolsar" });
-    expect((await s.listarSolicitudesCredito()).find((c) => c.id === primero!.id)?.estado).toBe("por_desembolsar");
-    await expect(s.responderSolicitud(primero!.id, "no_aprobar")).rejects.toThrow(ErrorServicio);
-    await expect(s.responderSolicitud("no-existe", "aprobar")).rejects.toThrow(ErrorServicio);
+    /** Staging falso: contratos por id, la tabla de créditos y POST /api/contracts. */
+    function fetchCreditos(creditos: unknown[] = [], estadoPost: number | "sin-respuesta" | "sin-conexion" = 201) {
+      const porId = fetchFalso(conWallet);
+      return vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+        const u = new URL(String(url));
+        if (init?.method === "POST" && estadoPost === "sin-respuesta") throw new Error("socket hang up");
+        if (init?.method === "POST" && estadoPost === "sin-conexion") throw new TypeError("fetch failed", { cause: { code: "ECONNREFUSED" } });
+        const estado = estadoPost as number;
+        if (init?.method === "POST") return new Response(JSON.stringify(estado < 300 ? { contractId: "c-cred-1" } : { detail: "rechazado" }), { status: estado });
+        if (u.pathname.endsWith("/api/contracts/table")) {
+          const items = u.searchParams.get("templateName") === "natillera-credito-ahorro" ? creditos : [];
+          return new Response(JSON.stringify({ items, hasMore: false }), { status: 200 });
+        }
+        return porId(url);
+      });
+    }
+    function montar(opc: { creditos?: unknown[]; decisiones?: RegistroDecision[]; tasa?: number; estadoPost?: number | "sin-respuesta" | "sin-conexion" } = {}) {
+      const guardadas: RegistroDecision[] = [...(opc.decisiones ?? [])];
+      const indice = { ...indiceCon([natillera], participaciones), solicitudes: async () => [solicitud], decisiones: async () => guardadas };
+      const f = fetchCreditos(opc.creditos, opc.estadoPost);
+      const escritor = {
+        guardarDecision: vi.fn(async (d: RegistroDecision) => {
+          if (guardadas.some((x) => x.solicitudId === d.solicitudId)) return "conflicto" as const;
+          guardadas.push(d);
+          return "nuevo" as const;
+        }),
+        quitarDecision: vi.fn(async (id: string) => {
+          const i = guardadas.findIndex((x) => x.solicitudId === id);
+          if (i >= 0) guardadas.splice(i, 1);
+        }),
+      };
+      const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice, fetch: f, decisiones: escritor, tasaMensualCredito: opc.tasa });
+      return { s, f, escritor, guardadas };
+    }
+
+    it("una solicitud del bot sin respuesta: por responder, con la tasa configurada y sin cuota todavía", async () => {
+      const { s } = montar({ tasa: 2 });
+      const [c] = await s.listarSolicitudesCredito();
+      expect(c).toMatchObject({ id: "sol-1", estado: "solicitado", participanteNombre: "Ana", natilleraNombre: "Natillera del barrio", tasaMensualPct: 2, cuotaMensual: null, cuotasAlDia: 1 });
+    });
+
+    it("aprobar crea el contrato natillera-credito-ahorro con los parámetros del motor y guarda la decisión", async () => {
+      const { s, f, guardadas } = montar({ tasa: 2 });
+      expect(await s.responderSolicitud("sol-1", "aprobar", "Doña Rosa")).toMatchObject({ estado: "por_desembolsar" });
+      const post = (f.mock.calls as unknown as [string, RequestInit?][]).find(([, init]) => init?.method === "POST")!;
+      expect(post[0]).toBe("https://staging.ejemplo/api/contracts");
+      const cuerpo = JSON.parse(String(post[1]!.body));
+      expect(cuerpo.templateName).toBe("natillera-credito-ahorro");
+      expect(cuerpo.parameters).toMatchObject({
+        CreditoId: { type: "Text", value: "cred-sol-1" },
+        ParticipanteId: { type: "Text", value: "111" },
+        WalletParticipante: { type: "Text", value: "$staging/ana" },
+        Capital: { type: "Currency", value: 100000 },
+        TasaMensual: { type: "Percentage", value: 0.02 },
+        PlazoMeses: { type: "Integer", value: 3 },
+      });
+      expect(cuerpo.parameters.FechaInicio.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(guardadas[0]).toMatchObject({ solicitudId: "sol-1", decision: "aprobada", creditoId: "cred-sol-1", respondio: "Doña Rosa" });
+    });
+
+    it("sin tasa configurada no aprueba ni escribe en staging; no aprobar sí se puede", async () => {
+      const { s, f, guardadas } = montar();
+      await expect(s.responderSolicitud("sol-1", "aprobar")).rejects.toThrow("CREDITO_TASA_MENSUAL");
+      expect((f.mock.calls as unknown as [string, RequestInit?][]).some(([, init]) => init?.method === "POST")).toBe(false);
+      expect(await s.responderSolicitud("sol-1", "no_aprobar")).toMatchObject({ estado: "rechazado" });
+      expect(guardadas[0]).toMatchObject({ decision: "no_aprobada" });
+    });
+
+    it("si staging rechaza el contrato, no se guarda la decisión y el error no lleva el token", async () => {
+      const { s, guardadas } = montar({ tasa: 2, estadoPost: 403 });
+      const error = await s.responderSolicitud("sol-1", "aprobar").catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(ErrorServicio);
+      expect(String((error as Error).message)).not.toContain(TOKEN);
+      expect(guardadas).toHaveLength(0);
+    });
+
+    it("dos aprobaciones a la vez crean un solo contrato (cada contrato desembolsa)", async () => {
+      const { s, f } = montar({ tasa: 2 });
+      const resultados = await Promise.allSettled([s.responderSolicitud("sol-1", "aprobar"), s.responderSolicitud("sol-1", "aprobar")]);
+      const posts = (f.mock.calls as unknown as [string, RequestInit?][]).filter(([, init]) => init?.method === "POST");
+      expect(posts).toHaveLength(1);
+      expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+      const fallo = resultados.find((r) => r.status === "rejected") as PromiseRejectedResult;
+      expect(fallo.reason).toMatchObject({ codigo: "ya_respondida" });
+    });
+
+    it("si staging no responde al crear el contrato, la reserva se queda y se avisa que no se sabe", async () => {
+      const { s, guardadas } = montar({ tasa: 2, estadoPost: "sin-respuesta" });
+      await expect(s.responderSolicitud("sol-1", "aprobar")).rejects.toMatchObject({ codigo: "credito_incierto" });
+      expect(guardadas).toHaveLength(1);
+      await expect(s.responderSolicitud("sol-1", "aprobar")).rejects.toMatchObject({ codigo: "ya_respondida" });
+    });
+
+    it("un 5xx no da certeza: la reserva se queda; sin conexión, la petición no salió y se suelta", async () => {
+      const conProxy = montar({ tasa: 2, estadoPost: 504 });
+      await expect(conProxy.s.responderSolicitud("sol-1", "aprobar")).rejects.toMatchObject({ codigo: "credito_incierto" });
+      expect(conProxy.guardadas).toHaveLength(1);
+
+      const sinRed = montar({ tasa: 2, estadoPost: "sin-conexion" });
+      await expect(sinRed.s.responderSolicitud("sol-1", "aprobar")).rejects.toMatchObject({ codigo: "sin_conexion" });
+      expect(sinRed.guardadas).toHaveLength(0);
+    });
+
+    it("una solicitud respondida no se responde otra vez", async () => {
+      const { s } = montar({ tasa: 2, decisiones: [{ solicitudId: "sol-1", decision: "no_aprobada", respondio: "x", fecha: "2026-10-16T21:00:00Z" }] });
+      expect((await s.listarSolicitudesCredito())[0]?.estado).toBe("rechazado");
+      await expect(s.responderSolicitud("sol-1", "aprobar")).rejects.toThrow(ErrorServicio);
+    });
+
+    it("el estado sale del contrato del motor cuando ya existe", async () => {
+      const credito = { contractId: "c-cred-1", createdAt: "2026-10-16T21:00:00Z", concepts: { CreditoId: "cred-sol-1", ParticipacionId: "p-1", EstadoCredito: "2", TasaMensual: "0.02", CuotaMensual: "34675" } };
+      const { s } = montar({ creditos: [credito], decisiones: [{ solicitudId: "sol-1", decision: "aprobada", creditoId: "cred-sol-1", respondio: "x", fecha: "2026-10-16T21:00:00Z" }] });
+      expect((await s.listarSolicitudesCredito())[0]).toMatchObject({ estado: "en_mora", tasaMensualPct: 2, cuotaMensual: 34675 });
+    });
   });
 });

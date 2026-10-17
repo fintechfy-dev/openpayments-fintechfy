@@ -48,18 +48,8 @@ export function hayPagoSimulado(pagos: Pago[]): boolean {
   return pagos.some((p) => p.simulado === true);
 }
 
-/**
- * El aviso de que los cobros no pasan por Open Payments. `sinRegistroDePagos` = staging sin la API de pagos
- * (el motor da los cobros por hechos); si no, solo aparece cuando algún pago a la vista vino simulado.
- */
-export function avisoSinOpenPayments(sinRegistroDePagos: boolean, pagos: Pago[]): AvisoPagos | null {
-  if (sinRegistroDePagos) {
-    return {
-      tipo: "info",
-      titulo: "Estos cobros todavía no pasan por Open Payments",
-      texto: "Staging los da por hechos. La ejecución real, con cotización y pago saliente, llega con el servicio de pagos.",
-    };
-  }
+/** El aviso de que algunos pagos no pasaron por Open Payments: solo si alguno a la vista vino simulado. */
+export function avisoSinOpenPayments(pagos: Pago[]): AvisoPagos | null {
   if (hayPagoSimulado(pagos)) {
     return {
       tipo: "info",

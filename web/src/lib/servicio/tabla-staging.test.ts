@@ -20,7 +20,7 @@ const PAGINA_REAL = {
   hasMore: false,
 };
 
-const vacio: LectorIndice = { natilleras: async () => [], natillera: async () => null, participaciones: async () => [], actividades: async () => [] };
+const vacio: LectorIndice = { natilleras: async () => [], natillera: async () => null, participaciones: async () => [], actividades: async () => [], solicitudes: async () => [], decisiones: async () => [] };
 
 describe("leerPaginaTabla", () => {
   it("lee las filas reales y si hay más", () => {

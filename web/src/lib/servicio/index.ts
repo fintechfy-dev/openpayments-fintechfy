@@ -1,13 +1,12 @@
-// Única puerta de la web al servicio externo. Solo corre en el servidor:
-// el token y la X-Api-Key nunca llegan al navegador. Si un componente de cliente lo importa, el build falla.
+// Única puerta de la web a los sistemas externos: staging (el motor) y la API de pagos. Solo corre en el
+// servidor: el token y la X-Api-Key nunca llegan al navegador. Si un componente de cliente lo importa, el
+// build falla. No hay datos de prueba: sin configuración, cada pantalla dice qué falta.
 import "server-only";
 
 import { cache } from "react";
 
-import { lectorIndice } from "@/lib/indice";
-import { crearServicioHttp } from "./http";
+import { escritorDecisiones, lectorIndice } from "@/lib/indice";
 import { crearClientePagos, type SaludPagos } from "./pagos-api";
-import { servicioDePrueba } from "./mock";
 import { crearServicioStaging } from "./staging";
 import type { Servicio } from "./tipos";
 
@@ -43,17 +42,29 @@ function crearServicio(): Servicio {
       console.error("SERVICIO_EXTERNO_URL está definida pero falta SERVICIO_EXTERNO_TOKEN en web/.env.local");
       return servicioMalConfigurado("Falta SERVICIO_EXTERNO_TOKEN: la web no puede hablar con staging.");
     }
-    return crearServicioStaging({ urlBase: urlStaging, token, indice: lectorIndice, pagos: clientePagos ?? undefined });
+    return crearServicioStaging({
+      urlBase: urlStaging,
+      token,
+      indice: lectorIndice,
+      pagos: clientePagos ?? undefined,
+      decisiones: escritorDecisiones,
+      tasaMensualCredito: tasaMensualCredito(),
+    });
   }
+  console.error("Falta SERVICIO_EXTERNO_URL en web/.env.local: la web no tiene de dónde leer");
+  return servicioMalConfigurado("Falta SERVICIO_EXTERNO_URL: la web no está conectada al servicio externo.");
+}
 
-  const url = process.env.SERVICIO_URL?.trim();
-  if (!url) return servicioDePrueba;
-  const apiKey = process.env.SERVICIO_API_KEY?.trim();
-  if (!apiKey) {
-    console.error("SERVICIO_URL está definida pero falta SERVICIO_API_KEY en web/.env.local");
-    return servicioMalConfigurado("Falta SERVICIO_API_KEY: la web no puede hablar con el servicio externo.");
+/** CREDITO_TASA_MENSUAL en porcentaje («2» = 2 % mensual); undefined si falta o no es un número válido. */
+function tasaMensualCredito(): number | undefined {
+  const texto = process.env.CREDITO_TASA_MENSUAL?.trim();
+  if (!texto) return undefined;
+  const n = Number(texto.replace(",", "."));
+  if (!Number.isFinite(n) || n <= 0 || n >= 100) {
+    console.error(`CREDITO_TASA_MENSUAL no es un porcentaje válido (${texto}): aprobar créditos queda deshabilitado`);
+    return undefined;
   }
-  return crearServicioHttp(url, apiKey);
+  return n;
 }
 
 const servicio = crearServicio();
@@ -61,15 +72,11 @@ const servicio = crearServicio();
 /** true si la web lee de staging bien configurado; si falta el token, todas las pantallas muestran ese error. */
 export const usaStaging = Boolean(process.env.SERVICIO_EXTERNO_URL?.trim() && process.env.SERVICIO_EXTERNO_TOKEN?.trim());
 
-/** Con staging, /creditos muestra créditos de prueba sobre las natilleras reales (creditos-prueba.ts) y lo dice. */
-export const creditosDePrueba = usaStaging;
-
-/** true cuando la web muestra datos de prueba (sin SERVICIO_EXTERNO_URL ni SERVICIO_URL). */
-export const usaDatosDePrueba = servicio === servicioDePrueba;
-
-/** true si /pagos lee el registro de la API de pagos. Solo con staging: con los datos de prueba, el registro
- *  real no se usa y su estado no debe pintarse sobre pagos de ejemplo. */
+/** true si /pagos puede leer el registro de la API de pagos (staging y la API configurados). */
 export const usaRegistroDePagos = usaStaging && clientePagos !== null;
+
+/** true si se pueden aprobar créditos: hay staging y una CREDITO_TASA_MENSUAL válida. */
+export const aprobarCreditosConfigurado = usaStaging && tasaMensualCredito() !== undefined;
 
 /** El estado de la API de pagos, o null si /pagos no usa su registro. Sin respuesta, se registra el detalle
  *  aquí y la pantalla dice solo que no se pudo consultar. */
@@ -87,7 +94,7 @@ export const listarNatilleras = () => servicio.listarNatilleras();
 // cache(): generateMetadata y la página piden la misma natillera; así es una sola petición por visita.
 export const obtenerNatillera = cache((id: string) => servicio.obtenerNatillera(id));
 export const listarSolicitudesCredito = () => servicio.listarSolicitudesCredito();
-export const responderSolicitud: Servicio["responderSolicitud"] = (id, decision) => servicio.responderSolicitud(id, decision);
+export const responderSolicitud: Servicio["responderSolicitud"] = (id, decision, respondio) => servicio.responderSolicitud(id, decision, respondio);
 export const listarPagos = () => servicio.listarPagos();
 export const listarBitacora = () => servicio.listarBitacora();
 

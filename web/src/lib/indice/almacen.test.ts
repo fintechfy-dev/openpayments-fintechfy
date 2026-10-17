@@ -36,7 +36,7 @@ describe("almacén del índice", () => {
     expect(await almacen.natilleras()).toEqual([]);
     expect(await almacen.natillera("n1")).toBeNull();
     expect(await almacen.guardar("natilleras", natillera("n1"))).toBe("nuevo");
-    expect(JSON.parse(await readFile(ruta, "utf8"))).toEqual({ natilleras: { n1: natillera("n1") }, participaciones: {}, actividades: {}, solicitudes: {} });
+    expect(JSON.parse(await readFile(ruta, "utf8"))).toEqual({ natilleras: { n1: natillera("n1") }, participaciones: {}, actividades: {}, solicitudes: {}, decisiones: {} });
   });
 
   it("un id repetido con los mismos datos responde «repetido»; con otros, «conflicto», y no sobrescribe", async () => {
@@ -103,5 +103,27 @@ describe("almacén del índice", () => {
     await expect(almacen.guardar("natilleras", natillera("n2"))).rejects.toThrow(IndiceCorrupto);
     await writeFile(ruta, "{}", "utf8");
     expect(await almacen.guardar("natilleras", natillera("n2"))).toBe("nuevo");
+  });
+
+  it("una decisión se guarda una sola vez y sobrevive a recrear el almacén", async () => {
+    const almacen = crearAlmacen(ruta);
+    const decision = { solicitudId: "sol-1", decision: "no_aprobada" as const, respondio: "Doña Rosa", fecha: "2026-10-16T21:00:00Z" };
+    expect(await almacen.guardarDecision(decision)).toBe("nuevo");
+    expect(await almacen.guardarDecision({ ...decision, decision: "aprobada" })).toBe("conflicto");
+    expect(await crearAlmacen(ruta).decisiones()).toEqual([decision]);
+    // Guardar una decisión no borra lo que el bot ya había guardado, ni al revés.
+    expect(await almacen.guardar("natilleras", natillera("n1"))).toBe("nuevo");
+    expect(await crearAlmacen(ruta).decisiones()).toHaveLength(1);
+  });
+
+  it("quitar una decisión la suelta: la solicitud se puede volver a responder", async () => {
+    const almacen = crearAlmacen(ruta);
+    const reserva = { solicitudId: "sol-1", decision: "aprobada" as const, creditoId: "cred-sol-1", respondio: "x", fecha: "2026-10-16T21:00:00Z" };
+    expect(await almacen.guardarDecision(reserva)).toBe("nuevo");
+    await almacen.quitarDecision("sol-1");
+    expect(await crearAlmacen(ruta).decisiones()).toEqual([]);
+    expect(await almacen.guardarDecision(reserva)).toBe("nuevo");
+    await almacen.quitarDecision("no-existe");
+    expect(await almacen.decisiones()).toHaveLength(1);
   });
 });

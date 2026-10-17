@@ -2,15 +2,14 @@
 // staging no lista nada; el estado de cada contrato sale de GET /api/contracts/{contractId}.
 // Sin "server-only" aquí: las pruebas lo importan, y la barrera para el navegador es index.ts.
 
-import type { LectorIndice, RegistroNatillera, RegistroParticipacion } from "@/lib/indice/tipos";
+import type { EscritorDecisiones, LectorIndice, RegistroNatillera, RegistroParticipacion } from "@/lib/indice/tipos";
 
 import { bitacoraDeNatillera } from "./bitacora-staging";
 import { leerEventos, type EventoContrato } from "./eventos-staging";
 import { ErrorServicio } from "./http";
 import type { ClientePagos } from "./pagos-api";
-import { pagosDeParticipacion } from "./pagos-staging";
 import { pagosDelRegistro, type UbicacionReferencia } from "./registro-pagos";
-import { solicitudesDePrueba, type NatilleraParaCreditos } from "./creditos-prueba";
+import { creditoIdDe, creditosDeStaging, cuerpoContratoCredito, hoyEnBogota, type UbicacionCredito } from "./creditos-staging";
 import { combinarConIndice, leerPaginaTabla, type ContratosDelMotor, type FilaTabla } from "./tabla-staging";
 import type {
   EstadoNatillera,
@@ -29,8 +28,12 @@ export interface OpcionesStaging {
   urlBase: string;
   token: string;
   indice: LectorIndice;
-  /** La API de pagos: si está, /pagos sale de su registro real de Open Payments y no de los eventos. */
+  /** La API de pagos: /pagos sale de su registro real de Open Payments. Sin ella, /pagos dice que falta. */
   pagos?: ClientePagos;
+  /** Dónde se guarda lo que se responde a una solicitud de crédito (el índice). Sin él, no se responde. */
+  decisiones?: EscritorDecisiones;
+  /** CREDITO_TASA_MENSUAL en porcentaje. Sin ella, los créditos se ven pero no se aprueban. */
+  tasaMensualCredito?: number;
   fetch?: typeof fetch;
 }
 
@@ -47,6 +50,8 @@ const TIEMPO_LIMITE_MS = 10_000;
 // listarPagos): sin esto son N·(3M+2) GET por refresco. Corto para que un pago nuevo se vea enseguida.
 const CACHE_MS = 2_000;
 const PAGINA_TABLA = 100;
+// Códigos de Node para una petición que no llegó a salir.
+const SIN_CONEXION = new Set(["ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN"]);
 // Tope de seguridad: la demo tiene decenas de contratos; un bucle sin fin no debe tumbar la pantalla.
 const MAX_FILAS_TABLA = 1_000;
 
@@ -235,6 +240,37 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
     }
   }
 
+  /** POST a staging (crear un contrato). Sin caché ni reintentos: un fallo se dice tal cual, sin el token. */
+  async function enviarJson(ruta: string, cuerpo: unknown): Promise<unknown> {
+    let res: Response;
+    try {
+      res = await pedirHttp(`${base}${ruta}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(cuerpo),
+        cache: "no-store",
+        signal: AbortSignal.timeout(TIEMPO_LIMITE_MS),
+      });
+    } catch (e) {
+      const motivo = e instanceof Error && e.name === "TimeoutError" ? "no respondió en 10 s" : `no se pudo conectar (${e instanceof Error ? e.message : String(e)})`;
+      // Sin conexión (rechazada o sin DNS) la petición nunca llegó: staging no pudo crear nada.
+      const codigoRed = (e as { cause?: { code?: unknown } } | null)?.cause?.code;
+      const noSalio = typeof codigoRed === "string" && SIN_CONEXION.has(codigoRed);
+      throw new ErrorServicio(sinToken(`Staging ${motivo} en ${ruta}`), undefined, noSalio ? "sin_conexion" : undefined);
+    }
+    let respuesta: unknown = null;
+    try {
+      respuesta = (await res.json()) as unknown;
+    } catch {
+      // Un 403 llega sin cuerpo (visto el 16 oct con un JWT sin rol admin).
+    }
+    if (!res.ok) {
+      const detalle = comoCampos(respuesta).detail;
+      throw new ErrorServicio(sinToken(`Staging respondió ${res.status} en ${ruta}${typeof detalle === "string" ? `: ${detalle}` : ""}`), res.status);
+    }
+    return respuesta;
+  }
+
   /** Todas las filas de una plantilla en /api/contracts/table, página por página. */
   async function tabla(plantilla: string, conceptos: string[]): Promise<FilaTabla[]> {
     const filas: FilaTabla[] = [];
@@ -365,28 +401,41 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
     return pagosDelRegistro(crudos, (referencia) => ubicaciones.get(referencia) ?? null);
   }
 
-  /** Lo que respondió la financiera a cada crédito de prueba. Solo en memoria: no crea nada en staging. */
-  const decisiones = new Map<string, { estado: "por_desembolsar" | "rechazado"; fecha: FechaISO }>();
-
-  async function creditosDePrueba(): Promise<SolicitudCredito[]> {
-    const natilleras = await reunir("créditos", await (await lector()).natilleras(), async (registro): Promise<NatilleraParaCreditos[]> => {
+  /** Natillera, persona y avance de ahorro de cada participación, para ubicar las solicitudes y los créditos. */
+  async function ubicacionesDeCredito(fuente: LectorIndice) {
+    const ubicaciones = new Map<string, UbicacionCredito & { participanteId: string; wallet: string }>();
+    await reunir("créditos", await fuente.natilleras(), async (registro) => {
       const a = await armar(registro);
       if (!a) return [];
       const r = resumen(registro, a.contrato, a.participaciones);
-      return [{
-        id: r.id,
-        nombre: r.nombre,
-        valorCuota: r.valorCuota,
-        multiploPrestamo: numero(a.contrato, "MultiploPrestamo"),
-        cuotasTotales: r.cuotasTotales,
-        periodoActual: r.periodoActual,
-        participantes: a.participaciones.encontradas.map(participante),
-      }];
+      for (const { registro: p, contrato } of a.participaciones.encontradas) {
+        const cuotasAlDia = numero(contrato, "CuotasPagadas");
+        ubicaciones.set(p.participacionId, {
+          natilleraId: r.id,
+          natilleraNombre: r.nombre,
+          participanteNombre: p.nombre,
+          cuotasAlDia,
+          cuotasTotales: r.cuotasTotales,
+          cuotasPendientes: Math.max(0, r.periodoActual - cuotasAlDia),
+          participanteId: leerTexto(contrato.raw.ParticipanteId) ?? p.telegramId,
+          wallet: leerTexto(contrato.raw.WalletParticipante) ?? p.billetera,
+        });
+      }
+      return [];
     });
-    return solicitudesDePrueba(natilleras, new Date()).map((s) => {
-      const d = decisiones.get(s.id);
-      return d && s.estado === "solicitado" ? { ...s, estado: d.estado, fechaRespuesta: d.fecha } : s;
-    });
+    return ubicaciones;
+  }
+
+  async function creditosReales(): Promise<{ lista: SolicitudCredito[]; fuente: LectorIndice; ubicaciones: Awaited<ReturnType<typeof ubicacionesDeCredito>> }> {
+    const fuente = await lector();
+    const [solicitudes, decisiones, creditos, ubicaciones] = await Promise.all([
+      fuente.solicitudes(),
+      fuente.decisiones(),
+      tabla("natillera-credito-ahorro", ["CreditoId", "ParticipacionId", "NatilleraId", "Capital", "PlazoMeses", "TasaMensual", "EstadoCredito", "CuotaMensual"]),
+      ubicacionesDeCredito(fuente),
+    ]);
+    const lista = creditosDeStaging({ solicitudes, decisiones, creditos, ubicar: (id) => ubicaciones.get(id) ?? null, tasaConfiguradaPct: opciones.tasaMensualCredito });
+    return { lista, fuente, ubicaciones };
   }
 
   return {
@@ -416,32 +465,61 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
       };
     },
     async listarSolicitudesCredito() {
-      return (await creditosDePrueba()).sort((x, y) => y.fechaSolicitud.localeCompare(x.fechaSolicitud));
+      const { lista } = await creditosReales();
+      return lista.sort((x, y) => y.fechaSolicitud.localeCompare(x.fechaSolicitud));
     },
-    async responderSolicitud(id, decision) {
-      const s = (await creditosDePrueba()).find((x) => x.id === id);
-      if (!s) throw new ErrorServicio(`No existe la solicitud ${id}.`);
-      if (s.estado !== "solicitado") throw new ErrorServicio(`La solicitud ${id} ya fue respondida.`);
-      const d = { estado: decision === "aprobar" ? ("por_desembolsar" as const) : ("rechazado" as const), fecha: new Date().toISOString() };
-      decisiones.set(id, d);
-      return { ...s, estado: d.estado, fechaRespuesta: d.fecha };
+    async responderSolicitud(id, decision, respondio = "La web") {
+      const { lista, fuente, ubicaciones } = await creditosReales();
+      const actual = lista.find((x) => x.id === id);
+      const solicitud = (await fuente.solicitudes()).find((x) => x.solicitudId === id);
+      if (!actual || !solicitud) throw new ErrorServicio(`No existe la solicitud ${id}.`);
+      const yaRespondida = () => new ErrorServicio(`La solicitud ${id} ya fue respondida.`, undefined, "ya_respondida");
+      if (actual.estado !== "solicitado") throw yaRespondida();
+      const escritor = opciones.decisiones;
+      if (!escritor) throw new ErrorServicio("La web no puede guardar respuestas a solicitudes: falta el índice.");
+      const fecha = new Date().toISOString();
+
+      if (decision === "no_aprobar") {
+        if ((await escritor.guardarDecision({ solicitudId: id, decision: "no_aprobada", respondio, fecha })) === "conflicto") throw yaRespondida();
+        return { ...actual, estado: "rechazado", fechaRespuesta: fecha };
+      }
+
+      const tasa = opciones.tasaMensualCredito;
+      if (tasa === undefined) throw new ErrorServicio("Falta CREDITO_TASA_MENSUAL en web/.env.local: no se puede aprobar.");
+      const u = ubicaciones.get(solicitud.participacionId);
+      if (!u?.wallet) throw new ErrorServicio(`La participación ${solicitud.participacionId} no tiene billetera en staging: no se puede desembolsar.`);
+
+      // Cada contrato pide un desembolso: dos aprobaciones a la vez (financiera y administrador, o un
+      // doble envío) no pueden crear dos. Se reserva en el índice, que escribe en cola, ANTES del POST.
+      const creditoId = creditoIdDe(id);
+      if ((await escritor.guardarDecision({ solicitudId: id, decision: "aprobada", creditoId, respondio, fecha })) === "conflicto") throw yaRespondida();
+      try {
+        await enviarJson(
+          "/api/contracts",
+          cuerpoContratoCredito({ solicitud, natilleraId: u.natilleraId, participanteId: u.participanteId, wallet: u.wallet, tasaMensualPct: tasa, hoy: hoyEnBogota(new Date()) }),
+        );
+      } catch (e) {
+        // Seguro que no se creó nada: staging lo rechazó (4xx) o la petición ni salió. La solicitud vuelve a
+        // quedar por responder. Un 5xx no da esa certeza (un proxy puede cortar mientras el motor sigue).
+        const rechazado = e instanceof ErrorServicio && e.estadoHttp !== undefined && e.estadoHttp >= 400 && e.estadoHttp < 500;
+        if (rechazado || (e instanceof ErrorServicio && e.codigo === "sin_conexion")) {
+          try {
+            await escritor.quitarDecision(id);
+          } catch (errorAlSoltar) {
+            console.error(`No se pudo soltar la reserva de la solicitud ${id}`, errorAlSoltar);
+          }
+          throw e;
+        }
+        // Sin certeza (5xx, se cortó o pasó el tiempo): el contrato pudo crearse. La reserva se queda para no
+        // desembolsar dos veces; el crédito aparece en la lista cuando staging lo liste por su CreditoId.
+        // Si nunca aparece, la salida es borrar la decisión en web/data/indice.json (web/README.md).
+        throw new ErrorServicio(`No sabemos si staging creó el crédito ${creditoId}: ${e instanceof Error ? e.message : String(e)}`, undefined, "credito_incierto");
+      }
+      return { ...actual, estado: "por_desembolsar", tasaMensualPct: tasa, fechaRespuesta: fecha };
     },
     async listarPagos() {
-      if (opciones.pagos) return pagosDeLaApi(opciones.pagos);
-      return reunir("pagos", await (await lector()).natilleras(), async (registro) => {
-        const a = await armar(registro);
-        if (!a) return [];
-        const natillera = { id: registro.natilleraId, nombre: leerTexto(a.contrato.raw.NombreNatillera) ?? registro.nombre };
-        const valorCuota = numeroObligatorio(a.contrato, "ValorCuota", registro);
-        return reunir(`pagos de ${registro.natilleraId}`, a.participaciones.encontradas, async ({ registro: p, contrato }) =>
-          pagosDeParticipacion({
-            natillera,
-            participanteNombre: p.nombre,
-            valorCuota,
-            deudaActual: numero(contrato, "DeudaCuotas") + numero(contrato, "MoraAcumulada"),
-            eventos: await eventosDe(p.contractId),
-          }));
-      }).then((pagos) => pagos.sort((x, y) => y.creado.localeCompare(x.creado)));
+      if (!opciones.pagos) throw new ErrorServicio("Falta configurar la API de pagos (PAGOS_URL y PAGOS_API_KEY en web/.env.local).");
+      return pagosDeLaApi(opciones.pagos);
     },
     async listarBitacora() {
       const fuente = await lector();

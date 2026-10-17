@@ -65,13 +65,14 @@ export interface SolicitudCredito {
   cuotasAlDia: number;
   cuotasTotales: number;
   cuotasPendientes: number;
-  /** N × cuota: lo máximo que la financiera le puede prestar. */
-  montoMaximo: number;
+  /** N × cuota: lo máximo que la financiera le puede prestar. null si el crédito no salió de una solicitud. */
+  montoMaximo: number | null;
   montoSolicitado: number;
   plazoMeses: number;
-  tasaMensualPct: number;
-  /** Cuota fija (francesa) que calcula el servicio externo. */
-  cuotaMensual: number;
+  /** null si aún no hay tasa: antes de aprobar sin CREDITO_TASA_MENSUAL configurada. */
+  tasaMensualPct: number | null;
+  /** Cuota fija (francesa) que calcula el servicio externo al crear el crédito: null antes de aprobar. */
+  cuotaMensual: number | null;
   estado: EstadoCredito;
   fechaSolicitud: FechaISO;
   fechaRespuesta: FechaISO | null;
@@ -124,12 +125,13 @@ export interface EventoBitacora {
   fecha: FechaISO;
 }
 
-/** Contrato que cumplen tanto los datos de prueba como el cliente HTTP. */
+/** Lo que la web le pide a la capa de datos (staging.ts). */
 export interface Servicio {
   listarNatilleras(): Promise<NatilleraResumen[]>;
   obtenerNatillera(id: string): Promise<Natillera | null>;
   listarSolicitudesCredito(): Promise<SolicitudCredito[]>;
-  responderSolicitud(id: string, decision: DecisionCredito): Promise<SolicitudCredito>;
+  /** respondio: el nombre de quien respondió (queda en el índice). */
+  responderSolicitud(id: string, decision: DecisionCredito, respondio?: string): Promise<SolicitudCredito>;
   listarPagos(): Promise<Pago[]>;
   listarBitacora(): Promise<EventoBitacora[]>;
 }

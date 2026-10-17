@@ -98,5 +98,8 @@ export function combinarConIndice(motor: ContratosDelMotor, indice: LectorIndice
     async actividades(natilleraId) {
       return unir(actividadesMotor(natilleraId), await indice.actividades(natilleraId), (r) => r.actividadId);
     },
+    // Las solicitudes y las respuestas solo existen en el índice: el motor no las guarda.
+    solicitudes: () => indice.solicitudes(),
+    decisiones: () => indice.decisiones(),
   };
 }

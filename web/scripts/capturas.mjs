@@ -15,7 +15,7 @@ const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, a, i, arr) => (a.startsWith("--") ? [...acc, [a.slice(2), arr[i + 1]]] : acc), []),
 );
 const base = (args.base ?? "http://localhost:3000").replace(/\/+$/, "");
-const rutas = (args.rutas ?? "/natilleras,/natilleras/los-primos,/creditos,/pagos,/bitacora").split(",");
+const rutas = (args.rutas ?? "/natilleras,/creditos,/pagos,/bitacora").split(",");
 const anchos = [360, 768, 1024, 1280];
 const temas = ["light", "dark"];
 const salida = join(dirname(fileURLToPath(import.meta.url)), "..", ".capturas");

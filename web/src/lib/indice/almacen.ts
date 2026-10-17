@@ -3,10 +3,11 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { LectorIndice, ResultadoGuardar, TipoRegistro } from "./tipos";
+import type { EscritorDecisiones, LectorIndice, RegistroDecision, ResultadoGuardar, TipoRegistro } from "./tipos";
 import { TIPOS_REGISTRO, type RegistroPorTipo } from "./validacion";
 
-type Contenido = { [T in TipoRegistro]: Record<string, RegistroPorTipo[T]> };
+// decisiones va aparte de TIPOS_REGISTRO a propósito: no tiene ruta POST /api/indice/* (la escribe la web).
+type Contenido = { [T in TipoRegistro]: Record<string, RegistroPorTipo[T]> } & { decisiones: Record<string, RegistroDecision> };
 
 const LLAVE: { [T in TipoRegistro]: keyof RegistroPorTipo[T] & string } = {
   natilleras: "natilleraId",
@@ -22,7 +23,7 @@ export class IndiceCorrupto extends Error {
   }
 }
 
-export interface Almacen extends LectorIndice {
+export interface Almacen extends LectorIndice, EscritorDecisiones {
   /** `repetido` si el id ya estaba con los mismos datos (el bot reintenta); `conflicto` si estaba
    *  con otros (la ruta responde 409). En los dos casos no sobrescribe. */
   guardar<T extends TipoRegistro>(tipo: T, registro: RegistroPorTipo[T]): Promise<ResultadoGuardar>;
@@ -40,7 +41,7 @@ function enCola<T>(ruta: string, tarea: () => Promise<T>): Promise<T> {
 
 // Sin prototipo: un id como "__proto__" (el patrón lo admite) queda como una llave más.
 const seccion = () => Object.create(null) as Record<string, never>;
-const vacio = (): Contenido => ({ natilleras: seccion(), participaciones: seccion(), actividades: seccion(), solicitudes: seccion() });
+const vacio = (): Contenido => ({ natilleras: seccion(), participaciones: seccion(), actividades: seccion(), solicitudes: seccion(), decisiones: seccion() });
 
 async function leer(ruta: string): Promise<Contenido> {
   let texto: string;
@@ -58,7 +59,7 @@ async function leer(ruta: string): Promise<Contenido> {
   }
   if (typeof datos !== "object" || datos === null || Array.isArray(datos)) throw new IndiceCorrupto(ruta, "no es un objeto");
   const contenido = vacio();
-  for (const tipo of TIPOS_REGISTRO) {
+  for (const tipo of [...TIPOS_REGISTRO, "decisiones"] as const) {
     const guardada = (datos as Record<string, unknown>)[tipo];
     if (guardada === undefined) continue;
     if (typeof guardada !== "object" || guardada === null || Array.isArray(guardada)) throw new IndiceCorrupto(ruta, `«${tipo}» no es un objeto`);
@@ -106,6 +107,31 @@ export function crearAlmacen(ruta: string): Almacen {
     },
     async actividades(natilleraId) {
       return Object.values((await leer(ruta)).actividades).filter((a) => a.natilleraId === natilleraId);
+    },
+    async solicitudes() {
+      return Object.values((await leer(ruta)).solicitudes);
+    },
+    async decisiones() {
+      return Object.values((await leer(ruta)).decisiones);
+    },
+    guardarDecision(decision) {
+      return enCola(ruta, async () => {
+        const contenido = await leer(ruta);
+        // Una solicitud se responde una sola vez: dos clics o dos personas a la vez no la cambian.
+        if (Object.hasOwn(contenido.decisiones, decision.solicitudId)) return "conflicto";
+        contenido.decisiones[decision.solicitudId] = decision;
+        await mkdir(path.dirname(ruta), { recursive: true });
+        await escribir(ruta, contenido);
+        return "nuevo";
+      });
+    },
+    quitarDecision(solicitudId) {
+      return enCola(ruta, async () => {
+        const contenido = await leer(ruta);
+        if (!Object.hasOwn(contenido.decisiones, solicitudId)) return;
+        delete contenido.decisiones[solicitudId];
+        await escribir(ruta, contenido);
+      });
     },
   };
 }

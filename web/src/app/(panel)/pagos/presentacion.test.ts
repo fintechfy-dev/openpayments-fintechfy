@@ -38,12 +38,8 @@ describe("textoOperacionesSimuladas", () => {
 });
 
 describe("avisoSinOpenPayments", () => {
-  it("staging sin la API de pagos: siempre avisa que los cobros no pasan por Open Payments", () => {
-    expect(avisoSinOpenPayments(true, [])?.titulo).toBe("Estos cobros todavía no pasan por Open Payments");
-  });
-
-  it("con la API de pagos: solo avisa si algún pago a la vista vino simulado", () => {
-    expect(avisoSinOpenPayments(false, [pago(false), pago()])).toBeNull();
-    expect(avisoSinOpenPayments(false, [pago(false), pago(true)])?.titulo).toBe("Algunos pagos no pasan por Open Payments");
+  it("solo avisa si algún pago a la vista vino simulado", () => {
+    expect(avisoSinOpenPayments([pago(false), pago()])).toBeNull();
+    expect(avisoSinOpenPayments([pago(false), pago(true)])?.titulo).toBe("Algunos pagos no pasan por Open Payments");
   });
 });

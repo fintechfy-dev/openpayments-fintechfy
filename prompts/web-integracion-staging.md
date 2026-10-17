@@ -405,3 +405,57 @@ Repo: /Users/octopus/Proyectos Johan/openpayments-fintechfy. Segunda pasada sobr
 ```
 
 Resultado (19:38): `web-revisor` dio CAMBIOS-NECESARIOS (1 🟠: /pagos se caía si /api/registro fallaba) y, tras las correcciones, CAMBIOS-MENORES con un 🟡 (hora y estado vacío falsos cuando falla la primera lectura), también corregido. Comprobado en la web real contra la API de pagos publicada con una llave falsa a propósito. `npm --prefix web run verificar`: 20 archivos, 203 pruebas, build compilado. Queda anotado el ⚪ 7: el estado de la API no se refresca con el polling.
+
+## 2026-10-16 · 19:47 (hora de Bogotá) · Claude Code (Claude Opus 5.5)
+
+```text
+ejecuta la aplicacion probamos
+```
+
+```text
+listo quit alos mocks y deja los consumos reales de las APIS
+```
+
+Claude Code preguntó y la persona respondió:
+
+- Qué mocks quitar: «Todo, también /pagos de eventos».
+- Aprobar un crédito: «tasa fija configurable y la aprueba el admin, de la plata que habia en la natillera se le pasa a la billetera de esa persona».
+
+Claude Code preguntó cómo seguir con Aprobar (el contrato del motor desembolsa desde la billetera de la financiera, no desde la natillera) y la persona respondió: «Como el motor (Recomendado)». Luego escribió:
+
+```text
+continua
+```
+
+## 2026-10-16 · 20:02 (hora de Bogotá) · Claude Code (Claude Opus 5.5) → subagente `web-revisor`
+
+```text
+Repo: /Users/octopus/Proyectos Johan/openpayments-fintechfy. Revisa el trabajo NO comiteado de la rama feature/web-53-integracion-staging (`git status`, `git diff -- web/` y archivos nuevos): se quitaron todos los mocks de la web y se dejaron solo consumos reales (#53, #54).
+
+Qué cambió:
+- Borrados `web/src/lib/servicio/mock.ts`, `creditos-prueba.ts`, `pagos-staging.ts` (y pruebas) y el cliente provisional de `http.ts` (queda solo ErrorServicio). Sin `SERVICIO_EXTERNO_URL` la web responde un error de configuración; sin la API de pagos, `/pagos` dice "Falta conectar la API de pagos". Se quitaron los avisos de "Datos de prueba" del layout y de /ingresar.
+- Créditos reales: `web/src/lib/servicio/creditos-staging.ts` (lista = solicitudes del índice + decisiones del índice + contratos `natillera-credito-ahorro` de `/api/contracts/table`; cuerpo del POST del contrato) y en `staging.ts` (`creditosReales`, `responderSolicitud`, `enviarJson` POST a staging). Aprobar = `POST /api/contracts` con la tasa de `CREDITO_TASA_MENSUAL` (index.ts) y después guarda la decisión; no aprobar = solo guarda la decisión. Decisión del usuario: aprueban la financiera y el administrador de esa natillera, y el desembolso sale de la billetera de la financiera, como el contrato del motor (CONT-003 en `integracion/FND-20261015-natillera-2.openapi.json`).
+- Índice: sección nueva `decisiones` (`web/src/lib/indice/{tipos,almacen,index}.ts`), fuera de las rutas POST del bot; `solicitudes()` y `decisiones()` en LectorIndice; `escritorDecisiones`.
+- Acceso: se quitó `puedeResponderCreditos`; `/creditos` filtra con `filtrarPorNatillera` y la Server Action (`web/src/app/(panel)/creditos/actions.ts`) vuelve a comprobarlo antes de responder; la navegación muestra Créditos a los dos roles.
+- `SolicitudCredito.cuotaMensual` y `tasaMensualPct` pueden ser null (antes de aprobar); la pantalla muestra "Al aprobar".
+
+**No compiles: corre solo typecheck, lint y test** (el build ya pasó). Fíjate en especial en: que un administrador no pueda aprobar ni ver solicitudes de natilleras ajenas (ni por la Server Action llamada directo); que el token no salga en el error del POST; que una doble aprobación (dos clics, dos personas) no cree dos contratos; que los parámetros del contrato coincidan con `Create_natillera_credito_ahorro` del OpenAPI (tipos, Percentage como fracción, FechaInicio AAAA-MM-DD); que no quede ningún dato inventado visible; y referencias rotas a lo borrado. Sigue `.claude/agents/web-revisor.md` y devuelve veredicto y hallazgos con severidad y ruta:línea.
+```
+
+## 2026-10-16 · 20:08 (hora de Bogotá) · Claude Code (Claude Opus 5.5) → subagente `web-revisor` (segunda pasada)
+
+```text
+Repo: /Users/octopus/Proyectos Johan/openpayments-fintechfy. Segunda pasada sobre el retiro de mocks y los créditos reales (rama feature/web-53-integracion-staging, trabajo no comiteado). En la primera devolviste CAMBIOS-NECESARIOS. Verifica las correcciones:
+
+🔴1 doble aprobación → `responderSolicitud` en `web/src/lib/servicio/staging.ts` reserva la decisión en el índice (guardarDecision en cola, `conflicto` = ya respondida) ANTES del POST; si staging responde con error suelta la reserva (`quitarDecision`, nuevo en `web/src/lib/indice/{tipos,almacen,index}.ts`); si no hay respuesta la deja y lanza `credito_incierto`. Pruebas en staging.test.ts: dos aprobaciones en Promise.allSettled → un solo POST; sin respuesta → la reserva se queda.
+🟡2 → `ErrorServicio.codigo` (`http.ts`), `ERROR_CREDITO_INCIERTO` en `creditos/logica.ts` y la acción lo distingue (también `ya_respondida`).
+🟡3 → `montoMaximo: number | null` ("Máximo sin dato"), `textoAhorro` dice "Ahorro sin dato" sin participación ubicada.
+🟡4 → `RespuestaSolicitud` recibe `puedeAprobar={aprobarCreditosConfigurado}` y no muestra Aprobar sin tasa.
+🟡5 → prueba vacía borrada (el filtro de admin lo cubre `quedanVisibles` en sesion.test.ts).
+⚪6 → `cuerpoContratoCredito` recibe `natilleraId` de la participación en staging. ⚪7 → cuota "—" si no está por responder. ⚪8 → quitada `.aviso-prueba`; las menciones en `.github/workflows/calidad.yml`, `docs/checklist-entrega.md` y la skill `natillera-web` quedan anotadas (fuera de web/ o van en commit aparte).
+Además se quitó `contractId` de RegistroDecision (ya no se conoce al reservar; el crédito se halla por CreditoId).
+
+**No compiles: corre solo typecheck, lint y test** (el build ya pasó). Sigue `.claude/agents/web-revisor.md` y devuelve veredicto y hallazgos con severidad y ruta:línea.
+```
+
+Resultado (20:13): `web-revisor` dio CAMBIOS-NECESARIOS (1 🔴: dos aprobaciones a la vez creaban dos contratos y dos desembolsos) y, tras corregirlo con una reserva en el índice antes del POST, CAMBIOS-MENORES; Claude Code corrigió también sus 🟡 (solo un 4xx o una petición que no salió sueltan la reserva; sin la promesa de «Le avisamos por el bot»). `npm --prefix web run verificar`: 19 archivos, 188 pruebas, build compilado.

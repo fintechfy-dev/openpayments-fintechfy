@@ -1,11 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Aviso } from "@/components/Aviso";
 import { Logo } from "@/components/Logo";
 import { Navegacion } from "@/components/Navegacion";
-import { usaDatosDePrueba } from "@/lib/servicio";
 import { requerirSesion } from "@/lib/sesion";
-import { puedeResponderCreditos } from "@/lib/sesion/acceso";
 import { cerrarSesion } from "./acciones-sesion";
 
 const ROL = { financiera: "Financiera", administrador: "Administrador" } as const;
@@ -34,16 +31,9 @@ export default async function LayoutPanel({ children }: { children: ReactNode })
             </form>
           </div>
         </div>
-        <Navegacion mostrarCreditos={puedeResponderCreditos(sesion)} />
+        <Navegacion />
       </header>
       <main id="contenido" className="app-contenido" tabIndex={-1}>
-        {usaDatosDePrueba ? (
-          <div className="aviso-prueba">
-            <Aviso tipo="info" titulo="Datos de prueba">
-              La web todavía no está conectada al servicio externo (issue #5): lo que ves es de ejemplo.
-            </Aviso>
-          </div>
-        ) : null}
         {children}
       </main>
     </>

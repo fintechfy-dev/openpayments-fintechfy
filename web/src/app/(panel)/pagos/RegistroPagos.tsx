@@ -47,16 +47,14 @@ interface Props {
   leidoEn: string | null;
   /** La primera lectura en el servidor falló: se muestra el aviso de falla y el refresco lo reintenta. */
   falloInicial?: boolean;
-  /** Staging sin la API de pagos: los cobros los dio por hechos el motor, sin pasar por Open Payments. */
-  sinRegistroDePagos?: boolean;
   /** El estado de la API de pagos (presentacion.ts); null si la web no la tiene configurada. */
   estadoApi?: AvisoPagos | null;
 }
 
 /** Registro de pagos para el jurado (US-007-RPT): se refresca solo cada 3 s y anuncia solo pagos que terminan. */
-export function RegistroPagos({ inicial, leidoEn: leidoInicial, falloInicial = false, sinRegistroDePagos = false, estadoApi = null }: Props) {
+export function RegistroPagos({ inicial, leidoEn: leidoInicial, falloInicial = false, estadoApi = null }: Props) {
   const [pagos, setPagos] = useState<Pago[]>(() => ordenarRecientes(inicial));
-  const avisoOpenPayments = avisoSinOpenPayments(sinRegistroDePagos, pagos);
+  const avisoOpenPayments = avisoSinOpenPayments(pagos);
   const [leidoEn, setLeidoEn] = useState(leidoInicial);
   const [fallo, setFallo] = useState(falloInicial);
   const [anuncio, setAnuncio] = useState({ texto: "", vez: 0 });

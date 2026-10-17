@@ -11,7 +11,7 @@
 
 ## Antes de empezar
 
-- **La capa `src/lib/servicio/` ya no habla con un puente:** habla directo con staging. Cambia `SERVICIO_URL` y `SERVICIO_API_KEY` por `SERVICIO_EXTERNO_URL` y `SERVICIO_EXTERNO_TOKEN`, que te da Willy, con el encabezado `Authorization: Bearer <token>`. Todo sigue en el servidor: el token nunca llega al navegador, como ya garantizan `server-only` y la regla de ESLint.
+- **La capa `src/lib/servicio/` habla directo con staging y con la API de pagos; no hay datos de prueba.** Usa `SERVICIO_EXTERNO_URL` y `SERVICIO_EXTERNO_TOKEN`, que te da Willy, con el encabezado `Authorization: Bearer <token>`. Todo sigue en el servidor: el token nunca llega al navegador, como ya garantizan `server-only` y la regla de ESLint.
 - **Índice persistente:** SQLite o un archivo JSON en el servidor, que aguante un reinicio durante la demo.
 - **Nueva variable** `WEB_INDICE_API_KEY`, la llave con la que llama el bot. Compártela con Estiven por canal privado.
 

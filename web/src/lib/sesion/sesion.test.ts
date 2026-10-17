@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { destinoSeguro, puedeResponderCreditos, puedeVerNatillera, quedanVisibles } from "./acceso";
+import { destinoSeguro, puedeVerNatillera, quedanVisibles } from "./acceso";
 import { firmarSesion, leerSesion, type DatosSesion } from "./firma";
 import { LimitadorIntentos, MAX_INTENTOS, VENTANA_MS } from "./intentos";
 import { codigoCorrecto, crearReto, generarCodigo, leerReto, limpiarCodigo, mensajeCodigo, VIGENCIA_CODIGO_MS } from "./otp";
@@ -125,10 +125,6 @@ describe("acceso", () => {
     expect(puedeVerNatillera(admin, { administrador: " Andre\u0301s Restrepo " })).toBe(true);
   });
 
-  it("solo la financiera responde créditos", () => {
-    expect(puedeResponderCreditos(financiera)).toBe(true);
-    expect(puedeResponderCreditos(admin)).toBe(false);
-  });
 
   it("solo vuelve a rutas internas después de iniciar sesión", () => {
     expect(destinoSeguro("/pagos")).toBe("/pagos");

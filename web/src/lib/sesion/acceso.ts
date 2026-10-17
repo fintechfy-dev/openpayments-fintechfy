@@ -8,7 +8,8 @@ const mismoNombre = (a: string, b: string) => a.normalize("NFC").trim() === b.no
 /**
  * La financiera ve todas las natilleras; un administrador, solo las suyas. Si la natillera trae el
  * id de Telegram de su administrador (staging), se compara ese id: un nombre visible lo puede
- * copiar cualquiera. Solo los datos de prueba, que no lo traen, se reconocen por el nombre.
+ * copiar cualquiera. Sin ese id (una natillera que el bot no registró: «Sin registrar»), se compara el nombre,
+ * que ningún usuario tiene.
  */
 export function puedeVerNatillera(
   sesion: DatosSesion,
@@ -27,10 +28,6 @@ export function quedanVisibles<T extends { natilleraId: string }>(sesion: DatosS
   return elementos.filter((e) => visibles.has(e.natilleraId));
 }
 
-/** Solo la financiera presta: solo ella ve y responde solicitudes de crédito. */
-export function puedeResponderCreditos(sesion: DatosSesion): boolean {
-  return sesion.rol === "financiera";
-}
 
 /**
  * A dónde volver después de iniciar sesión. Solo rutas internas: "//otro-sitio.com" o "https://..."
