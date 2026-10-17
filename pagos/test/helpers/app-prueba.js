@@ -92,6 +92,8 @@ export async function levantar({ simuladas = [], limiteRespuestaMs, esperar = as
     clientes: clientesApi,
     aprobarPermiso,
     volverAprobado,
+    base,
+    rutas: servidor.rutas,
     cerrar: () => new Promise((r) => servidor.close(r)),
   };
 }

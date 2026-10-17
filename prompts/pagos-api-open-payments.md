@@ -79,3 +79,11 @@ cambiala asi
 ```
 
 Resultado: `BOT_USUARIO` sale de la configuración y `POST /api/permisos` recibe `vuelta` (solo https, con `{permisoId}` como comodín). Sin `vuelta`, el navegador ve una página que dice que ya puede cerrar la ventana.
+
+## 5. Swagger (~19:10)
+
+```text
+listo mergeado, ahora quiero que instales swagger para esta api  para poderla implementar
+```
+
+Resultado: el contrato OpenAPI 3.0 se arma desde la tabla `REGLAS` de `src/operaciones.js`, que también valida los cuerpos. Swagger UI queda en `/docs`, servido desde `swagger-ui-dist` 5.33.0 sin CDN. Las pruebas de contrato usan `@apidevtools/swagger-parser` 13.1.0 y revisan que el OpenAPI sea válido, la paridad de rutas en las dos direcciones y que los ejemplos sean aceptados. Se eligieron versiones publicadas hace más de dos semanas.

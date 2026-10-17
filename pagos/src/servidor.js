@@ -1,8 +1,10 @@
 import { timingSafeEqual } from "node:crypto";
 import { createServer } from "node:http";
 import { leerCredenciales, sinCredenciales } from "./credenciales.js";
+import { archivoDocs, paginaDocs } from "./docs.js";
 import { ErrorHttp } from "./errores.js";
 import { llaveIdempotencia } from "./idempotencia.js";
+import { crearOpenApi } from "./openapi.js";
 
 // Staging da por fallida una llamada sin respuesta en 30 s. Se responde antes, a los ~20 s de
 // consultar, con un 503: el pago sigue por detrás y el reintento recibe el resultado.
@@ -17,7 +19,19 @@ export function crearServidor({ config, almacen, permisos, operaciones, pagos, a
     return { op: await clientes.para(credenciales), huella: credenciales.huella };
   };
 
+  const contrato = crearOpenApi({ urlPublica: config.urlPublica });
+
   const rutas = [
+    // El contrato y Swagger UI: públicos, no llevan secretos.
+    ["GET", /^\/api\/openapi\.json$/, async () => ({ cuerpo: contrato })],
+    ["GET", /^\/docs$/, async () => ({ redirigir: "/docs/" })],
+    ["GET", /^\/docs\/$/, async () => ({ pagina: paginaDocs() })],
+    ["GET", /^\/docs\/([A-Za-z0-9.-]+)$/, async (req, [nombre]) => {
+      const archivo = archivoDocs(nombre);
+      if (!archivo) throw new ErrorHttp(404, "Ruta desconocida");
+      return { archivo };
+    }],
+
     ["GET", /^\/api\/salud$/, async () => ({
       cuerpo: { ok: true, almacen: almacen.nombre, walletGrupo: config.walletGrupo, walletFinanciera: config.walletFinanciera, simuladas: [...config.simuladas] },
     })],
@@ -64,7 +78,7 @@ export function crearServidor({ config, almacen, permisos, operaciones, pagos, a
     }],
   ];
 
-  return createServer(async (req, res) => {
+  const servidor = createServer(async (req, res) => {
     const inicio = Date.now();
     const url = new URL(req.url, "http://local");
     let estado = 500;
@@ -73,7 +87,10 @@ export function crearServidor({ config, almacen, permisos, operaciones, pagos, a
       if (!ruta) throw new ErrorHttp(404, "Ruta desconocida");
       const parametros = url.pathname.match(ruta[1]).slice(1);
       const resultado = await ruta[2](req, parametros, url);
-      if (resultado.pagina) {
+      if (resultado.archivo) {
+        estado = 200;
+        res.writeHead(200, { "Content-Type": resultado.archivo.tipo, "Cache-Control": "public, max-age=3600" }).end(resultado.archivo.contenido);
+      } else if (resultado.pagina) {
         estado = 200;
         res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" }).end(resultado.pagina);
       } else if (resultado.redirigir) {
@@ -93,6 +110,9 @@ export function crearServidor({ config, almacen, permisos, operaciones, pagos, a
       console.log(`${req.method} ${url.pathname} ${estado} ${Date.now() - inicio}ms`);
     }
   });
+  // Para la prueba de paridad entre el contrato y lo que de verdad se atiende.
+  servidor.rutas = rutas.map(([metodo, patron]) => ({ metodo, patron }));
+  return servidor;
 }
 
 // Sin vuelta (por ejemplo los permisos del grupo y de la financiera, que aprueba Willy), el navegador

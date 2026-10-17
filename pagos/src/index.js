@@ -4,6 +4,8 @@ import { crearAlmacenMemoria, crearAlmacenTablas } from "./almacen.js";
 import { crearApp } from "./app.js";
 import { crearClientes } from "./clientes.js";
 import { ConfigIncompleta, leerConfig } from "./config.js";
+import { archivoDocs, paginaDocs } from "./docs.js";
+import { crearOpenApi } from "./openapi.js";
 
 let config;
 try {
@@ -13,9 +15,20 @@ try {
   // Sin configuración completa no se mueve dinero, pero la app responde y dice qué falta: así un
   // despliegue en Azure se puede verificar antes de tener todas las direcciones.
   console.error(`Sin configurar: ${error.message}. Ver .env.example.`);
+  // El contrato y Swagger UI sí se sirven: el equipo puede implementar contra ellos mientras tanto.
+  const contrato = JSON.stringify(crearOpenApi({ urlPublica: process.env.URL_PUBLICA?.trim().replace(/\/+$/, "") || "" }));
   createServer((req, res) => {
-    res.writeHead(503, { "Content-Type": "application/json; charset=utf-8" });
-    res.end(JSON.stringify({ ok: false, error: error.message }));
+    const ruta = new URL(req.url, "http://local").pathname;
+    const archivo = ruta.startsWith("/docs/") && archivoDocs(ruta.slice("/docs/".length));
+    if (req.method === "GET" && ruta === "/api/openapi.json") {
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" }).end(contrato);
+    } else if (req.method === "GET" && (ruta === "/docs" || ruta === "/docs/")) {
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(paginaDocs());
+    } else if (req.method === "GET" && archivo) {
+      res.writeHead(200, { "Content-Type": archivo.tipo }).end(archivo.contenido);
+    } else {
+      res.writeHead(503, { "Content-Type": "application/json; charset=utf-8" }).end(JSON.stringify({ ok: false, error: error.message }));
+    }
   }).listen(Number(process.env.PORT || 3200));
 }
 if (config) await arrancar(config);
