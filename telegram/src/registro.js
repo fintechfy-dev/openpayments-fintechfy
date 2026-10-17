@@ -38,10 +38,24 @@ export function crearRegistro(db) {
     permiso: db.prepare('SELECT * FROM permisos WHERE permiso_id = ?'),
     permisoDe: db.prepare('SELECT * FROM permisos WHERE participacion_id = ? ORDER BY creado_en DESC, rowid DESC LIMIT 1'),
     participacionesEn: db.prepare('SELECT * FROM participaciones WHERE natillera_id = ? ORDER BY rowid'),
+    guardarCobro: db.prepare(
+      `INSERT INTO cobros (participacion_id, periodo, monto, estado, motivo, intentado_en) VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT (participacion_id, periodo) DO UPDATE SET monto = excluded.monto, estado = excluded.estado, motivo = excluded.motivo, intentado_en = excluded.intentado_en`,
+    ),
+    cobro: db.prepare('SELECT * FROM cobros WHERE participacion_id = ? AND periodo = ?'),
     guardarNombre: db.prepare('UPDATE participaciones SET nombre = ? WHERE participacion_id = ? AND nombre IS NULL'),
     participacionesDe: db.prepare('SELECT * FROM participaciones WHERE telegram_id = ? ORDER BY rowid DESC'),
     natillerasPorNombre: db.prepare('SELECT * FROM natilleras WHERE lower(nombre) = lower(?) OR natillera_id = ? ORDER BY creada_en DESC'),
     natillerasDelAdmin: db.prepare('SELECT * FROM natilleras WHERE admin_telegram_id = ? ORDER BY creada_en DESC'),
+    cursor: db.prepare('SELECT valor FROM cursores WHERE fuente = ?'),
+    permisoRol: db.prepare('SELECT permiso_id FROM permisos_rol WHERE tipo = ?'),
+    guardarPermisoRol: db.prepare(
+      'INSERT INTO permisos_rol (tipo, permiso_id, guardado_en) VALUES (?, ?, ?) ON CONFLICT (tipo) DO UPDATE SET permiso_id = excluded.permiso_id, guardado_en = excluded.guardado_en',
+    ),
+    foto: db.prepare('SELECT valor FROM fotos WHERE contract_id = ?'),
+    guardarFoto: db.prepare('INSERT INTO fotos (contract_id, valor) VALUES (?, ?) ON CONFLICT (contract_id) DO UPDATE SET valor = excluded.valor'),
+    natilleras: db.prepare('SELECT * FROM natilleras ORDER BY creada_en DESC'),
+    guardarCursor: db.prepare('INSERT INTO cursores (fuente, valor) VALUES (?, ?) ON CONFLICT (fuente) DO UPDATE SET valor = excluded.valor'),
   };
 
   return {
@@ -93,11 +107,35 @@ export function crearRegistro(db) {
     permiso: (id) => sql.permiso.get(id),
     // El último permiso pedido por una participación: su tope se muestra en «Mi natillera».
     permisoDe: (participacionId) => sql.permisoDe.get(participacionId),
+    // Cobros de cuota hechos por el bot (externo/cobros.js): el último intento de cada periodo.
+    guardarCobro({ participacionId, periodo, monto, estado, motivo = null, intentadoEn }) {
+      sql.guardarCobro.run(participacionId, periodo, monto, estado, motivo, intentadoEn);
+    },
+    cobro: (participacionId, periodo) => sql.cobro.get(participacionId, periodo),
     // Para «Mi natillera»: todas las de una persona, la más reciente primero.
     participacionesDe: (telegramId) => sql.participacionesDe.all(telegramId),
     natillerasDelAdmin: (telegramId) => sql.natillerasDelAdmin.all(telegramId),
     // Para /reloj: por nombre sin importar mayúsculas, o por su id.
     natillerasPorNombre: (texto) => sql.natillerasPorNombre.all(texto, texto),
+    // El último aviso leído de una fuente (avisos/pagos.js); undefined si nunca leyó.
+    cursor: (fuente) => sql.cursor.get(fuente)?.valor,
+    guardarCursor(fuente, valor) {
+      sql.guardarCursor.run(fuente, valor);
+    },
+    // El permiso vigente de la billetera del grupo o de la financiera (bot/comandos/permisos.js).
+    permisoRol: (tipo) => sql.permisoRol.get(tipo)?.permiso_id,
+    guardarPermisoRol(tipo, permisoId, guardadoEn = new Date().toISOString()) {
+      sql.guardarPermisoRol.run(tipo, permisoId, guardadoEn);
+    },
+    // La última foto de un contrato que vio avisos/estados.js; undefined si nunca lo vio.
+    foto(contractId) {
+      const fila = sql.foto.get(contractId);
+      return fila ? JSON.parse(fila.valor) : undefined;
+    },
+    guardarFoto(contractId, foto) {
+      sql.guardarFoto.run(contractId, JSON.stringify(foto));
+    },
+    natilleras: () => sql.natilleras.all(),
 
     // Para los avisos que solo traen el contrato que los originó.
     porContrato(contractId) {

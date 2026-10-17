@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import type { NombreIcono } from "@/lib/natillera";
+import { SECCION_CREDITOS_VISIBLE } from "@/lib/secciones";
 import { Icono } from "./Icono";
 
 const ENLACES: { href: string; texto: string; corto?: string; icono: NombreIcono }[] = [
   { href: "/natilleras", texto: "Natilleras", icono: "grupo" },
-  { href: "/creditos", texto: "Créditos", icono: "credito" },
+  ...(SECCION_CREDITOS_VISIBLE ? [{ href: "/creditos", texto: "Créditos", icono: "credito" as const }] : []),
   { href: "/pagos", texto: "Registro de pagos", corto: "Pagos", icono: "billetera" },
   { href: "/bitacora", texto: "Bitácora", icono: "calendario" },
 ];

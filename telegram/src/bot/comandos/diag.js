@@ -17,7 +17,7 @@ function servicio(url, extra = '') {
 
 // `sesiones`: cuántas hay guardadas; undefined si no hay base abierta y null si no respondió.
 export function textoDiagnostico(config, { encendidoMs, sesiones }) {
-  const avisos = config.avisos.puerto ? `webhook en el puerto ${config.avisos.puerto}` : 'flujo en vivo';
+  const avisos = config.avisos.puerto ? `webhook en el puerto ${config.avisos.puerto}` : 'cambios de estado en staging';
   return [
     'Diagnóstico del bot',
     `Encendido hace: ${duracion(encendidoMs)}`,

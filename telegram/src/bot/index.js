@@ -11,6 +11,8 @@ import { cobros } from './comandos/cobros.js';
 import { invitar } from './comandos/invitar.js';
 import { administrar } from './comandos/administrar.js';
 import { reloj } from './comandos/reloj.js';
+import { permisos } from './comandos/permisos.js';
+import { crearCobros } from '../externo/cobros.js';
 import { crearUnirseBot, flujoUnirse } from './flujos/unirse.js';
 import { crearPrestamoBot, flujoPrestamo } from './flujos/prestamo.js';
 
@@ -70,10 +72,11 @@ function guardiaDeSecretos(secretos, log) {
 // `db` es la base de abrirBaseDeDatos(); sin ella, las sesiones quedan en memoria y se pierden al
 // reiniciar. `crearNatillera(datos, ctx)` crea la natillera en staging; sin ella, /crear termina en una
 // vista previa. `servicio` (cliente de staging) y `registro` activan los botones de cobro de los avisos;
-// con `unirse` (src/externo/unirse.js) además el enlace de invitación, unirse y autorizar.
-// `botInfo`, `cliente`, `inicio`, `ahora` y `hoy` son opcionales: en las pruebas evitan getMe y la red
-// y fijan el reloj y la fecha.
-export function crearBot(config, { log, db, crearNatillera, servicio, registro, unirse, web, botInfo, cliente, inicio, ahora, hoy } = {}) {
+// con `unirse` (src/externo/unirse.js) además el enlace de invitación, unirse y autorizar. Con `pagos`
+// (cliente de la API de pagos), /reloj cobra de verdad las cuotas que staging registra (externo/cobros.js).
+// `botInfo`, `cliente`, `inicio`, `ahora`, `hoy` y `esperar` son opcionales: en las pruebas evitan getMe
+// y la red y fijan el reloj y la fecha.
+export function crearBot(config, { log, db, crearNatillera, servicio, registro, unirse, web, pagos, botInfo, cliente, inicio, ahora, hoy, esperar } = {}) {
   const bot = new Bot(config.botToken, { botInfo, client: cliente });
 
   bot.api.config.use(guardiaDeSecretos(config.secretos, log));
@@ -120,7 +123,11 @@ export function crearBot(config, { log, db, crearNatillera, servicio, registro, 
     app.use(cobros({ servicio, registro, log }));
     app.use(administrar({ config, registro, servicio, log, ahora }));
     app.use(prestamoBot.comandos);
-    app.use(reloj({ config, registro, servicio, log }));
+    const cobrador = pagos && config.cobrarCuotasBot
+      ? crearCobros({ registro, servicio, pagos, log, esperar, avisar: (chatId, texto) => bot.api.sendMessage(chatId, texto, { parse_mode: 'HTML' }) })
+      : undefined;
+    app.use(reloj({ config, registro, servicio, log, cobrador }));
+    if (pagos) app.use(permisos({ config, registro, pagos, log }));
   }
   if (conUnirse) {
     app.use(unirseBot.comandos);

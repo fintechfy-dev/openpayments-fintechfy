@@ -1,6 +1,7 @@
 // La única puerta del bot a la API de pagos (pagos/API.md, contrato en
-// https://natillera-pagos.azurewebsites.net/api/openapi.json). El bot solo pide, consulta y cancela
-// permisos; cobrar y pagar lo hace staging. Ningún comando ni flujo hace fetch a esta API: reciben este
+// https://natillera-pagos.azurewebsites.net/api/openapi.json). El bot pide, consulta y cancela
+// permisos, y cobra las cuotas que staging registra (externo/cobros.js); los demás pagos los hace
+// staging. Ningún comando ni flujo hace fetch a esta API: reciben este
 // cliente por parámetro, y así las pruebas corren sin red.
 
 // Un 4xx/5xx de la API de pagos. El mensaje nombra la ruta, el estado y su `error`, nunca las llaves.
@@ -64,5 +65,15 @@ export function crearClientePagos({ url, apiKey, llaves, fetch = globalThis.fetc
 
     // POST /api/permisos/{id}/cancelar → { estado: 'cancelado' }.
     cancelarPermiso: (permisoId) => llamar('POST', `/api/permisos/${encodeURIComponent(permisoId)}/cancelar`),
+
+    // POST /api/open-payments/cobrar-cuota → { periodo, monto }. Saca la cuota de la billetera del
+    // participante con su permiso y la deja en la cuenta madre. Idempotente por 5 minutos con el mismo
+    // cuerpo; un 503 es que el pago sigue en curso.
+    cobrarCuota: ({ grantId, walletOrigen, monto, referencia, periodo }) =>
+      llamar('POST', '/api/open-payments/cobrar-cuota', { grantId, walletOrigen, monto, referencia, periodo }),
+
+    // GET /api/avisos?desde=<cursor> → [{ id, evento, datos, ... }], en orden y de a 100 como máximo.
+    // Son los PagoCompletado y PagoFallido de cada pago que terminó (avisos/pagos.js).
+    avisos: (desde) => llamar('GET', `/api/avisos${desde ? `?desde=${encodeURIComponent(desde)}` : ''}`),
   };
 }

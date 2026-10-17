@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { crearBotDePrueba, mensaje, boton, textos, botones, BOT_INFO } from './helpers/bot-prueba.js';
 import { validarBilletera } from '../src/natillera/reglas.js';
-import { estadoDe, AccionRechazadaError } from '../src/externo/cliente.js';
+import { estadoDe, AccionRechazadaError, ServicioExternoError } from '../src/externo/cliente.js';
 import { parametrosParticipacion } from '../src/externo/parametros.js';
 import { crearUnirse } from '../src/externo/unirse.js';
 import { crearRegistro } from '../src/registro.js';
@@ -15,6 +15,7 @@ import {
   PREGUNTA_BILLETERA,
   TEXTO_AHORA_NO,
   TEXTO_ENLACE_INVALIDO,
+  TEXTO_NATILLERA_YA_NO_ESTA,
   TEXTO_NO_AUTORIZO,
   TEXTO_NO_SE_PUDO_AUTORIZAR,
   datoAutorizar,
@@ -59,7 +60,7 @@ function contratoNatillera(estado = 0) {
 }
 
 // Staging falso: la natillera en `estadoNatillera`, las participaciones que se crean y los triggers.
-function stagingFalso({ estadoNatillera = 0, estadoParticipacion = 0, rechazaAutorizar = false } = {}) {
+function stagingFalso({ estadoNatillera = 0, estadoParticipacion = 0, rechazaAutorizar = false, borrada = false } = {}) {
   const creados = [];
   const disparos = [];
   return {
@@ -68,6 +69,8 @@ function stagingFalso({ estadoNatillera = 0, estadoParticipacion = 0, rechazaAut
     // Se puede cambiar a mitad de una prueba: la natillera arranca mientras alguien se une.
     estadoNatillera,
     async leerContrato(id) {
+      // Staging limpió los contratos de prueba: el bot todavía los tiene en su registro.
+      if (borrada) throw new ServicioExternoError(`GET /api/contracts/${id}`, 404, `Contrato '${id}' no encontrado`);
       if (id === 'c-nat') return contratoNatillera(this.estadoNatillera);
       return { currentStateRaw: { EstadoParticipacion: tipado('Integer', estadoParticipacion) } };
     },
@@ -182,6 +185,17 @@ test('un enlace que no es de ninguna natillera, o de una que ya arrancó, lo dic
   await bot.handleUpdate(mensaje(`/start ${CODIGO}`, { chatId: BETO }));
 
   assert.deepEqual(textos(llamadas), [TEXTO_ENLACE_INVALIDO, textoCerrada('Los <Amigos>')]);
+  db.close();
+});
+
+test('el enlace de una natillera que staging ya borró lo dice en vez de fallar, aunque la persona ya estuviera', async () => {
+  const { bot, llamadas, registro, servicio, db } = preparar({ borrada: true });
+  await bot.handleUpdate(mensaje(`/start ${CODIGO}`, { chatId: BETO }));
+  registro.guardarParticipacion({ participacionId: 'p-ana', contractId: 'c-ana', natilleraId: 'nat-1', telegramId: 100 });
+  await bot.handleUpdate(mensaje(`/start ${CODIGO}`, { chatId: 100 }));
+
+  assert.deepEqual(textos(llamadas), [TEXTO_NATILLERA_YA_NO_ESTA, TEXTO_NATILLERA_YA_NO_ESTA]);
+  assert.equal(servicio.creados.length, 0);
   db.close();
 });
 

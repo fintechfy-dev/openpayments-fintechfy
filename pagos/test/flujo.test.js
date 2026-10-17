@@ -195,6 +195,20 @@ test("llaves: staging y clientes no se cruzan, la vuelta es pública y el cuerpo
   assert.equal((await app.staging("inventada", {})).estado, 404);
 });
 
+test("la cuota también la cobra el bot con la llave de clientes, y un reintento suyo no cobra dos veces", async () => {
+  app = await levantar();
+  const { permisoId } = await app.aprobarPermiso({ tipo: "recurrente", wallet: ANA });
+  const delBot = () => app.clientes("POST", "/api/open-payments/cobrar-cuota", cuota(permisoId));
+  const primera = await delBot();
+  assert.equal(primera.estado, 200);
+  assert.deepEqual(primera.cuerpo, { periodo: 1, monto: 50000 });
+  assert.equal((await delBot()).estado, 200);
+  assert.equal(app.contar("saliente"), 1);
+  // Solo la cuota: lo demás sigue siendo de staging.
+  assert.equal((await app.clientes("POST", "/api/open-payments/cobrar", cuota(permisoId))).estado, 401);
+  assert.equal((await app.clientes("POST", "/api/open-payments/pagar", { walletDestino: ANA.id, monto: 1000, referencia: "x" })).estado, 401);
+});
+
 test("llaves de Open Payments: llegan en cada llamada y nunca quedan en el almacén", async () => {
   app = await levantar();
   const sinLlaves = await app.clientes("POST", "/api/permisos", { tipo: "recurrente", wallet: ANA.id, monto: 1000 }, {});

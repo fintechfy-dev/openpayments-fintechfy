@@ -9,6 +9,8 @@ import { estadoDe } from '../src/externo/cliente.js';
 import {
   BOTON_ABRIR_BILLETERA,
   BOTON_AUTORIZAR,
+  BOTON_ENLACE_NUEVO,
+  TEXTO_ENLACE_GASTADO,
   TEXTO_NO_AUTORIZO,
   TEXTO_NO_SE_PUDO_AUTORIZAR,
   TEXTO_PERMISO_DESCONOCIDO,
@@ -83,14 +85,17 @@ function pagosFalso({ falla = false } = {}) {
     pedidos: [],
     consultas: [],
     estado: 'pendiente',
+    motivo: 'grant_rejected',
     async pedirPermiso(cuerpo) {
       if (falla) throw new PagosError('POST /api/permisos', 422, 'La billetera no existe');
       this.pedidos.push(cuerpo);
-      return { permisoId: PERMISO_ID, urlAprobacion: URL_APROBACION };
+      // Como la API real: cada pedido es un permiso nuevo, con su propio id.
+      const permisoId = this.pedidos.length === 1 ? PERMISO_ID : `p${String(this.pedidos.length).padStart(16, '0')}`;
+      return { permisoId, urlAprobacion: URL_APROBACION };
     },
     async estadoPermiso(id) {
       this.consultas.push(id);
-      return { estado: this.estado, grantId: this.estado === 'aprobado' ? id : null, motivo: this.estado === 'rechazado' ? 'rechazado en la billetera' : null };
+      return { estado: this.estado, grantId: this.estado === 'aprobado' ? id : null, motivo: this.estado === 'rechazado' ? this.motivo : null };
     },
   };
 }
@@ -217,7 +222,28 @@ test('si todavía no lo aprueba, lo dice y deja «Ya aprobé»; si lo rechaza, q
   pagos.estado = 'rechazado';
   await bot.handleUpdate(mensaje(`/start permiso_${PERMISO_ID}`, { chatId: BETO }));
   assert.equal(textos(llamadas).at(-1), TEXTO_NO_AUTORIZO);
+  assert.deepEqual(botones(aBeto(llamadas).at(-1)), [datoAutorizar('par-uno')]);
   assert.equal(servicio.disparos.length, 0);
+  db.close();
+});
+
+test('si la billetera devuelve invalid_interaction (enlace ya abierto o vencido), ofrece un enlace nuevo', async () => {
+  const { bot, llamadas, pagos, servicio, db } = preparar();
+  await betoSeUneYAutoriza(bot);
+  pagos.estado = 'rechazado';
+  pagos.motivo = 'invalid_interaction';
+  await bot.handleUpdate(mensaje(`/start permiso_${PERMISO_ID}`, { chatId: BETO }));
+
+  assert.equal(textos(llamadas).at(-1), TEXTO_ENLACE_GASTADO);
+  const [nuevo] = aBeto(llamadas).at(-1).payload.reply_markup.inline_keyboard.flat();
+  assert.deepEqual(nuevo, { text: BOTON_ENLACE_NUEVO, callback_data: datoAutorizar('par-uno') });
+
+  // El botón pide otro permiso, con otro enlace de aprobación.
+  await bot.handleUpdate(boton(datoAutorizar('par-uno'), { chatId: BETO }));
+  assert.equal(pagos.pedidos.length, 2);
+  assert.equal(textos(llamadas).at(-1), textoAbrirBilletera(150000));
+  assert.equal(servicio.disparos.length, 0);
+  assert.ok(TEXTO_ENLACE_GASTADO.split('\n').length <= 3);
   db.close();
 });
 

@@ -121,6 +121,25 @@ test('/reloj mora causa la mora en cada participación y cuenta solo las que cor
   assert.doesNotMatch(textos(llamadas).at(-1), /Ana/);
 });
 
+test('/reloj reintentar dispara ReintentarPagoLiquidacion en cada participación, el día después de la final', async () => {
+  const { bot, llamadas, disparos } = preparar({
+    estado: natillera({ EstadoNatillera: 3, PeriodoActual: 2 }),
+    rechaza: (contractId) => contractId === 'c-p2',
+  });
+  await bot.handleUpdate(enEquipo('/reloj reintentar test2'));
+  const final = natillera({}).FechaFinal;
+  const siguiente = new Date(Date.parse(`${final}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+  assert.deepEqual(disparos.map((d) => [d.contractId, d.trigger, d.fecha]), [
+    ['c-p1', 'ReintentarPagoLiquidacion', siguiente],
+    ['c-p2', 'ReintentarPagoLiquidacion', siguiente],
+  ]);
+  assert.match(textos(llamadas).at(-1), /^Ana: ✓ ReintentarPagoLiquidacion/);
+  assert.doesNotMatch(textos(llamadas).at(-1), /Beto/);
+
+  await bot.handleUpdate(enEquipo('/reloj reintentar test2 2027-01-05'));
+  assert.equal(disparos.at(-1).fecha, '2027-01-05');
+});
+
 test('una acción que staging rechaza se informa con su motivo', async () => {
   const { bot, llamadas } = preparar({ rechaza: () => true });
   await bot.handleUpdate(enEquipo('/reloj iniciar test2'));

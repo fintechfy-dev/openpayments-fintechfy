@@ -84,9 +84,9 @@ Sale con código 1 solo si encuentra un secreto o un `.env` versionado. El resto
 | `s-video` | Exigido | Video de un pago de punta a punta | ❌ |
 | `s-slides` | Exigido | Presentación final: reto, usuario, solución, Open Payments y aprendizajes | ❌ |
 | `s-subir` | Exigido | Video y presentación en Drive, con copia en el repo | ❌ No hay carpeta para la copia; propuesta: `docs/entrega/` |
-| `s-demo-link` | Exigido | Enlace a la demo a mano | ❌ |
+| `s-demo-link` | Exigido | Enlace a la demo a mano | ⚠️ Enlaces en vivo en `README.md` → «Para revisar» (bot, web, API de pagos, servicio externo y billeteras); falta confirmar si la organización pide además el enlace en el formulario |
 | `s-form` | Exigido | Enlace del repo en el formulario de Slack | 👥 |
-| `s-opcional` | Recomendado | Diagrama, maquetas, documentación técnica | ✅ Diagrama en `docs/plan-de-trabajo.md`, `design-system/` y `docs/discovery/` |
+| `s-opcional` | Recomendado | Diagrama, maquetas, documentación técnica | ✅ [`docs/tecnica/`](tecnica/) en Mermaid: arquitectura (contexto, piezas y contratos, despliegue en Azure y cinco flujos), maquetas (mapa de pantallas y cada pantalla del bot y de la web) y estados y datos; además `docs/plan-de-trabajo.md`, `design-system/` y `docs/discovery/` |
 | `s-freeze` | Exigido | Después de las 11:00 nadie toca el código | Pendiente |
 | `p-ensayo`, `p-sala`, `p-voto`, `p-cierre` | Dato | Ensayo, sala, voto y cierre | ℹ️ |
 | `p-5min` | Exigido | Cronometrar 5 minutos con presentación y demo | 👥 |

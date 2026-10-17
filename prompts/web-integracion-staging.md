@@ -511,3 +511,11 @@ quita los mocks por favor
 ```
 
 Se borró el índice temporal con la solicitud inventada; no llegó a aprobarse ni a staging.
+
+### 2026-10-17 09:35 (Bogotá) · Claude Code (Claude Opus 5.5)
+
+```text
+Oculta la seccion de creditos ya que no la podriamos proba rlo suficientemente bien.
+```
+
+Claude Code agregó `SECCION_CREDITOS_VISIBLE = false` en `web/src/lib/secciones.ts` y lo usa en el menú, en `src/proxy.ts` (404 antes de pintar el panel), en la página y en la Server Action. Lo comprobó con una sesión local: `/creditos` responde 404 y el menú ya no lo muestra.
