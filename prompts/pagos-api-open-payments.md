@@ -103,3 +103,11 @@ Que la API convierta monedas
 ```
 
 Resultado: antes de cambiar el código, Claude comprobó con cotizaciones reales en la Test Wallet, sin pagos salientes, que hay tasa entre EUR, USD y COP (50.000 COP al grupo costaban 15,08 EUR o 15,74 USD). Los montos siguen en pesos, la moneda del grupo. Si quien recibe está en pesos, el cobro fija el monto; si quien paga está en pesos, la cotización fija lo que sale; si ninguno, el grupo cotiza la referencia sin pagar. El tope de un permiso en otra moneda se cotiza y lleva la mitad de margen por la comisión fija de cada pago. Hay 5 pruebas nuevas con tasas falsas, y cada una de tres roturas a propósito (siempre fijar al recibir, no cerrar el cobro, no convertir el tope) hizo fallar al menos una.
+
+## 7. Prueba en Postman (17 de octubre, madrugada)
+
+```text
+necesito que hagamos una prueba en postman de la implementacion de esta api, haz una prueba postman
+```
+
+Resultado: Claude generó, con un script, una colección de Postman (formato v2.1, importable en la app) y su ambiente con las llaves vacías. Tiene cinco carpetas: salud y contrato, seguridad, permisos (pide y cancela), lecturas, y las 6 operaciones de staging aparte porque mueven dinero. La corrió con la CLI de Postman 1.74.0 contra la API publicada, con las llaves en un ambiente temporal fuera del repo: 22 solicitudes, 51 verificaciones y 0 fallas.
