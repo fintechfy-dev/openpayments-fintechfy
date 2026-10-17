@@ -63,7 +63,8 @@ export function crearPermisos({ config, almacen, wallets, conCandado, ahora = ()
   }
 
   return {
-    async pedir({ tipo, wallet, monto, referencia }, cuenta) {
+    async pedir({ tipo, wallet, monto, referencia, vuelta }, cuenta) {
+      const urlVuelta = leerVuelta(vuelta);
       if (!TIPOS_PERMISO.includes(tipo)) throw new ErrorHttp(400, `tipo debe ser uno de: ${TIPOS_PERMISO.join(", ")}`);
       if (!esMontoValido(monto)) throw new ErrorHttp(400, "monto debe ser un número mayor que 0");
       const url = tipo === "grupo" ? config.walletGrupo : tipo === "financiera" ? config.walletFinanciera : normalizarWallet(wallet);
@@ -107,6 +108,7 @@ export function crearPermisos({ config, almacen, wallets, conCandado, ahora = ()
         wallet: billetera.id,
         monto,
         referencia: referencia ?? null,
+        vuelta: urlVuelta,
         huella: cuenta.huella,
         estado: "pendiente",
         creado: iso(),
@@ -124,19 +126,20 @@ export function crearPermisos({ config, almacen, wallets, conCandado, ahora = ()
     },
 
     // La abre el navegador del participante al volver de su billetera. No lleva llaves: solo verifica
-    // el hash, deja el permiso «aprobando» y lo devuelve al chat del bot, que consulta el estado.
+    // el hash y deja el permiso «aprobando». Devuelve a dónde mandar al participante: la vuelta que
+    // pidió el bot (por ejemplo su chat de Telegram, que luego consulta el estado) o ninguna.
     async retorno(id, consulta) {
       return conCandado(`permiso:${id}`, async () => {
         const permiso = await leer(id);
         if (!permiso) throw new ErrorHttp(404, "Ese permiso no existe");
-        const vueltaAlBot = `https://t.me/${config.botUsuario}?start=permiso_${id}`;
-        if (permiso.estado !== "pendiente") return vueltaAlBot;
+        const salida = () => ({ estado: permiso.estado, vuelta: permiso.vuelta?.replaceAll("{permisoId}", id) ?? null });
+        if (permiso.estado !== "pendiente") return salida();
 
         const resultado = consulta.get("result");
         const interactRef = consulta.get("interact_ref");
         if (resultado || !interactRef) {
           await rechazar(permiso, resultado ?? "la billetera volvió sin interact_ref");
-          return vueltaAlBot;
+          return salida();
         }
         const hashValido = verificarHash({
           nonceCliente: permiso.nonceCliente,
@@ -147,12 +150,12 @@ export function crearPermisos({ config, almacen, wallets, conCandado, ahora = ()
         });
         if (!hashValido) {
           await rechazar(permiso, "el hash de la vuelta no coincide");
-          return vueltaAlBot;
+          return salida();
         }
         permiso.estado = "aprobando";
         permiso.interactRef = interactRef;
         await guardar(permiso);
-        return vueltaAlBot;
+        return salida();
       });
     },
 
@@ -231,4 +234,20 @@ export function crearPermisos({ config, almacen, wallets, conCandado, ahora = ()
       });
     },
   };
+}
+
+// La dirección a la que vuelve el participante la manda quien pide el permiso (el bot), no la
+// configuración: así la API no necesita saber de Telegram. «{permisoId}» se reemplaza por el id, que
+// quien pide todavía no conoce. Solo https, para que la vuelta no termine en un esquema inesperado.
+function leerVuelta(vuelta) {
+  if (vuelta === undefined || vuelta === null || vuelta === "") return null;
+  if (typeof vuelta !== "string" || vuelta.length > 2000) throw new ErrorHttp(400, "vuelta debe ser una dirección https");
+  let url;
+  try {
+    url = new URL(vuelta.replaceAll("{permisoId}", "p0"));
+  } catch {
+    throw new ErrorHttp(400, "vuelta debe ser una dirección https");
+  }
+  if (url.protocol !== "https:") throw new ErrorHttp(400, "vuelta debe ser una dirección https");
+  return vuelta;
 }

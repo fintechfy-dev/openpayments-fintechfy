@@ -49,7 +49,8 @@ export function crearServidor({ config, almacen, permisos, operaciones, pagos, a
     }],
     // Pública: la abre el navegador del participante al volver de su billetera.
     ["GET", /^\/api\/permisos\/(p[0-9a-f]{16})\/retorno$/, async (req, [id], url) => {
-      return { redirigir: await permisos.retorno(id, url.searchParams) };
+      const { estado, vuelta } = await permisos.retorno(id, url.searchParams);
+      return vuelta ? { redirigir: vuelta } : { pagina: paginaDeVuelta(estado) };
     }],
 
     // Lo que leen el bot y la web: los avisos de pago y el registro de las cuatro etapas.
@@ -72,7 +73,10 @@ export function crearServidor({ config, almacen, permisos, operaciones, pagos, a
       if (!ruta) throw new ErrorHttp(404, "Ruta desconocida");
       const parametros = url.pathname.match(ruta[1]).slice(1);
       const resultado = await ruta[2](req, parametros, url);
-      if (resultado.redirigir) {
+      if (resultado.pagina) {
+        estado = 200;
+        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" }).end(resultado.pagina);
+      } else if (resultado.redirigir) {
         estado = 302;
         res.writeHead(302, { Location: resultado.redirigir, "Cache-Control": "no-store" }).end();
       } else {
@@ -89,6 +93,15 @@ export function crearServidor({ config, almacen, permisos, operaciones, pagos, a
       console.log(`${req.method} ${url.pathname} ${estado} ${Date.now() - inicio}ms`);
     }
   });
+}
+
+// Sin vuelta (por ejemplo los permisos del grupo y de la financiera, que aprueba Willy), el navegador
+// se queda aquí. El texto no dice «aprobado»: el permiso se termina cuando alguien lo consulta con las llaves.
+function paginaDeVuelta(estado) {
+  const texto = estado === "rechazado" || estado === "cancelado"
+    ? "No se aprobó el permiso. Puedes cerrar esta ventana."
+    : "Listo, recibimos tu respuesta. Puedes cerrar esta ventana y volver al chat.";
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Natillera 2.0</title></head><body style="font-family:system-ui,sans-serif;max-width:32rem;margin:4rem auto;padding:0 1rem;line-height:1.5"><p>${texto}</p></body></html>`;
 }
 
 function responder(res, estado, cuerpo, encabezados = {}) {
