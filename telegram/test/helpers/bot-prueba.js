@@ -49,7 +49,7 @@ export function crearFetchFalso(llamadas) {
   };
 }
 
-export function crearBotDePrueba({ env = {}, log = logSilencioso, db, inicio, ahora, hoy, crearNatillera, servicio, registro, unirse, web } = {}) {
+export function crearBotDePrueba({ env = {}, log = logSilencioso, db, inicio, ahora, hoy, crearNatillera, servicio, registro, unirse, web, pagos, esperar } = {}) {
   const llamadas = [];
   const config = loadConfig({ ...ENV_DE_PRUEBA, ...env });
   const bot = crearBot(config, {
@@ -60,6 +60,8 @@ export function crearBotDePrueba({ env = {}, log = logSilencioso, db, inicio, ah
     registro,
     unirse,
     web,
+    pagos,
+    esperar,
     botInfo: BOT_INFO,
     cliente: { fetch: crearFetchFalso(llamadas) },
     inicio,

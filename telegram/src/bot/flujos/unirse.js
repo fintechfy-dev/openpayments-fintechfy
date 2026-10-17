@@ -1,7 +1,7 @@
 import { Composer, InlineKeyboard } from 'grammy';
 import { escaparHTML, formatoCOP, formatoPorcentaje } from '../../formato.js';
 import { formatoFecha, validarBilletera } from '../../natillera/reglas.js';
-import { AccionRechazadaError } from '../../externo/cliente.js';
+import { AccionRechazadaError, ServicioExternoError } from '../../externo/cliente.js';
 import { ID_PERMISO, PERMISO } from '../../externo/pagos.js';
 import { NATILLERA_CREADA, PARTICIPACION_PENDIENTE, topeDelPermiso } from '../../externo/unirse.js';
 
@@ -41,6 +41,7 @@ export function textoReglas(estado) {
 }
 
 export const TEXTO_ENLACE_INVALIDO = 'Ese enlace no corresponde a ninguna natillera. Pídele a quien te invitó que te lo mande otra vez.';
+export const TEXTO_NATILLERA_YA_NO_ESTA = 'Esa natillera ya no está activa. Pídele a quien te invitó el enlace de la natillera nueva.';
 export const textoCerrada = (nombre) => `${nombreHTML(nombre)} ya arrancó y no recibe más personas.`;
 export const textoYaEstas = (nombre) => `Ya estás en ${nombreHTML(nombre)} y tu cobro está autorizado. Te aviso cada vez que se cobre una cuota.`;
 export const textoFaltaAutorizar = (nombre) => `Ya te inscribiste en ${nombreHTML(nombre)}. Te falta autorizar el cobro de tus cuotas.`;
@@ -76,6 +77,12 @@ export const textoAbrirBilletera = (tope) =>
   `Abre tu billetera y aprueba el cobro, con tope de ${formatoCOP(tope)}. Al terminar, la billetera te trae de vuelta aquí.\nSi no te trae, vuelve tú y toca «${BOTON_YA_APROBE}».`;
 export const TEXTO_PERMISO_PENDIENTE = `Todavía no veo la aprobación en tu billetera. Cuando la apruebes, toca «${BOTON_YA_APROBE}».`;
 export const TEXTO_PERMISO_DESCONOCIDO = 'No encuentro esa autorización. Abre el enlace de invitación otra vez para autorizar el cobro.';
+// La billetera devuelve `grant_rejected` cuando la persona dice que no. Otro motivo, como
+// `invalid_interaction`, es que el enlace ya se había abierto o se venció: ese enlace no sirve más.
+export const RECHAZO_DE_LA_PERSONA = 'grant_rejected';
+export const BOTON_ENLACE_NUEVO = 'Pedir un enlace nuevo';
+export const TEXTO_ENLACE_GASTADO =
+  'Tu billetera no recibió la aprobación: ese enlace ya se había abierto o se venció, y sirve una sola vez.\nPide uno nuevo y ábrelo con tu sesión de la billetera ya iniciada.';
 
 export function textoAvisoAdmin(persona, nombreNatillera, inscritos, cupo) {
   return `🐷 ${escaparHTML(persona ?? 'Alguien')} se unió a ${nombreHTML(nombreNatillera)}. Van ${inscritos} de ${cupo} para arrancar.`;
@@ -156,7 +163,17 @@ export function crearUnirseBot({ registro, unirse, motor, log }) {
       await ctx.reply(TEXTO_ENLACE_INVALIDO);
       return;
     }
+    try {
+      await abrirInvitacionDe(ctx, natillera, codigo);
+    } catch (error) {
+      // El enlace es de una natillera que ya no está en staging (por ejemplo, se limpiaron las de prueba).
+      if (!(error instanceof ServicioExternoError && error.estado === 404)) throw error;
+      log.warn(`El enlace de ${natillera.natillera_id} apunta a un contrato que ya no está en staging: ${error.detalle}`);
+      await ctx.reply(TEXTO_NATILLERA_YA_NO_ESTA);
+    }
+  }
 
+  async function abrirInvitacionDe(ctx, natillera, codigo) {
     // La misma persona dos veces: no se inscribe de nuevo (US-003, casos borde).
     const participacion = registro.participacionEn(natillera.natillera_id, ctx.from.id);
     if (participacion) {
@@ -276,7 +293,10 @@ export function crearUnirseBot({ registro, unirse, motor, log }) {
       await ctx.reply(TEXTO_PERMISO_PENDIENTE, { reply_markup: new InlineKeyboard().text(BOTON_YA_APROBE, datoYaAprobe(permisoId)) });
     } else {
       log.info(`El permiso ${permisoId} quedó ${resultado.estado}: ${resultado.motivo ?? 'sin motivo'}`);
-      await ctx.reply(TEXTO_NO_AUTORIZO);
+      // La participación sigue pendiente: con el botón se pide un permiso nuevo, con otro enlace.
+      const otraVez = new InlineKeyboard().text(BOTON_ENLACE_NUEVO, datoAutorizar(participacion.participacion_id));
+      const dijoQueNo = resultado.motivo === RECHAZO_DE_LA_PERSONA;
+      await ctx.reply(dijoQueNo ? TEXTO_NO_AUTORIZO : TEXTO_ENLACE_GASTADO, { reply_markup: otraVez });
     }
   }
 

@@ -59,7 +59,7 @@ test('/diag nunca muestra secretos y de las URL solo enseña el origen', async (
   await bot.handleUpdate(mensaje('/diag', { chatId: CHAT_EQUIPO }));
 
   const texto = llamadas[0].payload.text;
-  assert.match(texto, /Servicio externo: https:\/\/externo\.example · avisos por flujo en vivo/);
+  assert.match(texto, /Servicio externo: https:\/\/externo\.example · avisos por cambios de estado en staging/);
   assert.match(texto, /Índice de la web: http:\/\/localhost:3000\n/);
   assert.match(texto, /Servicio de pagos: http:\/\/localhost:3001\n/);
   for (const prohibido of [TOKEN_DE_PRUEBA, 'llave-xyz', 'llave-web', 'llave-pagos', 'clave-privada-b64', 'clave', '/api/v1', '/secreto']) {

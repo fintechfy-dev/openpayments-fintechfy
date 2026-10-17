@@ -38,9 +38,9 @@ const botonObligacion = (c) => {
   return actividadId && new InlineKeyboard().text(BOTON_PAGAR_OBLIGACION, datoBotonObligacion(actividadId));
 };
 
-const PLATA_UBICADA = 'La plata la guarda Financiera Aliada, a nombre de la natillera.';
+export const PLATA_UBICADA = 'La plata la guarda Financiera Aliada, a nombre de la natillera.';
 const REVISA_SALDO = 'Revisa que tu billetera tenga saldo y vuelve a tocar el botón.';
-const LO_REVISAMOS = 'Ya lo estamos revisando; no tienes que hacer nada.';
+export const LO_REVISAMOS = 'Ya lo estamos revisando; no tienes que hacer nada.';
 
 export const AVISOS = Object.freeze({
   // Viene de la natillera (por el bridge que cuenta validados): también confirma que los bridges corren.

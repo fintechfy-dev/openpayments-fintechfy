@@ -111,6 +111,15 @@ test('con la API de pagos se exigen su llave y las de Open Payments, y las dos s
   assert.equal(loadConfig(ENV_DE_PRUEBA).pagos.url, undefined);
 });
 
+test('el bot no cobra cuotas salvo COBRAR_CUOTAS_BOT=si, y eso exige la API de pagos', () => {
+  const conPagos = { ...ENV_DE_PRUEBA, ...PAGOS, PAGOS_URL: 'https://pagos.example' };
+  assert.equal(loadConfig(conPagos).cobrarCuotasBot, false);
+  assert.equal(loadConfig({ ...conPagos, COBRAR_CUOTAS_BOT: 'no' }).cobrarCuotasBot, false);
+  assert.equal(loadConfig({ ...conPagos, COBRAR_CUOTAS_BOT: 'SI' }).cobrarCuotasBot, true);
+  assert.deepEqual(erroresDe({ ...conPagos, COBRAR_CUOTAS_BOT: 'true' }), ['COBRAR_CUOTAS_BOT debe ser «si» o «no».']);
+  assert.deepEqual(erroresDe({ ...ENV_DE_PRUEBA, COBRAR_CUOTAS_BOT: 'si' }), ['COBRAR_CUOTAS_BOT=si necesita PAGOS_URL.']);
+});
+
 test('el índice de la web pide su llave y el puerto de avisos debe ser válido', () => {
   assert.deepEqual(erroresDe({ ...ENV_DE_PRUEBA, WEB_INDICE_URL: 'http://localhost:3000' }), ['Falta la variable WEB_INDICE_API_KEY.']);
   assert.equal(loadConfig({ ...ENV_DE_PRUEBA, AVISOS_PUERTO: '8080' }).avisos.puerto, 8080);

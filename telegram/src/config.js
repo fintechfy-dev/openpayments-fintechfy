@@ -96,6 +96,12 @@ export function loadConfig(env) {
   const opWallet = texto('OP_WALLET_ADDRESS', { obligatoria: conPagos });
   const opKeyId = texto('OP_KEY_ID', { obligatoria: conPagos });
   const opPrivateKey = texto('OP_PRIVATE_KEY', { obligatoria: conPagos });
+  // Quién cobra las cuotas: staging en modo real ya llama a la API de pagos por cada cuota. Si el bot
+  // también cobra, la cuota sale dos veces de la billetera. Por eso el bot solo cobra si se le pide
+  // (`si`), para cuando staging esté en modo de prueba.
+  const cobrarCuotas = texto('COBRAR_CUOTAS_BOT', { obligatoria: false })?.toLowerCase();
+  if (cobrarCuotas !== undefined && !['si', 'no'].includes(cobrarCuotas)) errores.push('COBRAR_CUOTAS_BOT debe ser «si» o «no».');
+  if (cobrarCuotas === 'si' && !conPagos) errores.push('COBRAR_CUOTAS_BOT=si necesita PAGOS_URL.');
   // Formulario de la Mini App (miniapp/). Sin ella, /crear pregunta todo en el chat.
   const miniappUrl = url('MINIAPP_URL', { soloHttps: true });
 
@@ -114,6 +120,7 @@ export function loadConfig(env) {
     avisos: Object.freeze({ puerto: avisosPuerto }),
     pagosUrl,
     pagos: Object.freeze({ url: pagosUrl, apiKey: pagosApiKey, llaves: Object.freeze({ wallet: opWallet, keyId: opKeyId, privateKey: opPrivateKey }) }),
+    cobrarCuotasBot: cobrarCuotas === 'si',
     miniappUrl,
     dbPath,
     secretos: Object.freeze(listaDeSecretos(botToken, externoToken, webIndiceApiKey, pagosApiKey, opPrivateKey)),

@@ -24,6 +24,7 @@ El laboratorio `playground/open-payments-lab` del servicio externo se leyó como
 | Quién llama | Ruta | Llave | Llaves de Open Payments |
 |---|---|---|---|
 | Staging | `POST /api/open-payments/{cobrar-cuota, cobrar, pagar, desembolsar, pagar-con-permiso, aportar-con-permiso}` | `X-Api-Key` = `API_KEY_STAGING` | Sí |
+| Bot | `POST /api/open-payments/cobrar-cuota`: el bot orquesta el cobro de las cuotas que staging registra (`telegram/INTEGRACION.md`). Las demás operaciones siguen siendo solo de staging | `X-Api-Key` = `API_KEY_CLIENTES` (o `API_KEY_STAGING`) | Sí |
 | Bot | `POST /api/permisos` con `{ tipo, wallet, monto, referencia, vuelta }` → `201 { permisoId, urlAprobacion }` | `X-Api-Key` = `API_KEY_CLIENTES` | Sí |
 | Bot | `GET /api/permisos/{permisoId}` → `{ estado, grantId, motivo }` | `API_KEY_CLIENTES` | Sí, la primera vez después de la vuelta |
 | Bot | `POST /api/permisos/{permisoId}/cancelar` | `API_KEY_CLIENTES` | Sí, si estaba aprobado |

@@ -36,9 +36,10 @@ export function crearServidor({ config, almacen, permisos, operaciones, pagos, a
       cuerpo: { ok: true, almacen: almacen.nombre, walletGrupo: config.walletGrupo, walletFinanciera: config.walletFinanciera, simuladas: [...config.simuladas] },
     })],
 
-    // Lo que llama staging: los cobros y los pagos.
+    // Lo que llama staging: los cobros y los pagos. La cuota la cobra también el bot, que orquesta:
+    // staging registra la cuota y el bot mueve la plata con el permiso del participante.
     ["POST", /^\/api\/open-payments\/([a-z-]+)$/, async (req, [operacion]) => {
-      exigirLlave(req, config.llaveStaging);
+      exigirLlave(req, operacion === "cobrar-cuota" ? [config.llaveStaging, config.llaveClientes] : config.llaveStaging);
       const crudo = await leerJson(req);
       const cuerpo = sinCredenciales(crudo);
       const llave = llaveIdempotencia(`/api/open-payments/${operacion}`, cuerpo);
@@ -129,10 +130,14 @@ function responder(res, estado, cuerpo, encabezados = {}) {
   res.end(JSON.stringify(cuerpo));
 }
 
+// `esperada` es una llave o una lista de llaves válidas para la ruta.
 function exigirLlave(req, esperada) {
   const dada = Buffer.from(req.headers["x-api-key"] ?? "");
-  const correcta = Buffer.from(esperada);
-  if (dada.length !== correcta.length || !timingSafeEqual(dada, correcta)) throw new ErrorHttp(401, "Falta X-Api-Key o no es la correcta");
+  const coincide = (llave) => {
+    const correcta = Buffer.from(llave ?? "");
+    return correcta.length > 0 && dada.length === correcta.length && timingSafeEqual(dada, correcta);
+  };
+  if (![esperada].flat().some(coincide)) throw new ErrorHttp(401, "Falta X-Api-Key o no es la correcta");
 }
 
 async function leerJson(req) {

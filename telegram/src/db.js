@@ -57,6 +57,34 @@ export function abrirBaseDeDatos(ruta) {
       monto INTEGER NOT NULL,
       creado_en TEXT NOT NULL
     );
+    -- Cobros de cuota que el bot hizo con la API de pagos: staging registra la cuota y el bot mueve la
+    -- plata. Uno por participación y periodo, para no cobrar dos veces. estado: cobrado, fallido o en_curso.
+    CREATE TABLE IF NOT EXISTS cobros (
+      participacion_id TEXT NOT NULL REFERENCES participaciones (participacion_id),
+      periodo INTEGER NOT NULL,
+      monto INTEGER NOT NULL,
+      estado TEXT NOT NULL,
+      motivo TEXT,
+      intentado_en TEXT NOT NULL,
+      PRIMARY KEY (participacion_id, periodo)
+    );
+    -- Hasta qué aviso leyó el bot en cada fuente (por ejemplo 'pagos'): al reiniciar no repite avisos.
+    CREATE TABLE IF NOT EXISTS cursores (
+      fuente TEXT PRIMARY KEY,
+      valor TEXT NOT NULL
+    );
+    -- Lo último que el bot vio de cada contrato en staging (avisos/estados.js): avisa solo cuando cambia.
+    -- Los permisos de las billeteras de la plataforma (#67): de grupo salen liquidaciones y premios, de
+    -- financiera los préstamos. Se aprueban una vez; /permisos los revisa y los pide desde el chat del equipo.
+    CREATE TABLE IF NOT EXISTS permisos_rol (
+      tipo TEXT PRIMARY KEY,
+      permiso_id TEXT NOT NULL,
+      guardado_en TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS fotos (
+      contract_id TEXT PRIMARY KEY,
+      valor TEXT NOT NULL
+    );
   `);
   // Columnas que llegaron después de la primera versión: las bases que ya existen las ganan aquí.
   agregarColumna(db, 'natilleras', 'codigo_invitacion', 'TEXT');
