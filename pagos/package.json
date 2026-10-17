@@ -1,0 +1,19 @@
+{
+  "name": "natillera-pagos",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API de pagos de Natillera 2.0: lo único que habla con Open Payments. La llama el servicio externo para cobrar y pagar, y el bot para pedir permisos.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "dependencies": {
+    "@azure/data-tables": "13.3.2",
+    "@interledger/open-payments": "7.4.0"
+  }
+}

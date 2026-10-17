@@ -7,10 +7,14 @@
 export function crearRegistro(db) {
   const sql = {
     guardarNatillera: db.prepare(
-      'INSERT INTO natilleras (natillera_id, contract_id, nombre, admin_telegram_id, creada_en) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO natilleras (natillera_id, contract_id, nombre, admin_telegram_id, creada_en, codigo_invitacion) VALUES (?, ?, ?, ?, ?, ?)',
     ),
+    guardarCodigo: db.prepare('UPDATE natilleras SET codigo_invitacion = ? WHERE natillera_id = ? AND codigo_invitacion IS NULL'),
+    natilleraPorCodigo: db.prepare('SELECT * FROM natilleras WHERE codigo_invitacion = ?'),
+    participacionEn: db.prepare('SELECT * FROM participaciones WHERE natillera_id = ? AND telegram_id = ?'),
+    contarParticipaciones: db.prepare('SELECT count(*) AS n FROM participaciones WHERE natillera_id = ?'),
     guardarParticipacion: db.prepare(
-      'INSERT INTO participaciones (participacion_id, contract_id, natillera_id, telegram_id) VALUES (?, ?, ?, ?)',
+      'INSERT INTO participaciones (participacion_id, contract_id, natillera_id, telegram_id, nombre) VALUES (?, ?, ?, ?, ?)',
     ),
     guardarActividad: db.prepare('INSERT INTO actividades (actividad_id, contract_id, natillera_id) VALUES (?, ?, ?)'),
     guardarObligacion: db.prepare('INSERT INTO obligaciones (contract_id, actividad_id, participacion_id) VALUES (?, ?, ?)'),
@@ -27,14 +31,33 @@ export function crearRegistro(db) {
     obligacionPorContrato: db.prepare('SELECT * FROM obligaciones WHERE contract_id = ?'),
     participantes: db.prepare('SELECT telegram_id FROM participaciones WHERE natillera_id = ?'),
     participacionDe: db.prepare('SELECT * FROM participaciones WHERE telegram_id = ? ORDER BY rowid DESC LIMIT 1'),
+    participacionesEn: db.prepare('SELECT * FROM participaciones WHERE natillera_id = ? ORDER BY rowid'),
+    guardarNombre: db.prepare('UPDATE participaciones SET nombre = ? WHERE participacion_id = ? AND nombre IS NULL'),
+    participacionesDe: db.prepare('SELECT * FROM participaciones WHERE telegram_id = ? ORDER BY rowid DESC'),
+    natillerasDelAdmin: db.prepare('SELECT * FROM natilleras WHERE admin_telegram_id = ? ORDER BY creada_en DESC'),
   };
 
   return {
-    guardarNatillera({ natilleraId, contractId, nombre, adminTelegramId, creadaEn }) {
-      sql.guardarNatillera.run(natilleraId, contractId, nombre, adminTelegramId, creadaEn);
+    guardarNatillera({ natilleraId, contractId, nombre, adminTelegramId, creadaEn, codigoInvitacion = null }) {
+      sql.guardarNatillera.run(natilleraId, contractId, nombre, adminTelegramId, creadaEn, codigoInvitacion);
     },
-    guardarParticipacion({ participacionId, contractId, natilleraId, telegramId }) {
-      sql.guardarParticipacion.run(participacionId, contractId, natilleraId, telegramId);
+    // El código del enlace de invitación (US-003). Solo se pone si no tenía: un enlace ya compartido no
+    // deja de funcionar. Devuelve el código vigente.
+    codigoDeInvitacion(natilleraId, nuevo) {
+      sql.guardarCodigo.run(nuevo, natilleraId);
+      return sql.natillera.get(natilleraId)?.codigo_invitacion;
+    },
+    natilleraPorCodigo: (codigo) => sql.natilleraPorCodigo.get(codigo),
+    participacionEn: (natilleraId, telegramId) => sql.participacionEn.get(natilleraId, telegramId),
+    contarParticipaciones: (natilleraId) => sql.contarParticipaciones.get(natilleraId).n,
+    guardarParticipacion({ participacionId, contractId, natilleraId, telegramId, nombre = null }) {
+      sql.guardarParticipacion.run(participacionId, contractId, natilleraId, telegramId, nombre);
+    },
+    // Las personas de una natillera, en el orden en que se unieron (el panel del administrador).
+    participacionesEn: (natilleraId) => sql.participacionesEn.all(natilleraId),
+    // Para las que se unieron antes de guardar el nombre: se completa la primera vez que se conoce.
+    guardarNombre(participacionId, nombre) {
+      sql.guardarNombre.run(nombre, participacionId);
     },
     guardarActividad({ actividadId, contractId, natilleraId }) {
       sql.guardarActividad.run(actividadId, contractId, natilleraId);
@@ -50,6 +73,9 @@ export function crearRegistro(db) {
     obligacionDe: (actividadId, telegramId) => sql.obligacion.get(actividadId, telegramId),
     // La participación más reciente de una persona: para los avisos que solo traen su id de Telegram.
     participacionDe: (telegramId) => sql.participacionDe.get(telegramId),
+    // Para «Mi natillera»: todas las de una persona, la más reciente primero.
+    participacionesDe: (telegramId) => sql.participacionesDe.all(telegramId),
+    natillerasDelAdmin: (telegramId) => sql.natillerasDelAdmin.all(telegramId),
 
     // Para los avisos que solo traen el contrato que los originó.
     porContrato(contractId) {

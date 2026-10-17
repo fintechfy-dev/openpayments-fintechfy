@@ -7,13 +7,8 @@ const { tool_input: e = {} } = entrada();
 const ruta = rutaDelRepo(e.file_path ?? e.notebook_path);
 if (!ruta) process.exit(0);
 
-// La documentación de pagos/ (README, notas) sí se puede tocar; el código no.
-if (ruta.startsWith("pagos/") && !ruta.endsWith(".md")) {
-  negar(
-    "PreToolUse",
-    `${ruta}: el código de pagos/ lo escribe el equipo a mano (los mentores lo revisan línea por línea; .claude/rules/ia-y-prompts.md). Explica o sugiere el cambio en el chat para que la persona lo escriba.`,
-  );
-}
+// Desde el 16 de octubre en la tarde, pagos/ lo escribe Claude y se declara en AI_USAGE.md (decisión del
+// equipo; .claude/rules/ia-y-prompts.md): ya no hay candado sobre esa carpeta.
 
 if (esArchivoSecreto(ruta)) {
   negar("PreToolUse", `${ruta} guarda secretos: lo llena la persona, nunca Claude (.claude/rules/secretos.md). Si falta una variable, agrégala sin valor al .env.example de la carpeta.`);

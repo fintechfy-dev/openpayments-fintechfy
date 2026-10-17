@@ -35,7 +35,8 @@ Node.js 24 o más nuevo y [grammY](https://grammy.dev). Todo se corre **dentro d
 5. En el chat del equipo, `/diag` muestra la configuración en uso y cuántas sesiones hay guardadas. En cualquier otro chat no responde.
 6. `/crear` (o el botón de la bienvenida) arma la natillera: con `MINIAPP_URL` ofrece el formulario de la Mini App o responder en el chat; sin ella, pregunta en el chat con botones. Las respuestas sobreviven a un reinicio del bot y `/cancelar` deja todo como estaba. Las sesiones quedan en `telegram/data/bot.db` (ignorada por git). Por ahora termina en una vista previa: crear de verdad espera el contrato de #5.
 
-7. `/mi_natillera` (o el botón **Mi natillera** junto al cuadro de texto) abre lo que ve el participante: su ahorro, las reglas y sus cobros. Por ahora con datos de ejemplo, hasta #5.
+7. `/mi_natillera` (o el botón **Mi natillera** junto al cuadro de texto) responde en el chat con lo que hay en staging: cuánto lleva, la próxima cuota o cuántos faltan para arrancar, y el botón que le toca. Sin `SERVICIO_EXTERNO_URL` abre la Mini App, que muestra datos de ejemplo.
+8. `/administrar` es el panel del administrador: abre la Mini App `miniapp/admin/` con cada natillera que administra (nombre y fecha de creación para distinguirlas), quién falta por autorizar, cómo va el arranque y el enlace para compartir. Los datos los lee el bot de staging y viajan en el fragmento del enlace (`#d=...`), que no sale del teléfono; para refrescarlos se vuelve a escribir `/administrar`. Sin `MINIAPP_URL` responde en el chat, un mensaje por natillera. `/invitar` pregunta de cuál natillera si administras varias.
 
 **Mini App:** está en [`miniapp/`](miniapp/): el formulario de crear en `miniapp/` y «Mi natillera» en `miniapp/natillera/`. Se publica en GitHub Pages (`MINIAPP_URL`). Cómo publicarla: [`docs/crear-natillera.md`](docs/crear-natillera.md); la pantalla del participante: [`docs/mi-natillera.md`](docs/mi-natillera.md).
 
