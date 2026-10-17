@@ -11,6 +11,7 @@ import { cobros } from './comandos/cobros.js';
 import { invitar } from './comandos/invitar.js';
 import { administrar } from './comandos/administrar.js';
 import { reloj } from './comandos/reloj.js';
+import { permisos } from './comandos/permisos.js';
 import { crearCobros } from '../externo/cobros.js';
 import { crearUnirseBot, flujoUnirse } from './flujos/unirse.js';
 import { crearPrestamoBot, flujoPrestamo } from './flujos/prestamo.js';
@@ -126,6 +127,7 @@ export function crearBot(config, { log, db, crearNatillera, servicio, registro, 
       ? crearCobros({ registro, servicio, pagos, log, esperar, avisar: (chatId, texto) => bot.api.sendMessage(chatId, texto, { parse_mode: 'HTML' }) })
       : undefined;
     app.use(reloj({ config, registro, servicio, log, cobrador }));
+    if (pagos) app.use(permisos({ config, registro, pagos, log }));
   }
   if (conUnirse) {
     app.use(unirseBot.comandos);

@@ -48,6 +48,10 @@ export function crearRegistro(db) {
     natillerasPorNombre: db.prepare('SELECT * FROM natilleras WHERE lower(nombre) = lower(?) OR natillera_id = ? ORDER BY creada_en DESC'),
     natillerasDelAdmin: db.prepare('SELECT * FROM natilleras WHERE admin_telegram_id = ? ORDER BY creada_en DESC'),
     cursor: db.prepare('SELECT valor FROM cursores WHERE fuente = ?'),
+    permisoRol: db.prepare('SELECT permiso_id FROM permisos_rol WHERE tipo = ?'),
+    guardarPermisoRol: db.prepare(
+      'INSERT INTO permisos_rol (tipo, permiso_id, guardado_en) VALUES (?, ?, ?) ON CONFLICT (tipo) DO UPDATE SET permiso_id = excluded.permiso_id, guardado_en = excluded.guardado_en',
+    ),
     foto: db.prepare('SELECT valor FROM fotos WHERE contract_id = ?'),
     guardarFoto: db.prepare('INSERT INTO fotos (contract_id, valor) VALUES (?, ?) ON CONFLICT (contract_id) DO UPDATE SET valor = excluded.valor'),
     natilleras: db.prepare('SELECT * FROM natilleras ORDER BY creada_en DESC'),
@@ -117,6 +121,11 @@ export function crearRegistro(db) {
     cursor: (fuente) => sql.cursor.get(fuente)?.valor,
     guardarCursor(fuente, valor) {
       sql.guardarCursor.run(fuente, valor);
+    },
+    // El permiso vigente de la billetera del grupo o de la financiera (bot/comandos/permisos.js).
+    permisoRol: (tipo) => sql.permisoRol.get(tipo)?.permiso_id,
+    guardarPermisoRol(tipo, permisoId, guardadoEn = new Date().toISOString()) {
+      sql.guardarPermisoRol.run(tipo, permisoId, guardadoEn);
     },
     // La última foto de un contrato que vio avisos/estados.js; undefined si nunca lo vio.
     foto(contractId) {

@@ -74,6 +74,13 @@ export function abrirBaseDeDatos(ruta) {
       valor TEXT NOT NULL
     );
     -- Lo último que el bot vio de cada contrato en staging (avisos/estados.js): avisa solo cuando cambia.
+    -- Los permisos de las billeteras de la plataforma (#67): de grupo salen liquidaciones y premios, de
+    -- financiera los préstamos. Se aprueban una vez; /permisos los revisa y los pide desde el chat del equipo.
+    CREATE TABLE IF NOT EXISTS permisos_rol (
+      tipo TEXT PRIMARY KEY,
+      permiso_id TEXT NOT NULL,
+      guardado_en TEXT NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS fotos (
       contract_id TEXT PRIMARY KEY,
       valor TEXT NOT NULL

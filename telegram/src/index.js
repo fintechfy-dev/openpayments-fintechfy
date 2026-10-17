@@ -76,7 +76,7 @@ if (servicio) {
 }
 // Avisos de pago (PagoCompletado y PagoFallido): los da la API de pagos, no staging.
 if (pagos) {
-  crearLectorDeAvisosDePago({ pagos, registro, api: bot.api, log }).escuchar({ signal: avisos.signal });
+  crearLectorDeAvisosDePago({ pagos, registro, api: bot.api, log, equipo: config.teamChatId }).escuchar({ signal: avisos.signal });
   log.info('Avisos de pago: leyendo la API de pagos.');
 }
 if (pagos && config.cobrarCuotasBot) log.warn('COBRAR_CUOTAS_BOT=si: el bot cobra las cuotas. Si staging está en modo real, la cuota se cobra dos veces.');

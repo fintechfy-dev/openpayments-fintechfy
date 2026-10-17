@@ -1,6 +1,7 @@
 import { InlineKeyboard } from 'grammy';
 import { escaparHTML, formatoCOP } from '../formato.js';
 import { BOTON_PAGAR_DEUDA, datoBotonDeuda, LO_REVISAMOS, PLATA_UBICADA } from './mensajes.js';
+import { textoAlertaPermiso } from '../bot/comandos/permisos.js';
 
 // Los avisos de pago (telegram/INTEGRACION.md, sección 3): «cobro hecho» no es un aviso de staging; lo
 // sabe solo la API de pagos, que ejecuta cada pago y deja un PagoCompletado o PagoFallido. El bot se
@@ -49,6 +50,16 @@ const TIPOS = {
 
 const EVENTOS = { PagoCompletado: 'completado', PagoFallido: 'fallido' };
 
+// Los pagos que salen de las billeteras de la plataforma: sin su permiso (#67) fallan todos igual.
+const TIPOS_DE_PLATAFORMA = new Set(['liquidacion', 'premio', 'desembolso']);
+const SIN_PERMISO = /no tiene permiso aprobado/i;
+export const ESPERA_ALERTA_MS = 10 * 60_000;
+
+// Si el aviso dice que un pago de la plataforma falló por falta de su permiso, el tipo; si no, null.
+export function faltaPermisoDePlataforma({ evento, datos }) {
+  return evento === 'PagoFallido' && TIPOS_DE_PLATAFORMA.has(datos?.tipo) && SIN_PERMISO.test(String(datos?.motivo ?? '')) ? datos.tipo : null;
+}
+
 // El mensaje de un aviso de pago y a qué chats va, o null si no es de algo que este bot creó (la API
 // de pagos atiende a toda la organización) o si no se anuncia.
 export function avisoDePago({ evento, datos }, registro) {
@@ -88,9 +99,25 @@ const dormir = (ms, signal) =>
   });
 
 // `pagos`: el cliente de la API de pagos (externo/pagos.js). `api`: bot.api, para que cada aviso pase
-// por la guardia de secretos.
-export function crearLectorDeAvisosDePago({ pagos, registro, api, log, esperar = dormir }) {
+// por la guardia de secretos. `equipo`: el chat del equipo, que recibe la alerta cuando falta el permiso
+// de la plataforma; una por tipo cada 10 minutos, porque una liquidación falla una vez por participante.
+export function crearLectorDeAvisosDePago({ pagos, registro, api, log, equipo, esperar = dormir, ahora = Date.now }) {
+  const ultimaAlerta = new Map();
+
+  async function alertarSiFaltaPermiso(aviso) {
+    const tipo = faltaPermisoDePlataforma(aviso);
+    if (!tipo || !equipo) return;
+    if (ahora() - (ultimaAlerta.get(tipo) ?? -Infinity) < ESPERA_ALERTA_MS) return;
+    ultimaAlerta.set(tipo, ahora());
+    try {
+      await api.sendMessage(equipo, textoAlertaPermiso(tipo));
+    } catch (error) {
+      log.warn(`No se pudo alertar al equipo de la falta del permiso: ${error.message}`);
+    }
+  }
+
   async function enviar(aviso) {
+    await alertarSiFaltaPermiso(aviso);
     const mensaje = avisoDePago(aviso, registro);
     if (aviso.datos?.motivo) log.info(`Aviso ${aviso.evento} (${aviso.datos.tipo} ${aviso.datos.referencia}), motivo: ${aviso.datos.motivo}`);
     if (!mensaje) return;
