@@ -1,15 +1,17 @@
 import { Composer, InlineKeyboard } from 'grammy';
 import { escaparHTML, formatoCOP } from '../../formato.js';
-import { formatoFecha } from '../../natillera/reglas.js';
+import { formatoFecha, hoyEnBogota } from '../../natillera/reglas.js';
 import { estadoDe } from '../../externo/cliente.js';
+import { codificarPanel } from '../../natillera/panel.js';
+import { datosDeMiNatillera } from '../../natillera/mi-natillera.js';
 import { BOTON_PAGAR_DEUDA, datoBotonDeuda } from '../../avisos/mensajes.js';
 import { botonAutorizar, datoAutorizar } from '../flujos/unirse.js';
 import { BOTON_PEDIR_PRESTAMO, datoPrestamo } from '../flujos/prestamo.js';
 
 // «Mi natillera» (US-008, #26). Con staging, responde en el chat con lo que hay en sus contratos: un
 // mensaje por natillera en la que está la persona (y por las que administra sin ahorrar en ellas), con
-// el botón que le toca según el estado. Sin staging abre la Mini App (miniapp/natillera/), que todavía
-// muestra datos de ejemplo.
+// el botón que le toca según el estado. Con Mini App, además la abre con esos mismos datos en el enlace
+// (#d=..., src/natillera/mi-natillera.js) y deja el botón del menú de ese chat apuntando a ellos.
 
 export const BOTON_MI_NATILLERA = 'Ver mi natillera';
 export const TEXTO_MENU = 'Mi natillera';
@@ -27,11 +29,18 @@ export const TEXTO_NO_SE_PUDO_LEER = 'No pude traer tu natillera ahora. Vuelve a
 
 // La página vive junto al formulario de crear: <MINIAPP_URL>natillera/. Lleva el usuario del bot para
 // que «Pedir préstamo» sepa a qué chat volver.
-export function urlMiNatillera(config, usuarioBot) {
+// Con `datos` (codificarPanel), van en el fragmento: no salen del teléfono.
+export function urlMiNatillera(config, usuarioBot, datos) {
   const url = new URL('natillera/', config.miniappUrl.endsWith('/') ? config.miniappUrl : `${config.miniappUrl}/`);
   if (usuarioBot) url.searchParams.set('bot', usuarioBot);
+  if (datos) url.hash = `d=${datos}`;
   return url.href;
 }
+
+// /start mi_natillera: el botón «Traer mis datos» de la Mini App cuando se abrió sin datos.
+export const PAYLOAD_MI_NATILLERA = 'mi_natillera';
+export const textoAbrirMiniApp = (cuantas) =>
+  `🐷 Aquí ves ${cuantas === 1 ? 'tu natillera' : `tus ${cuantas} natilleras`} con tus cuotas, las reglas y tus cobros.`;
 
 // ---------- Textos desde el estado de staging (web/INTEGRACION.md, «Los estados») ----------
 
@@ -146,8 +155,38 @@ export function resumenAdministra(n) {
 // Para no llenar el chat ni pegarle de más a staging si alguien está en muchas natilleras.
 export const MAXIMO_NATILLERAS = 5;
 
-export function miNatillera({ config, registro, servicio, log }) {
+export function miNatillera({ config, registro, servicio, log, ahora = () => Date.now(), hoy = () => hoyEnBogota() }) {
   const comandos = new Composer();
+
+  // Lo que ve la persona en la Mini App de una natillera en la que ahorra.
+  function datosMiniApp(ctx, fila, n, p) {
+    const natillera = registro.natillera(fila.natillera_id);
+    const grupo = registro.participacionesEn(fila.natillera_id);
+    const admin = grupo.find((x) => Number(x.telegram_id) === Number(natillera.admin_telegram_id));
+    return datosDeMiNatillera({
+      fila: natillera,
+      n,
+      p,
+      personas: grupo.map((x) => x.nombre),
+      administrador: admin?.nombre ?? null,
+      nombre: fila.nombre ?? ctx.from.first_name,
+      permiso: registro.permisoDe(fila.participacion_id),
+      solicitud: registro.solicitudDe(fila.participacion_id),
+      hoy: hoy(),
+    });
+  }
+
+  // El enlace con los datos, en un mensaje y en el botón del menú de este chat (el del menú general
+  // no lleva datos). Si Telegram no deja cambiar el menú, el mensaje basta.
+  async function abrirMiniApp(ctx, natilleras) {
+    const url = urlMiNatillera(config, ctx.me.username, codificarPanel(natilleras, new Date(ahora()).toISOString()));
+    await ctx.reply(textoAbrirMiniApp(natilleras.length), { reply_markup: new InlineKeyboard().webApp(BOTON_MI_NATILLERA, url) });
+    try {
+      await ctx.api.setChatMenuButton({ chat_id: ctx.chat.id, menu_button: { type: 'web_app', text: TEXTO_MENU, web_app: { url } } });
+    } catch (error) {
+      log.warn(`No se pudo poner «${TEXTO_MENU}» con datos en el chat ${ctx.chat.id}: ${error.message}`);
+    }
+  }
 
   async function conStaging(ctx) {
     const telegramId = ctx.from.id;
@@ -156,7 +195,7 @@ export function miNatillera({ config, registro, servicio, log }) {
     const administradas = registro.natillerasDelAdmin(telegramId).filter((n) => !propias.has(n.natillera_id));
 
     const pedidos = [
-      ...participaciones.map((p) => ({ natillera: registro.natillera(p.natillera_id)?.contract_id, participacion: p.contract_id })),
+      ...participaciones.map((p) => ({ natillera: registro.natillera(p.natillera_id)?.contract_id, participacion: p.contract_id, fila: p })),
       ...administradas.map((n) => ({ natillera: n.contract_id })),
     ]
       .filter((pedido) => pedido.natillera)
@@ -170,10 +209,13 @@ export function miNatillera({ config, registro, servicio, log }) {
     let resumenes;
     try {
       resumenes = await Promise.all(
-        pedidos.map(async ({ natillera, participacion }) => {
+        pedidos.map(async ({ natillera, participacion, fila }) => {
           if (!participacion) return resumenAdministra(await leer(natillera));
           const [n, p] = await Promise.all([leer(natillera), leer(participacion)]);
-          return resumenParticipacion(n, p, { conPagos: Boolean(config.pagos?.url) });
+          return {
+            ...resumenParticipacion(n, p, { conPagos: Boolean(config.pagos?.url) }),
+            miniApp: config.miniappUrl ? datosMiniApp(ctx, fila, n, p) : null,
+          };
         }),
       );
     } catch (error) {
@@ -184,7 +226,14 @@ export function miNatillera({ config, registro, servicio, log }) {
     for (const { texto, teclado } of resumenes) {
       await ctx.reply(texto, { parse_mode: 'HTML', reply_markup: teclado });
     }
+    const natilleras = resumenes.map((r) => r.miniApp).filter(Boolean);
+    if (natilleras.length) await abrirMiniApp(ctx, natilleras);
   }
+
+  comandos.command('start', async (ctx, next) => {
+    if (ctx.match !== PAYLOAD_MI_NATILLERA || !registro || !servicio) return next();
+    await conStaging(ctx);
+  });
 
   comandos.command('mi_natillera', async (ctx) => {
     if (registro && servicio) {

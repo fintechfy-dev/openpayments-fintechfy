@@ -36,6 +36,7 @@ export function crearRegistro(db) {
     solicitudDe: db.prepare('SELECT * FROM solicitudes WHERE participacion_id = ? ORDER BY creada_en DESC, rowid DESC LIMIT 1'),
     guardarPermiso: db.prepare('INSERT INTO permisos (permiso_id, participacion_id, monto, creado_en) VALUES (?, ?, ?, ?)'),
     permiso: db.prepare('SELECT * FROM permisos WHERE permiso_id = ?'),
+    permisoDe: db.prepare('SELECT * FROM permisos WHERE participacion_id = ? ORDER BY creado_en DESC, rowid DESC LIMIT 1'),
     participacionesEn: db.prepare('SELECT * FROM participaciones WHERE natillera_id = ? ORDER BY rowid'),
     guardarNombre: db.prepare('UPDATE participaciones SET nombre = ? WHERE participacion_id = ? AND nombre IS NULL'),
     participacionesDe: db.prepare('SELECT * FROM participaciones WHERE telegram_id = ? ORDER BY rowid DESC'),
@@ -90,6 +91,8 @@ export function crearRegistro(db) {
       sql.guardarPermiso.run(permisoId, participacionId, monto, creadoEn);
     },
     permiso: (id) => sql.permiso.get(id),
+    // El último permiso pedido por una participación: su tope se muestra en «Mi natillera».
+    permisoDe: (participacionId) => sql.permisoDe.get(participacionId),
     // Para «Mi natillera»: todas las de una persona, la más reciente primero.
     participacionesDe: (telegramId) => sql.participacionesDe.all(telegramId),
     natillerasDelAdmin: (telegramId) => sql.natillerasDelAdmin.all(telegramId),

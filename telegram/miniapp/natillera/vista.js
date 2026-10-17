@@ -1,9 +1,8 @@
 // Lo que ve un participante en la Mini App «Mi natillera», calculado a partir de los datos del
 // servicio externo. Función pura: corre en el navegador y en las pruebas del bot (node:test).
 //
-// Los datos siguen la forma de web/src/lib/servicio/tipos.ts (Natillera, Participante, Pago), más lo
-// que solo ve la persona: su tope autorizado y si puede pedir préstamo. El contrato definitivo sale
-// de #5. Los textos siguen design-system/docs/voz-y-tono.md: el dato primero, sin culpa, y la plata
+// Los datos los arma el bot con lo que hay en staging (src/natillera/mi-natillera.js): la natillera, lo
+// de la persona (su ahorro, si autorizó y su tope), sus cobros y si puede pedir préstamo. Los textos siguen design-system/docs/voz-y-tono.md: el dato primero, sin culpa, y la plata
 // siempre ubicada en Financiera Aliada. Nunca se muestra el estado de otra persona del grupo.
 
 import { formatoCOP, formatoPorcentaje } from '../../src/formato.js';
@@ -38,7 +37,8 @@ export function segmentosDeCuotas({ cuotasTotales, periodoActual }, { cuotasPaga
 }
 
 export function armarVista({ natillera: n, yo, pagos = [], credito = null }) {
-  const p = PERIODICIDADES[n.periodicidad];
+  // Staging cuenta la periodicidad en meses; el bot solo crea mensuales.
+  const cada = PERIODICIDADES[n.periodicidad]?.cada ?? n.periodicidad;
   const arranco = n.periodoActual > 0;
   const cuotasPendientes = Math.max(0, n.periodoActual - yo.cuotasPagadas);
   const metaGrupo = n.cuotasTotales * n.valorCuota * n.numeroParticipantes;
@@ -67,24 +67,29 @@ export function armarVista({ natillera: n, yo, pagos = [], credito = null }) {
       texto: `Entre ${n.numeroParticipantes} personas. La plata la guarda Financiera Aliada, a nombre de la natillera.`,
     },
 
-    liquidacion: {
-      valor: formatoCOP(n.cuotasTotales * n.valorCuota),
-      texto: `Si todo sigue así, el ${formatoFecha(dia(n.fechaFinal), { anio: true })} te llega a tu billetera.`,
-    },
+    liquidacion: yo.parteFinal
+      ? { valor: formatoCOP(yo.parteFinal), texto: 'Ya te llegó a tu billetera.' }
+      : {
+          valor: formatoCOP(n.cuotasTotales * n.valorCuota),
+          texto: `Si todo sigue así, el ${formatoFecha(dia(n.fechaFinal), { anio: true })} te llega a tu billetera.`,
+        },
 
     credito: null,
 
     reglas: [
-      { etiqueta: 'Cuota', valor: `${formatoCOP(n.valorCuota)} ${p.cada}` },
+      { etiqueta: 'Cuota', valor: `${formatoCOP(n.valorCuota)} ${cada}` },
       { etiqueta: 'Fechas', valor: `Del ${formatoFecha(dia(n.fechaInicio))} al ${formatoFecha(dia(n.fechaFinal), { anio: true })}` },
       { etiqueta: 'Cuotas', valor: String(n.cuotasTotales) },
       { etiqueta: 'Mora diaria', valor: `${formatoPorcentaje(n.moraDiariaPct)} si una cuota queda pendiente` },
       { etiqueta: 'Cupo para arrancar', valor: `${n.cupoMinimo} personas` },
       { etiqueta: 'Administra', valor: n.administrador },
     ],
-    autorizacion: yo.topeAutorizado
-      ? `Autorizaste el cobro de tus cuotas, hasta ${formatoCOP(yo.topeAutorizado)} cada vez.`
-      : 'Todavía no autorizas el cobro de tus cuotas.',
+    // El tope del permiso es total, no por cobro (pagos/API.md). Sin tope conocido, el permiso es de prueba.
+    autorizacion: !(yo.autorizo ?? yo.topeAutorizado)
+      ? 'Todavía no autorizas el cobro de tus cuotas. Hazlo desde el chat con el bot.'
+      : yo.topeAutorizado
+        ? `Autorizaste desde tu billetera el cobro automático de tus cuotas, con tope de ${formatoCOP(yo.topeAutorizado)} en total.`
+        : 'Autorizaste el cobro automático de tus cuotas.',
 
     // Solo nombres: el estado de cada quien no se expone ante el grupo.
     personas: n.participantes.map((x) => ({
@@ -107,7 +112,7 @@ export function armarVista({ natillera: n, yo, pagos = [], credito = null }) {
   if (!arranco) {
     const faltan = Math.max(0, n.cupoMinimo - n.numeroParticipantes);
     vista.arranque = {
-      titulo: faltan > 0 ? `Faltan ${faltan} ${faltan === 1 ? 'persona' : 'personas'} para arrancar` : '¡Ya está el cupo completo!',
+      titulo: faltan > 0 ? `${faltan === 1 ? 'Falta 1 persona' : `Faltan ${faltan} personas`} para arrancar` : '¡Ya está el cupo completo!',
       texto: `Van ${n.numeroParticipantes} de ${n.cupoMinimo}. Cuando se complete, se cobra la primera cuota a todos el mismo día.`,
       porcentaje: Math.min(100, Math.round((n.numeroParticipantes / n.cupoMinimo) * 100)),
     };

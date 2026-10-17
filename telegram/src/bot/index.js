@@ -103,6 +103,8 @@ export function crearBot(config, { log, db, crearNatillera, servicio, registro, 
     prestamoBot = crearPrestamoBot({ registro, servicio, motor, log, hoy });
   }
 
+  // Antes de start: atiende /start mi_natillera (el botón «Traer mis datos» de la Mini App).
+  app.use(miNatillera({ config, registro, servicio, log, ahora, hoy }));
   app.use(
     start({
       log,
@@ -113,7 +115,6 @@ export function crearBot(config, { log, db, crearNatillera, servicio, registro, 
   );
   app.use(cancelar({ motor }));
   app.use(diag({ config, db, inicio, ahora }));
-  app.use(miNatillera({ config, registro, servicio, log }));
   if (registro) app.use(invitar({ registro }));
   if (servicio && registro) {
     app.use(cobros({ servicio, registro, log }));
