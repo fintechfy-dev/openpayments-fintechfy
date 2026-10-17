@@ -4,8 +4,9 @@ Declaración exigida por la política de IA de la hackathon. El equipo la comple
 
 ## Herramientas usadas
 
-- Claude Code (modelo Claude Opus), de Anthropic
-- _Agregar aquí cualquier otra herramienta que use el equipo (ChatGPT, Copilot, Cursor, Gemini…), con su modelo._
+- Claude Code (Claude Opus 5.5), de Anthropic: código, documentación, pruebas y configuración.
+- Claude Design, de Anthropic: componentes del design system y el redibujo del logo en vector.
+- ChatGPT (modelo de imagen `gpt-image`), de OpenAI: el tablero original del logo. Lo dicen los metadatos C2PA de `design-system/assets/logos/tablero-original.png`: creado el 16 de octubre a las 12:06 p. m., firmado por «OpenAI Media Service».
 
 ## Dónde y cómo se usó
 
@@ -21,11 +22,11 @@ Declaración exigida por la política de IA de la hackathon. El equipo la comple
 
 ### 3. Código de la hackathon
 
-_Por completar. Una línea por archivo o componente: qué herramienta, para qué y cuánto (mucho, poco o nada)._
+Una línea por archivo o componente: qué herramienta, para qué y cuánto (mucho, poco o nada).
 
 | Archivo o componente | Herramienta | Para qué | Cuánta IA |
 |---|---|---|---|
-| `design-system/` (marca, tokens, componentes, voz y tono) | Claude Design; ChatGPT para el logo (_completar modelo_) | Explorar y vectorizar el logo del equipo, definir paleta, tipografía, componentes y guía de mensajes | Mucho |
+| `design-system/` (marca, tokens, componentes, voz y tono) | Claude Design; ChatGPT (`gpt-image`) para el logo | Explorar y vectorizar el logo del equipo, definir paleta, tipografía, componentes y guía de mensajes | Mucho |
 | `design-system/tokens/build.mjs`, `design-system/index.html` | Claude Code (Claude Opus 5.5) | Generar `tokens.css` desde `tokens.json` y galería local de componentes | Mucho |
 | `telegram/docs/plan-esqueleto.md` | Claude Code (Claude Opus 5.5) | Plan del esqueleto del bot: decisiones, herramientas y pasos; el equipo lo revisó y aprobó antes de ejecutar | Mucho |
 | `telegram/src/` (arranque, `crearBot`, `/start`, logger) | Claude Code (Claude Opus 5.5) | Esqueleto del bot con grammY (#7) | Mucho; probado a mano por el equipo con un bot real |
@@ -67,6 +68,7 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 | `.github/workflows/calidad.yml`, `scripts/secretos.mjs` | Claude Code (Claude Opus 5.5) | CI en cada PR (checklist de entrega, `verificar` de la web, pruebas del bot y de `pagos/` cuando exista) y patrones de secretos declarados una sola vez | Mucho |
 | `pagos/` (API de Open Payments: `src/`, `test/`, `API.md`, `.env.example`) | Claude Code (Claude Opus 5.5) | API propia de pagos (#3, #4, #67): permisos con su vuelta y verificación del hash, cobros y pagos de las 6 rutas de staging, idempotencia, rotación del token, avisos de pago y registro de las cuatro etapas; contrato OpenAPI con Swagger UI en `/docs`; publicada en Azure. Decisión del equipo del 16 de octubre: la escribe la IA y se declara (`prompts/pagos-api-open-payments.md`) | Mucho; 38 pruebas con un Open Payments falso (incluido el contrato), sin probar aún un pago real en la Test Wallet |
 | `pagos/src/cotizaciones.js`, `pagos/src/pagos.js`, `pagos/src/permisos.js`, `pagos/test/monedas.test.js`, `pagos/test/helpers/`, `pagos/API.md`, `pagos/README.md` | Claude Code (Claude Opus 5.5) | Pagos entre monedas: la cotización de Open Payments convierte cuando una billetera no está en pesos (fijo al recibir, fijo al enviar o convertido), y el tope de los permisos se cotiza en la moneda de quien paga con la mitad de margen. Comprobado con cotizaciones reales en la Test Wallet, sin pagos (`prompts/pagos-api-open-payments.md`, punto 6) | Mucho; 43 pruebas y 3 roturas a propósito detectadas |
+| `README.md` («Cómo usa Open Payments» y «Correr la demo»), `AI_USAGE.md`, `docs/checklist-entrega.md` | Claude Code (Claude Opus 5.5) | Kit de entrega: lo que pide la página de entrega y evaluación de la hackathon. El modelo del logo salió de los metadatos de la imagen | Mucho |
 | `.claude/hooks/guardia-edicion.mjs`, `.claude/rules/ia-y-prompts.md` | Claude Code (Claude Opus 5.5) | Quitar el candado de `pagos/` y dejar escrita la nueva regla: `pagos/` lo escribe la IA y se declara con precisión | Mucho |
 | `integracion/README.md`, `telegram/INTEGRACION.md`, `web/INTEGRACION.md`, `pagos/README.md`, `docs/plan-de-trabajo.md`, `docs/checklist-entrega.md`, `docs/discovery/4-logica-financiera/` | Claude Code (Claude Opus 5.5, subagentes de análisis y revisión) | Mapas de integración con la versión 0.2.0 del servicio externo (ventas), contrato de la API de pagos con staging y plan de trabajo, contrastados con el código del servicio externo, la puerta de staging y la documentación de Open Payments, y alineados con la API de pagos del PR #71 | Mucho |
 | `scripts/revisar-entrega.mjs`, `CLAUDE.md`, `.claude/rules/`, `.claude/skills/`, `.claude/agents/`, `.claude/commands/director-web.md` | Claude Code (Claude Opus 5.5) | Reglas, skills, agentes y checklist alineados con la API de pagos en `pagos/`: Open Payments solo desde ahí, la web lee su registro y el bot le pide permisos y avisos de pago | Mucho |
@@ -78,13 +80,15 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 
 ## Archivos hechos con poca o ninguna IA
 
-_Por completar._ El servicio de Open Payments **no** está en esta lista: lo escribió Claude Code (ver la fila de `pagos/`). El equipo lo revisa y lo prueba en la Test Wallet antes de la demo.
+Ninguno. Todo el código de la hackathon se escribió con ayuda de IA y está declarado archivo por archivo en la tabla de arriba. Eso incluye el servicio de Open Payments (`pagos/`), que escribió Claude Code por decisión del equipo del 16 de octubre en la tarde; el equipo lo revisó y lo probó en la Test Wallet.
 
 ## Lo que hizo el equipo
 
 - Todas las decisiones de producto y de alcance del discovery.
 - **Bot de Telegram (Estiven):** pidió y aprobó el plan del esqueleto antes de que se escribiera código, creó el bot en @BotFather, probó a mano el arranque, `/start` y el apagado con el bot real, y decidió el reacomodo a `telegram/` y cada commit.
-- _Por completar: revisión, pruebas y verificación del código que sugiera la IA._
+- **Decisiones:** la arquitectura del 16 de octubre (la API de pagos aparte, los avisos a través de la web y la conversión de monedas) y qué entra a la demo. Todo cambio entró por pull request, y el equipo lo fusionó después de que pasaran las pruebas automáticas de la CI.
+- **Pruebas con dinero de prueba:** el equipo creó natilleras en staging desde el bot, se unió con sus billeteras de la Test Wallet, aprobó los permisos en cada billetera y corrió la prueba de punta a punta del 16 de octubre, con tres cuotas cobradas desde billeteras en euros y dólares.
+- **Configuración y llaves:** las billeteras de la Test Wallet y sus llaves de desarrollador, la configuración de Azure y de staging, y los tokens. Ninguna llave está en el repositorio.
 
 ## Registro de prompts
 
