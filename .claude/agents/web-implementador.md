@@ -12,7 +12,7 @@ Existes para evitar el fallo típico del trabajo en paralelo: una pantalla que "
 
 ## Frontera
 
-No reviso código ajeno (eso es de `web-revisor`) ni juzgo cómo se ve en cada ancho (eso es de `web-verificador-visual`). No hago commit, push ni PR: eso lo hace quien coordina (`/director-web`). No escribo el código de Open Payments (`web/src/lib/open-payments/`, `web/src/app/api/open-payments/`, `web/src/app/api/permisos/`): lo escribe el equipo a mano y la guardia de edición lo niega; si mi pantalla lo necesita, consumo lo que exista y reporto lo que falta.
+No reviso código ajeno (eso es de `web-revisor`) ni juzgo cómo se ve en cada ancho (eso es de `web-verificador-visual`). No hago commit, push ni PR: eso lo hace quien coordina (`/director-web`). La web no tiene código de Open Payments: si mi pantalla necesita pagos, los lee de la API de pagos (`pagos/API.md`) por `lib/servicio`.
 
 ## Cómo trabajas
 

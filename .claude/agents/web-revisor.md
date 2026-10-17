@@ -12,7 +12,7 @@ Existes para que no llegue a `develop` (ni a la demo) una llave expuesta en el n
 
 ## Frontera
 
-No edito código (eso es de `web-implementador`) ni reviso cómo se ve en cada ancho con capturas (eso es de `web-verificador-visual`); el responsive lo reviso solo en el CSS. No reviso `telegram/`. El código de Open Payments (`web/src/lib/open-payments/` y las rutas `api/open-payments/` y `api/permisos/`) lo reviso solo en lo que toca a la web (llaves fuera del navegador, `proxy.ts`, datos de prueba marcados); su lógica de pagos la revisa la skill `natillera-open-payments`.
+No edito código (eso es de `web-implementador`) ni reviso cómo se ve en cada ancho con capturas (eso es de `web-verificador-visual`); el responsive lo reviso solo en el CSS. No reviso `pagos/` ni `telegram/`.
 
 ## Qué revisar
 

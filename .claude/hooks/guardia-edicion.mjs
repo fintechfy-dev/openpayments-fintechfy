@@ -7,15 +7,8 @@ const { tool_input: e = {} } = entrada();
 const ruta = rutaDelRepo(e.file_path ?? e.notebook_path);
 if (!ruta) process.exit(0);
 
-// El código de Open Payments lo escribe el equipo a mano. Desde el 16 de octubre vive en el backend de la web
-// (módulo y rutas); pagos/ guarda la especificación. La documentación (.md) sí se puede tocar; el código no.
-const CODIGO_A_MANO = ["pagos/", "web/src/lib/open-payments/", "web/src/app/api/open-payments/", "web/src/app/api/permisos/"];
-if (CODIGO_A_MANO.some((p) => ruta.startsWith(p)) && !ruta.endsWith(".md")) {
-  negar(
-    "PreToolUse",
-    `${ruta}: el código de Open Payments lo escribe el equipo a mano (los mentores lo revisan línea por línea; .claude/rules/ia-y-prompts.md). Explica o sugiere el cambio en el chat para que la persona lo escriba.`,
-  );
-}
+// Desde el 16 de octubre en la tarde, pagos/ lo escribe Claude y se declara en AI_USAGE.md (decisión del
+// equipo; .claude/rules/ia-y-prompts.md): ya no hay candado sobre esa carpeta.
 
 if (esArchivoSecreto(ruta)) {
   negar("PreToolUse", `${ruta} guarda secretos: lo llena la persona, nunca Claude (.claude/rules/secretos.md). Si falta una variable, agrégala sin valor al .env.example de la carpeta.`);
