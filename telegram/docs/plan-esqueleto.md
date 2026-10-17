@@ -121,9 +121,10 @@ prompts/telegram-esqueleto-bot.md   prompts reales (política de IA)
 | `CUOTA_MIN` | Sí | Número > 0 y < `CUOTA_MAX` |
 | `CUOTA_MAX` | Sí | Número > `CUOTA_MIN` |
 | `MORA_DIARIA_MAX_PCT` | Sí | Número ≥ 0 |
-| `EXTERNO_URL` | Tarea 5 | URL `http(s)` del servicio externo |
-| `EXTERNO_API_KEY` | Tarea 5 | Según el contrato de #5. Nunca se imprime |
-| `PAGOS_URL` | Cuando exista #4 | URL del servicio de pagos, para iniciar el permiso interactivo |
+| `SERVICIO_EXTERNO_URL`, `SERVICIO_EXTERNO_TOKEN` | Para hablar con staging | Dirección y token de staging (#5). El token nunca se imprime |
+| `PAGOS_URL` | Para los permisos | Dirección de la API de pagos |
+
+La lista completa y vigente está en `telegram/.env.example` y en «Antes de empezar» de `telegram/INTEGRACION.md`.
 | `DB_PATH` | No | Por defecto `./data/bot.db` |
 
 Ya no son del bot (pasan al servicio externo o a `pagos/`): `REINTENTOS_COBRO`, `MODO_DEMO`, `MINUTOS_POR_PERIODO` y `MINUTOS_POR_DIA_MORA`. El reloj de la demo se acelera en el servicio externo («se pueden disparar con la fecha deseada»).

@@ -86,6 +86,36 @@
           }
         ]
       }
+    },
+    {
+      "id": "pagar-con-permiso",
+      "nombre": "Pagar de una billetera de participante a otra con una autorización de un solo uso",
+      "metodo": "POST",
+      "ruta": "/pagar-con-permiso",
+      "timeoutSegundos": 30,
+      "mock": {
+        "respuestas": [
+          {
+            "status": 200,
+            "cuerpo": "{\"estado\":\"completado\",\"monto\":{{monto}}}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "aportar-con-permiso",
+      "nombre": "Pagar de la billetera de un participante a la cuenta de la natillera con la misma autorización",
+      "metodo": "POST",
+      "ruta": "/aportar-con-permiso",
+      "timeoutSegundos": 30,
+      "mock": {
+        "respuestas": [
+          {
+            "status": 200,
+            "cuerpo": "{\"estado\":\"completado\",\"monto\":{{monto}}}"
+          }
+        ]
+      }
     }
   ]
 }
