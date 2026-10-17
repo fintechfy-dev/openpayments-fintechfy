@@ -1,6 +1,6 @@
 # Logo
 
-El marranito de Natillera 2.0: rosado, ojos sonrientes, la moneda dorada entrando por la ranura y "Natillera 2.0" con la hojita en la "i". El oficial es el kit original del equipo en `assets/logos/kit/` (PNG); los SVG redibujados quedan solo para cuando haga falta un vector.
+El marranito de Natillera 2.0: rosado, ojos sonrientes, la moneda dorada entrando por la ranura y "Natillera 2.0" con la hojita en la "i". El oficial es el kit original del equipo en `assets/logos/kit/` (PNG).
 
 ## Qué archivo usar
 - **Foto del bot de Telegram:** `kit/05_avatar/avatar_verde_oscuro_512px.png` (Telegram lo escala).

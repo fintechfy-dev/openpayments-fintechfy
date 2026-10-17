@@ -16,7 +16,6 @@ Fuente: el design system del equipo en Claude Design ([artifact](https://claude.
 | [`components/bundle.js`](components/bundle.js) | `window.Natillera`: `formatoCOP`, `ESTADOS`, `icono()`, `badge()` |
 | [`components/<Nombre>/`](components/) | Guía (`README.md`) y vista previa (`preview.html`) de cada componente |
 | [`assets/logos/kit/`](assets/logos/kit/) | **Logo oficial**: el kit original del equipo en PNG (símbolo, vertical, horizontal, nombre, avatar y monocromos). Guía en [`assets/logos/README.md`](assets/logos/README.md) |
-| [`assets/logos/`](assets/logos/) | El redibujo del marranito en SVG, solo para cuando haga falta un vector |
 | [`assets/iconos/`](assets/iconos/) | Set base de íconos de línea |
 | [`fonts/`](fonts/) | Nunito (700, 800, 900) y Atkinson Hyperlegible (400, 700) en woff2 |
 | [`docs/`](docs/) | [Marca](docs/marca.md), [estados del producto](docs/estados.md) y [voz y tono del bot](docs/voz-y-tono.md) |

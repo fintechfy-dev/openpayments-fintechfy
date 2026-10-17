@@ -72,6 +72,7 @@ Una línea por archivo o componente: qué herramienta, para qué y cuánto (much
 | `.claude/hooks/guardia-edicion.mjs`, `.claude/rules/ia-y-prompts.md` | Claude Code (Claude Opus 5.5) | Quitar el candado de `pagos/` y dejar escrita la nueva regla: `pagos/` lo escribe la IA y se declara con precisión | Mucho |
 | `integracion/README.md`, `telegram/INTEGRACION.md`, `web/INTEGRACION.md`, `pagos/README.md`, `docs/plan-de-trabajo.md`, `docs/checklist-entrega.md`, `docs/discovery/4-logica-financiera/` | Claude Code (Claude Opus 5.5, subagentes de análisis y revisión) | Mapas de integración con la versión 0.2.0 del servicio externo (ventas), contrato de la API de pagos con staging y plan de trabajo, contrastados con el código del servicio externo, la puerta de staging y la documentación de Open Payments, y alineados con la API de pagos del PR #71 | Mucho |
 | `scripts/revisar-entrega.mjs`, `CLAUDE.md`, `.claude/rules/`, `.claude/skills/`, `.claude/agents/`, `.claude/commands/director-web.md` | Claude Code (Claude Opus 5.5) | Reglas, skills, agentes y checklist alineados con la API de pagos en `pagos/`: Open Payments solo desde ahí, la web lee su registro y el bot le pide permisos y avisos de pago | Mucho |
+| Retiro de los logos SVG redibujados de `design-system/assets/logos/` y sus menciones en `design-system/README.md`, `docs/marca.md`, `assets/logos/README.md` y `components/Logo/README.md` | Claude Code (Claude Opus 5.5) | Buscar qué logos no usa nadie y quitar el redibujo vectorial, que no era idéntico al kit oficial | Mucho |
 
 ## Servicios externos
 
