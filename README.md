@@ -41,6 +41,28 @@ GitFlow: cada cosa por hacer es un [issue](https://github.com/fintechfy-dev/open
 
 Antes de cada commit y de cada PR: `node scripts/revisar-entrega.mjs --rama`. Revisa contra el repo lo que exige la entrega (secretos, Open Payments, `AI_USAGE.md`, prompts, README y ramas) y dice cuánto falta para el próximo hito. Lo que falta de la checklist del equipo está en [docs/checklist-entrega.md](docs/checklist-entrega.md).
 
+## Para revisar
+
+Todo está en línea; no hace falta instalar nada para verlo funcionar.
+
+| Qué | URL | Cómo se entra |
+|---|---|---|
+| Bot de Telegram | https://t.me/natillerahackbot | Abrir el chat y escribir `/start` |
+| Web de la financiera y el administrador | https://natillera-web.azurewebsites.net | `/` es pública; el panel pide usuario y un código de 6 dígitos que llega por Telegram |
+| API de pagos (Open Payments) | https://natillera-pagos.azurewebsites.net/docs | Swagger público; las rutas piden su `X-Api-Key` |
+| Servicio externo de lógica financiera (staging) | Portal y API: https://sandbox-staging.corebank.ai · Swagger: https://motorcredito-api-staging.corebank.ai/swagger/index.html | Portal: usuario y contraseña, con el usuario `wsierra@fintechfy.ai` (la contraseña no va en el repo). El bot y la web llaman a su API (`/api/...`) con un Bearer JWT. Contrato en [`integracion/README.md`](integracion/README.md) |
+| Billeteras de prueba | https://wallet.interledger-test.dev | Cuenta de la Test Wallet de Interledger |
+
+**Dónde está el código y cómo se prueba:**
+
+| Pieza | Por dónde empezar | Pruebas |
+|---|---|---|
+| API de pagos (lo único que habla con Open Payments) | [`pagos/src/app.js`](pagos/src/app.js) (rutas), [`pagos/src/pagos.js`](pagos/src/pagos.js) (cobros y pagos) y [`pagos/src/permisos.js`](pagos/src/permisos.js) (permisos) | `cd pagos && npm test` |
+| Bot de Telegram | [`telegram/src/`](telegram/src/): `bot/` (comandos y flujos), `externo/` (llamadas al servicio externo) | `cd telegram && npm test` |
+| Web | [`web/src/app/`](web/src/app/) (pantallas y rutas `/api`) y [`web/src/lib/`](web/src/lib/) (servicio externo, pagos, índice y sesión) | `cd web && npm run verificar` |
+
+En cada PR, GitHub corre las tres suites y la checklist de entrega (`.github/workflows/calidad.yml`). La arquitectura, las maquetas y los estados, en diagramas, están en [`docs/tecnica/`](docs/tecnica/README.md).
+
 ## Correr la demo
 
 **En vivo:**
@@ -48,6 +70,7 @@ Antes de cada commit y de cada PR: `node scripts/revisar-entrega.mjs --rama`. Re
 | Qué | Dónde |
 |---|---|
 | Bot de Telegram | https://t.me/natillerahackbot |
+| Web de la financiera y el administrador | https://natillera-web.azurewebsites.net |
 | Mini App «Mi natillera» y formulario de crear | https://fintechfy-dev.github.io/openpayments-fintechfy/telegram/miniapp/ (se abren desde el bot) |
 | API de pagos (Swagger) | https://natillera-pagos.azurewebsites.net/docs |
 | Billeteras de prueba | https://wallet.interledger-test.dev |

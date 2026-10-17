@@ -76,6 +76,7 @@ Una línea por archivo o componente: qué herramienta, para qué y cuánto (much
 | Retiro de los logos SVG redibujados de `design-system/assets/logos/` y sus menciones en `design-system/README.md`, `docs/marca.md`, `assets/logos/README.md` y `components/Logo/README.md` | Claude Code (Claude Opus 5.5) | Buscar qué logos no usa nadie y quitar el redibujo vectorial, que no era idéntico al kit oficial | Mucho |
 | Ocultar la sección de créditos: `web/src/lib/secciones.ts`, `web/src/proxy.ts`, `web/src/components/Navegacion.tsx`, `web/src/app/(panel)/creditos/page.tsx` y `actions.ts`, `web/README.md` | Claude Code (Claude Opus 5.5) | Apagar Créditos en la entrega (menú, 404 y acción del servidor) sin borrar su código | Mucho |
 | `docs/tecnica/` (arquitectura, maquetas, estados y datos), enlaces en `README.md` y `docs/checklist-entrega.md` | Claude Code (Claude Opus 5.5) | Diagramas Mermaid de contexto, piezas y contratos, despliegue y flujos; maquetas de baja fidelidad de cada pantalla con los componentes del design system; estados y datos, contrastados con el código de `pagos/`, `web/` y `telegram/` | Mucho |
+| `README.md` (sección «Para revisar»), `docs/checklist-entrega.md` (`s-demo-link`) | Claude Code (Claude Opus 5.5) | URLs en vivo de la demo (bot, web, API de pagos, servicio externo en staging y billeteras) y la guía de dónde está el código de cada pieza y cómo se prueba, comprobadas contra los servicios y los `package.json` | Mucho |
 
 ## Servicios externos
 
