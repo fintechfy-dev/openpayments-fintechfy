@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { listarSolicitudesCredito, responderSolicitud } from "@/lib/servicio";
 import { filtrarPorNatillera, obtenerSesion } from "@/lib/sesion";
 import { ErrorServicio } from "@/lib/servicio/http";
+import { SECCION_CREDITOS_VISIBLE } from "@/lib/secciones";
 import { ERROR_CREDITO_INCIERTO, ERROR_ENTRADA, ERROR_SERVICIO, ERROR_YA_RESPONDIDA, mensajeRespuesta, validarEntrada, type ResultadoRespuesta } from "./logica";
 
 /**
@@ -19,7 +20,9 @@ const SIN_PERMISO: ResultadoRespuesta = {
 };
 
 export async function responderSolicitudAccion(_previo: ResultadoRespuesta | null, datos: FormData): Promise<ResultadoRespuesta> {
-  // Una Server Action se puede llamar directo por HTTP: el permiso se revisa aquí, no solo en la página.
+  // Una Server Action se puede llamar directo por HTTP: ocultar la página no basta para que nadie apruebe.
+  if (!SECCION_CREDITOS_VISIBLE) return SIN_PERMISO;
+  // El permiso se revisa aquí, no solo en la página.
   const sesion = await obtenerSesion();
   if (!sesion) return SIN_PERMISO;
 
