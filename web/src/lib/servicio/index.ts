@@ -53,8 +53,8 @@ const servicio = crearServicio();
 /** true si la web lee de staging bien configurado; si falta el token, todas las pantallas muestran ese error. */
 export const usaStaging = Boolean(process.env.SERVICIO_EXTERNO_URL?.trim() && process.env.SERVICIO_EXTERNO_TOKEN?.trim());
 
-/** Con staging, /creditos todavía no lee de allí (#53) y lo dice. */
-export const creditosSinConectar = usaStaging;
+/** Con staging, /creditos muestra créditos de prueba sobre las natilleras reales (creditos-prueba.ts) y lo dice. */
+export const creditosDePrueba = usaStaging;
 
 /** true cuando la web muestra datos de prueba (sin SERVICIO_EXTERNO_URL ni SERVICIO_URL). */
 export const usaDatosDePrueba = servicio === servicioDePrueba;

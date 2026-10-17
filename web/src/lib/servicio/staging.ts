@@ -8,10 +8,13 @@ import { bitacoraDeNatillera } from "./bitacora-staging";
 import { leerEventos, type EventoContrato } from "./eventos-staging";
 import { ErrorServicio } from "./http";
 import { pagosDeParticipacion } from "./pagos-staging";
+import { solicitudesDePrueba, type NatilleraParaCreditos } from "./creditos-prueba";
+import { combinarConIndice, leerPaginaTabla, type ContratosDelMotor, type FilaTabla } from "./tabla-staging";
 import type {
   EstadoNatillera,
   EstadoParticipante,
   FechaISO,
+  SolicitudCredito,
   Natillera,
   NatilleraResumen,
   Participante,
@@ -38,6 +41,9 @@ const TIEMPO_LIMITE_MS = 10_000;
 // /api/pagos se consulta cada 3 s y cada consulta lee las natilleras dos veces (natillerasVisibles y
 // listarPagos): sin esto son N·(3M+2) GET por refresco. Corto para que un pago nuevo se vea enseguida.
 const CACHE_MS = 2_000;
+const PAGINA_TABLA = 100;
+// Tope de seguridad: la demo tiene decenas de contratos; un bucle sin fin no debe tumbar la pantalla.
+const MAX_FILAS_TABLA = 1_000;
 
 // Staging manda { type, value, assigned } (visto el 16 oct); se acepta también el valor crudo (5000, "ACTIVA")
 // o como texto numérico ("5000"), por si otro contrato o versión del motor lo manda así.
@@ -224,9 +230,39 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
     }
   }
 
+  /** Todas las filas de una plantilla en /api/contracts/table, página por página. */
+  async function tabla(plantilla: string, conceptos: string[]): Promise<FilaTabla[]> {
+    const filas: FilaTabla[] = [];
+    for (let skip = 0; skip < MAX_FILAS_TABLA; skip += PAGINA_TABLA) {
+      const q = new URLSearchParams({ templateName: plantilla, concepts: conceptos.join(","), skip: String(skip), take: String(PAGINA_TABLA) });
+      const pagina = leerPaginaTabla(await pedirJson(`/api/contracts/table?${q}`));
+      filas.push(...pagina.filas);
+      if (!pagina.hayMas) return filas;
+    }
+    console.warn(`La tabla de ${plantilla} tiene más de ${MAX_FILAS_TABLA} contratos: se muestran los primeros`);
+    return filas;
+  }
+
+  /** El índice completado con todo lo que hay en el motor. Si la tabla falla (no está en la especificación),
+   *  se sigue solo con el índice: la lista se queda corta, pero la pantalla no se cae. */
+  async function lector(): Promise<LectorIndice> {
+    try {
+      const [natilleras, participaciones, actividades] = await Promise.all([
+        tabla("natillera-cuenta", ["NatilleraId", "NombreNatillera"]),
+        tabla("natillera-participacion", ["ParticipacionId", "NatilleraId", "ParticipanteId", "WalletParticipante"]),
+        tabla("natillera-actividad", ["ActividadId", "NatilleraId", "Descripcion"]),
+      ]);
+      const motor: ContratosDelMotor = { natilleras, participaciones, actividades };
+      return combinarConIndice(motor, indice);
+    } catch (e) {
+      console.error(`No se pudo leer la tabla de contratos de staging; se usa solo el índice: ${e instanceof Error ? e.message : String(e)}`);
+      return indice;
+    }
+  }
+
   /** Las participaciones cuyo contrato no existe en staging se omiten (con registro), igual que las natilleras. */
   async function leerParticipaciones(natilleraId: string) {
-    const registros = await indice.participaciones(natilleraId);
+    const registros = await (await lector()).participaciones(natilleraId);
     const contratos = await Promise.all(registros.map((p) => leerContrato(p.contractId)));
     const encontradas: { registro: RegistroParticipacion; contrato: Contrato }[] = [];
     registros.forEach((registro, i) => {
@@ -311,13 +347,33 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
     return { contrato, participaciones };
   }
 
-  const sinConectar = async (): Promise<never> => {
-    throw new ErrorServicio("Esta pantalla todavía no está conectada a staging (#53).");
-  };
+  /** Lo que respondió la financiera a cada crédito de prueba. Solo en memoria: no crea nada en staging. */
+  const decisiones = new Map<string, { estado: "por_desembolsar" | "rechazado"; fecha: FechaISO }>();
+
+  async function creditosDePrueba(): Promise<SolicitudCredito[]> {
+    const natilleras = await reunir("créditos", await (await lector()).natilleras(), async (registro): Promise<NatilleraParaCreditos[]> => {
+      const a = await armar(registro);
+      if (!a) return [];
+      const r = resumen(registro, a.contrato, a.participaciones);
+      return [{
+        id: r.id,
+        nombre: r.nombre,
+        valorCuota: r.valorCuota,
+        multiploPrestamo: numero(a.contrato, "MultiploPrestamo"),
+        cuotasTotales: r.cuotasTotales,
+        periodoActual: r.periodoActual,
+        participantes: a.participaciones.encontradas.map(participante),
+      }];
+    });
+    return solicitudesDePrueba(natilleras, new Date()).map((s) => {
+      const d = decisiones.get(s.id);
+      return d && s.estado === "solicitado" ? { ...s, estado: d.estado, fechaRespuesta: d.fecha } : s;
+    });
+  }
 
   return {
     async listarNatilleras() {
-      const registros = await indice.natilleras();
+      const registros = await (await lector()).natilleras();
       // Una natillera con un dato malo o un contrato que falla no tumba la lista de las demás:
       // se omite y queda registrada. Si fallan todas, el error se ve en la pantalla.
       const armadas = await Promise.allSettled(registros.map(async (r) => {
@@ -330,7 +386,7 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
       return armadas.flatMap((a) => (a.status === "fulfilled" && a.value ? [a.value] : []));
     },
     async obtenerNatillera(id): Promise<Natillera | null> {
-      const registro = await indice.natillera(id);
+      const registro = await (await lector()).natillera(id);
       if (!registro) return null;
       const a = await armar(registro);
       if (!a) return null;
@@ -341,10 +397,19 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
         participantes: a.participaciones.encontradas.map(participante),
       };
     },
-    listarSolicitudesCredito: sinConectar,
-    responderSolicitud: sinConectar,
+    async listarSolicitudesCredito() {
+      return (await creditosDePrueba()).sort((x, y) => y.fechaSolicitud.localeCompare(x.fechaSolicitud));
+    },
+    async responderSolicitud(id, decision) {
+      const s = (await creditosDePrueba()).find((x) => x.id === id);
+      if (!s) throw new ErrorServicio(`No existe la solicitud ${id}.`);
+      if (s.estado !== "solicitado") throw new ErrorServicio(`La solicitud ${id} ya fue respondida.`);
+      const d = { estado: decision === "aprobar" ? ("por_desembolsar" as const) : ("rechazado" as const), fecha: new Date().toISOString() };
+      decisiones.set(id, d);
+      return { ...s, estado: d.estado, fechaRespuesta: d.fecha };
+    },
     async listarPagos() {
-      return reunir("pagos", await indice.natilleras(), async (registro) => {
+      return reunir("pagos", await (await lector()).natilleras(), async (registro) => {
         const a = await armar(registro);
         if (!a) return [];
         const natillera = { id: registro.natilleraId, nombre: leerTexto(a.contrato.raw.NombreNatillera) ?? registro.nombre };
@@ -360,11 +425,12 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
       }).then((pagos) => pagos.sort((x, y) => y.creado.localeCompare(x.creado)));
     },
     async listarBitacora() {
-      return reunir("bitácora", await indice.natilleras(), async (registro) => {
+      const fuente = await lector();
+      return reunir("bitácora", await fuente.natilleras(), async (registro) => {
         const [contrato, eventosCuenta, actividades] = await Promise.all([
           leerContrato(registro.contractId),
           eventosDe(registro.contractId),
-          indice.actividades(registro.natilleraId),
+          fuente.actividades(registro.natilleraId),
         ]);
         if (!contrato) return [];
         // Si fallan las actividades, la bitácora de la natillera igual se muestra con lo de la cuenta.

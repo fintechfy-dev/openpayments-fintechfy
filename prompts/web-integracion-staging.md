@@ -252,3 +252,59 @@ Queda abierto a propósito el 🟡7 (actor de la bitácora con JWT compartido): 
 ```
 
 Resultado (18:04): `web-revisor` dio CAMBIOS-NECESARIOS (5 🟠) y, tras las correcciones de Claude Code, CAMBIOS-MENORES; Claude Code corrigió también los 🟡 1-3 y los ⚪ 5-6. Quedan anotados el ⚪ 4 (línea de tiempo de un cobro sin permiso) y el 🟡 7 (actor de la bitácora con el JWT compartido). `npm --prefix web run verificar`: 166 pruebas, build compilado.
+
+## 2026-10-16 · 18:17 (hora de Bogotá) · Claude Code (Claude Opus 5.5)
+
+```text
+ejecuta la aplicacion y dime como puedo ingresar a la plataforma? con mi numero de telefono y otp o como?
+```
+
+```text
+en la lista de natillera me puedes mostrar en la tabla el ID? y ya agregue las variables bot token y telegram chat id
+```
+
+```text
+pero solo mjuestra 1, deberia d emostrar las 3 creadas que son las que estan creadas en el motor ya que este es el administrador
+```
+
+```text
+espera, esta inicio de sesion es para el administrador de la natillera, sin embargo necesitamos un superadmin que es el que me visualiza todas las natilleras con el token que ya tienes, entonces ten presente estas 2 tipos de personas
+```
+
+Claude Code preguntó y la persona respondió:
+
+- Superadmin: «Es la financiera (Recomendado)».
+- Cómo obtener las 3 natilleras: «creo que aca estan las apis y creo que eso seria suficiente curl -H "Authorization: Bearer $TOKEN" https://sandbox-staging.corebank.ai/api/ecosystems/FND-20261015-natillera-2/openapi > FND-20261015-natillera-2.openapi.json».
+
+```text
+curl -X POST https://sandbox-staging.corebank.ai/api/contracts \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{
+  "templateName": "natillera-cuenta",
+  "parameters": {}
+}'
+```
+
+```text
+https://sandbox-staging.corebank.ai/api/contracts/table?templateName=natillera-cuenta&concepts=NatilleraId%2CNombreNatillera%2CEstadoNatillera&skip=0&take=20 perdon revisa este
+```
+
+Resultado (18:41): `GET /api/contracts/table` respondió con el JWT admin (3 natilleras, 9 participaciones). Claude Code escribió `tabla-staging.ts` (lee la tabla y la combina con el índice), lo conectó en `staging.ts` con respaldo al índice si falla, y dejó el ID debajo del nombre en la lista (una columna aparte cortaba la tabla en 1024 px). Capturas en 360, 1024 y 1280 px.
+
+## 2026-10-16 · 18:54 (hora de Bogotá) · Claude Code (Claude Opus 5.5)
+
+```text
+mokiemos los creditos con base a la documentacion de las apis que tenemos
+```
+
+```text
+lista los creditos y los estados de esos creditos
+```
+
+Resultado (18:59): Claude Code escribió `web/src/lib/servicio/creditos-prueba.ts` (un crédito de prueba en cada estado sobre los participantes reales; montos de ejemplo fijos, sin calcular la cuota) con su prueba, lo conectó en `staging.ts` (decisiones solo en memoria, sin escribir en staging), puso el aviso «Créditos de prueba» en `/creditos` y borró `PantallaSinConectar`, que quedó sin uso.
+
+## 2026-10-16 · 18:59 (hora de Bogotá) · Claude Code (Claude Opus 5.5)
+
+```text
+realiza commit y push
+```

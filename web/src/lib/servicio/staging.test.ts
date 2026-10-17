@@ -55,6 +55,7 @@ const contratos: Record<string, unknown> = {
       SaldoNatillera: 150000,
       FechaProximoCobro: "",
       PorcentajeMoraDiaria: { type: "Percentage", value: 0.025 },
+      MultiploPrestamo: 3,
     },
     currentStateLabels: { EstadoNatillera: "ACTIVA" },
   },
@@ -168,7 +169,9 @@ describe("crearServicioStaging", () => {
     const f = fetchFalso(contratos);
     const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], []), fetch: f });
     await s.listarNatilleras();
-    const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
+    const llamada = (f.mock.calls as unknown as [string, RequestInit][]).find(([u]) => u.includes("c-nat"));
+    expect(llamada).toBeDefined();
+    const [url, init] = llamada!;
     expect(url).toBe("https://staging.ejemplo/api/contracts/c-nat%2F1");
     const headers = new Headers(init.headers);
     expect(headers.get("Authorization")).toBe(`Bearer ${TOKEN}`);
@@ -333,9 +336,68 @@ describe("crearServicioStaging", () => {
     expect(bitacora[1]).toMatchObject({ actor: "Doña Rosa", natilleraNombre: "Natillera del barrio" });
   });
 
-  it("los créditos todavía no están conectados y avisan con #53", async () => {
-    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([], []), fetch: fetchFalso({}) });
-    await expect(s.listarSolicitudesCredito()).rejects.toThrow("#53");
-    await expect(s.responderSolicitud("x", "aprobar")).rejects.toThrow(ErrorServicio);
+  describe("con la tabla de contratos del motor (/api/contracts/table)", () => {
+    // La tabla responde por plantilla; los contratos, por id. Como lo hace staging (16 oct).
+    function fetchConTabla(tablas: Record<string, unknown[]>, falla = false) {
+      const porId = fetchFalso(contratos);
+      return vi.fn(async (url: string | URL | Request) => {
+        const u = new URL(String(url));
+        if (u.pathname.endsWith("/api/contracts/table")) {
+          if (falla) return new Response("{}", { status: 500 });
+          return new Response(JSON.stringify({ items: tablas[u.searchParams.get("templateName") ?? ""] ?? [], hasMore: false }), { status: 200 });
+        }
+        return porId(url);
+      });
+    }
+    const filaNatillera = { contractId: "c-nat/1", createdAt: "2026-10-16T22:00:00Z", concepts: { NatilleraId: "nat-1", NombreNatillera: "Del motor" } };
+    const filaParticipacion = (id: string, contractId: string, telegram: string) => ({ contractId, concepts: { ParticipacionId: id, NatilleraId: "nat-1", ParticipanteId: telegram, WalletParticipante: "$motor" } });
+
+    it("el superadmin ve las natilleras del motor aunque el índice esté vacío", async () => {
+      const f = fetchConTabla({ "natillera-cuenta": [filaNatillera], "natillera-participacion": [filaParticipacion("p-1", "c-p1", "111")] });
+      const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([], []), fetch: f });
+      const [n] = await s.listarNatilleras();
+      expect(n).toMatchObject({ id: "nat-1", nombre: "Natillera del barrio", administrador: "Sin registrar", numeroParticipantes: 1 });
+      const detalle = await s.obtenerNatillera("nat-1");
+      expect(detalle?.participantes[0]).toMatchObject({ id: "p-1", nombre: "Telegram 111" });
+    });
+
+    it("el índice pone lo que el motor no guarda: administrador y nombres", async () => {
+      const f = fetchConTabla({ "natillera-cuenta": [filaNatillera], "natillera-participacion": [filaParticipacion("p-1", "c-p1", "111"), filaParticipacion("p-2", "c-p2", "222")] });
+      const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones.slice(0, 1)), fetch: f });
+      const detalle = await s.obtenerNatillera("nat-1");
+      expect(detalle).toMatchObject({ administrador: "Doña Rosa", administradorTelegramId: "10" });
+      expect(detalle?.participantes.map((p) => p.nombre)).toEqual(["Ana", "Telegram 222"]);
+    });
+
+    it("si la tabla falla, sigue con el índice y lo registra", async () => {
+      const f = fetchConTabla({}, true);
+      const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], []), fetch: f });
+      expect(await s.listarNatilleras()).toHaveLength(1);
+      expect(registrado()).toContain("se usa solo el índice");
+      expect(registrado()).not.toContain(TOKEN);
+    });
+  });
+
+  it("créditos de prueba: uno por estado sobre los participantes reales, con el tope del contrato", async () => {
+    const f = fetchFalso(contratos);
+    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: f });
+    const creditos = await s.listarSolicitudesCredito();
+    expect(creditos.map((c) => [c.participanteNombre, c.estado])).toEqual([
+      ["Ana", "solicitado"],
+      ["Beto", "solicitado"],
+      ["Caro", "por_desembolsar"],
+    ]);
+    expect(creditos[0]).toMatchObject({ natilleraNombre: "Natillera del barrio", montoMaximo: 150000, montoSolicitado: 100000, cuotaMensual: 34675 });
+    // No se escribe nada en staging: solo lecturas.
+    expect((f.mock.calls as unknown as [string, RequestInit?][]).every(([, init]) => !init?.method || init.method === "GET")).toBe(true);
+  });
+
+  it("responder un crédito de prueba lo cambia en la lista y no deja responderlo dos veces", async () => {
+    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: fetchFalso(contratos) });
+    const [primero] = await s.listarSolicitudesCredito();
+    expect(await s.responderSolicitud(primero!.id, "aprobar")).toMatchObject({ estado: "por_desembolsar" });
+    expect((await s.listarSolicitudesCredito()).find((c) => c.id === primero!.id)?.estado).toBe("por_desembolsar");
+    await expect(s.responderSolicitud(primero!.id, "no_aprobar")).rejects.toThrow(ErrorServicio);
+    await expect(s.responderSolicitud("no-existe", "aprobar")).rejects.toThrow(ErrorServicio);
   });
 });
