@@ -87,3 +87,19 @@ listo mergeado, ahora quiero que instales swagger para esta api  para poderla im
 ```
 
 Resultado: el contrato OpenAPI 3.0 se arma desde la tabla `REGLAS` de `src/operaciones.js`, que también valida los cuerpos. Swagger UI queda en `/docs`, servido desde `swagger-ui-dist` 5.33.0 sin CDN. Las pruebas de contrato usan `@apidevtools/swagger-parser` 13.1.0 y revisan que el OpenAPI sea válido, la paridad de rutas en las dos direcciones y que los ejemplos sean aceptados. Se eligieron versiones publicadas hace más de dos semanas.
+
+## 6. Pagos entre monedas (~22:20)
+
+Los primeros cobros reales de staging fallaron con `422`: las billeteras de los participantes estaban en euros y dólares, y la del grupo en pesos. Claude explicó que Open Payments sí paga entre monedas con la cotización y que el bloqueo era una regla de esta API.
+
+```text
+pero open payment puede hacer pagos en diferentes monedas? que debe de pasar para poder hacer transferencias en diferentes monedas? en que fallamos?
+```
+
+Entre las opciones que propuso Claude, el equipo eligió:
+
+```text
+Que la API convierta monedas
+```
+
+Resultado: antes de cambiar el código, Claude comprobó con cotizaciones reales en la Test Wallet, sin pagos salientes, que hay tasa entre EUR, USD y COP (50.000 COP al grupo costaban 15,08 EUR o 15,74 USD). Los montos siguen en pesos, la moneda del grupo. Si quien recibe está en pesos, el cobro fija el monto; si quien paga está en pesos, la cotización fija lo que sale; si ninguno, el grupo cotiza la referencia sin pagar. El tope de un permiso en otra moneda se cotiza y lleva la mitad de margen por la comisión fija de cada pago. Hay 5 pruebas nuevas con tasas falsas, y cada una de tres roturas a propósito (siempre fijar al recibir, no cerrar el cobro, no convertir el tope) hizo fallar al menos una.

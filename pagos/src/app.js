@@ -16,7 +16,7 @@ export function crearApp({ config, almacen, opPublico, clientes, ahora = () => D
   const wallets = crearWallets({ opPublico, ahora });
   const avisos = crearAvisos({ almacen, ahora });
   const permisos = crearPermisos({ config, almacen, wallets, conCandado, ahora });
-  const pagos = crearPagos({ almacen, wallets, permisos, avisos, ahora, esperar });
+  const pagos = crearPagos({ almacen, wallets, permisos, avisos, walletGrupo: config.walletGrupo, ahora, esperar });
   const operaciones = crearOperaciones({ config, permisos, pagos });
   const idempotencia = crearIdempotencia({ almacen, ahora });
   return crearServidor({ config, almacen, permisos, operaciones, pagos, avisos, idempotencia, clientes, limiteRespuestaMs });

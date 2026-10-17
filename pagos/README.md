@@ -18,7 +18,7 @@ Lo único del sistema que habla con Open Payments, y lo que más mira el jurado:
    - un permiso sin interacción y una cotización (*quote*) en el de quien paga, justo antes de pagar (vence a los 5 minutos);
    - el *outgoing payment* con el token del permiso de pago saliente de quien paga (el único permiso interactivo);
    - y consultar hasta que termine, porque Open Payments no avisa. **Se consulta el *incoming payment*** (`completed` o `receivedAmount`): el pago saliente no tiene un estado de completado, solo de fallido.
-5. **Billeteras de la demo:** la del grupo (`OP_WALLET_GRUPO`, custodia), la de la financiera (`OP_WALLET_FINANCIERA`, préstamos) y la de cada participante. La Test Wallet maneja pesos colombianos (COP, con dos decimales), así que todas pueden ir en COP y no hay conversión.
+5. **Billeteras de la demo:** la del grupo (`OP_WALLET_GRUPO`, custodia), la de la financiera (`OP_WALLET_FINANCIERA`, préstamos) y la de cada participante. Los montos van siempre en pesos, la moneda de la billetera del grupo. Una billetera en euros o en dólares también sirve: la cotización de Open Payments convierte con la tasa de su proveedor (detalle en «Monedas» de [`API.md`](API.md)).
 
 El laboratorio `playground/open-payments-lab` del servicio externo es código previo al evento: se leyó como referencia del flujo y su código no se copió.
 
@@ -77,7 +77,7 @@ En los dos casos redirige a la **`vuelta`** del permiso, que para el bot es su c
 **Los tipos de permiso** (todos de pago saliente, todos sin intervalo, con el tope total en `monto`):
 
 - **Recurrente** (cuotas, deuda y actividades). Con intervalo, el tope sería el máximo **por intervalo**, y la billetera rechazaría cualquier cobro que por sí solo lo supere: la deuda con mora o una actividad más cara que la cuota fallarían siempre. Además, el intervalo correría en tiempo real mientras la demo adelanta las fechas. Por eso el tope total alcanza para todas las cuotas más la mora y las actividades; una cuota por periodo ya la garantiza staging.
-- **De un solo uso** (compra y devolución): tope igual al valor completo, **sin receptor fijo**, porque en la compra cubre dos pagos a dos destinos (vendedor y comisión). Va en la moneda de la billetera de quien paga, y los dos pagos tienen que sumar exactamente el valor.
+- **De un solo uso** (compra y devolución): tope igual al valor completo, **sin receptor fijo**, porque en la compra cubre dos pagos a dos destinos (vendedor y comisión). Va en la moneda de la billetera de quien paga (si no es pesos, se cotiza y se le suma la mitad de margen), y los dos pagos tienen que sumar exactamente el valor.
 - **`grupo` y `financiera`:** los de #67, arriba.
 
 El enlace de aprobación puede vencer antes de los 15 minutos que cuenta el bot en una compra (en el servidor de la Test Wallet el valor por omisión es de 10). Si vence, el participante ya no puede aprobar y la compra se cancela a los 15 minutos, sin mover dinero.
