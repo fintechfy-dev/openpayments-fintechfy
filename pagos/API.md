@@ -112,6 +112,10 @@ El bot lee estos avisos aquí, aparte de los de staging que recibe la web, y gua
 
 `/api/registro` devuelve cada pago con sus etapas `solicitud`, `autorizacion`, `ejecucion` (con los ids del cobro, la cotización y el pago saliente) y `finalizacion`.
 
+## Probar con Postman
+
+La colección de [`postman/`](postman/README.md) prueba la API publicada: salud, contrato, seguridad, permisos (pide y cancela) y lecturas, sin mover dinero. Las 6 operaciones de staging están aparte, porque mueven dinero.
+
 ## Correrla
 
 ```bash

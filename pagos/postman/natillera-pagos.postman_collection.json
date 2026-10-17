@@ -1,0 +1,1535 @@
+{
+  "info": {
+    "_postman_id": "22d2761c-02b0-5d81-82e8-b01030a61627",
+    "name": "Natillera 2.0 · API de pagos",
+    "description": "Pruebas de la API de pagos con Open Payments (`pagos/`), publicada en https://natillera-pagos.azurewebsites.net. Las carpetas 1 a 4 no mueven dinero y se pueden correr siempre; la 5 mueve dinero de la Test Wallet y se corre a mano. Ver `pagos/postman/README.md`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Salud y contrato",
+      "description": "Rutas públicas. No cambian nada.",
+      "item": [
+        {
+          "name": "Salud de la API",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/salud",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "salud"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const s = pm.response.json();",
+                  "pm.test(\"está configurada (ok)\", () => pm.expect(s.ok).to.eql(true));",
+                  "pm.test(\"guarda en Azure Table Storage\", () => pm.expect(s.almacen).to.eql(\"tablas\"));",
+                  "pm.test(\"tiene billetera del grupo y de la financiera\", () => { pm.expect(s.walletGrupo).to.match(/^https:\\/\\//); pm.expect(s.walletFinanciera).to.match(/^https:\\/\\//); });",
+                  "pm.test(\"dice qué operaciones están simuladas\", () => pm.expect(s.simuladas).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Contrato OpenAPI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/openapi.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "openapi.json"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const c = pm.response.json();",
+                  "pm.test(\"es OpenAPI 3\", () => pm.expect(c.openapi).to.match(/^3\\./));",
+                  "const rutas = [\"/api/salud\", \"/api/permisos\", \"/api/permisos/{permisoId}\", \"/api/permisos/{permisoId}/cancelar\", \"/api/permisos/{permisoId}/retorno\", \"/api/avisos\", \"/api/registro\"].concat([\"cobrar-cuota\", \"cobrar\", \"pagar\", \"desembolsar\", \"pagar-con-permiso\", \"aportar-con-permiso\"].map((o) => \"/api/open-payments/\" + o));",
+                  "pm.test(\"documenta las 13 rutas\", () => rutas.forEach((r) => pm.expect(c.paths, r).to.have.property(r)));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/docs/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "docs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"es una página HTML con Swagger\", () => { pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\"); pm.expect(pm.response.text().toLowerCase()).to.include(\"swagger\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Seguridad (sin efectos)",
+      "description": "Llaves equivocadas o faltantes. La API rechaza antes de tocar Open Payments o el registro.",
+      "item": [
+        {
+          "name": "Cobro sin llave → 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/open-payments/cobrar-cuota",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "open-payments",
+                "cobrar-cuota"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"el error dice: X-Api-Key\", () => pm.expect(pm.response.json().error).to.include(\"X-Api-Key\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cobro con la llave del bot → 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/open-payments/cobrar-cuota",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "open-payments",
+                "cobrar-cuota"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Las rutas de staging solo aceptan `API_KEY_STAGING`. Con la llave del bot y de la web responden 401: es el error de las pruebas manuales en el Swagger."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registro sin llave → 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registro"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Avisos sin llave → 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/avisos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "avisos"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Permiso sin las llaves de Open Payments → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/permisos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permisos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"recurrente\",\n  \"wallet\": \"{{walletPesos}}\",\n  \"monto\": 150000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"el error dice: Faltan las llaves de Open Payments\", () => pm.expect(pm.response.json().error).to.include(\"Faltan las llaves de Open Payments\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Permiso que no existe → 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/permisos/p0000000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permisos",
+                "p0000000000000000"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"el error dice: no existe\", () => pm.expect(pm.response.json().error).to.include(\"no existe\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ruta que no existe → 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/no-existe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "no-existe"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Permisos (pide y cancela)",
+      "description": "Pide permisos recurrentes de 150.000 pesos y los cancela enseguida. Nadie los aprueba, así que no se mueve dinero. Con una billetera en otra moneda, la API cotiza el tope en la Test Wallet: si la Test Wallet tarda, puede responder 502 y basta con repetir.",
+      "item": [
+        {
+          "name": "Pedir permiso (billetera en pesos)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/permisos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permisos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"recurrente\",\n  \"wallet\": \"{{walletPesos}}\",\n  \"monto\": 150000,\n  \"referencia\": \"prueba-postman\",\n  \"vuelta\": \"{{vuelta}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Billetera en la moneda del grupo: el tope va en pesos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 201\", () => pm.response.to.have.status(201));",
+                  "const p = pm.response.json();",
+                  "pm.test(\"trae un permisoId corto\", () => pm.expect(p.permisoId).to.match(/^p[0-9a-f]{16}$/));",
+                  "pm.test(\"trae el enlace de aprobación de la billetera\", () => pm.expect(p.urlAprobacion).to.match(/^https:\\/\\//));",
+                  "pm.collectionVariables.set(\"permisoPesos\", p.permisoId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Estado: pendiente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/permisos/{{permisoPesos}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permisos",
+                "{{permisoPesos}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const e = pm.response.json();",
+                  "pm.test(\"está pendiente\", () => pm.expect(e.estado).to.eql(\"pendiente\"));",
+                  "pm.test(\"sin grantId mientras no esté aprobado\", () => pm.expect(e.grantId).to.eql(null));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancelar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/permisos/{{permisoPesos}}/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permisos",
+                "{{permisoPesos}}",
+                "cancelar"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"queda cancelado\", () => pm.expect(pm.response.json().estado).to.eql(\"cancelado\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Estado: cancelado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/permisos/{{permisoPesos}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permisos",
+                "{{permisoPesos}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const e = pm.response.json();",
+                  "pm.test(\"está cancelado\", () => pm.expect(e.estado).to.eql(\"cancelado\"));",
+                  "pm.test(\"sin grantId mientras no esté aprobado\", () => pm.expect(e.grantId).to.eql(null));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pedir permiso (billetera en otra moneda)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/permisos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permisos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"recurrente\",\n  \"wallet\": \"{{walletOtraMoneda}}\",\n  \"monto\": 150000,\n  \"referencia\": \"prueba-postman\",\n  \"vuelta\": \"{{vuelta}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Billetera en euros o dólares: la API cotiza los 150.000 pesos en esa moneda y les suma la mitad de margen."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 201\", () => pm.response.to.have.status(201));",
+                  "const p = pm.response.json();",
+                  "pm.test(\"trae un permisoId corto\", () => pm.expect(p.permisoId).to.match(/^p[0-9a-f]{16}$/));",
+                  "pm.test(\"trae el enlace de aprobación de la billetera\", () => pm.expect(p.urlAprobacion).to.match(/^https:\\/\\//));",
+                  "pm.collectionVariables.set(\"permisoOtraMoneda\", p.permisoId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancelar (otra moneda)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/permisos/{{permisoOtraMoneda}}/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permisos",
+                "{{permisoOtraMoneda}}",
+                "cancelar"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"queda cancelado\", () => pm.expect(pm.response.json().estado).to.eql(\"cancelado\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tipo inválido → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/permisos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permisos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"mensual\",\n  \"wallet\": \"{{walletPesos}}\",\n  \"monto\": 150000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"el error dice: tipo debe ser uno de\", () => pm.expect(pm.response.json().error).to.include(\"tipo debe ser uno de\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Monto inválido → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/permisos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permisos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"recurrente\",\n  \"wallet\": \"{{walletPesos}}\",\n  \"monto\": -5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"el error dice: monto\", () => pm.expect(pm.response.json().error).to.include(\"monto\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vuelta sin https → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/permisos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permisos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"recurrente\",\n  \"wallet\": \"{{walletPesos}}\",\n  \"monto\": 150000,\n  \"vuelta\": \"http://inseguro.test/{permisoId}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"el error dice: vuelta debe ser una dirección https\", () => pm.expect(pm.response.json().error).to.include(\"vuelta debe ser una dirección https\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Lecturas del bot y la web",
+      "description": "Solo lectura: el registro de pagos que muestra la web y los avisos de pago que pide el bot.",
+      "item": [
+        {
+          "name": "Registro de pagos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registro"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const pagos = pm.response.json();",
+                  "pm.test(\"es una lista\", () => pm.expect(pagos).to.be.an(\"array\"));",
+                  "const OPS = [\"cobrar-cuota\", \"cobrar\", \"pagar\", \"desembolsar\", \"pagar-con-permiso\", \"aportar-con-permiso\"];",
+                  "pm.test(\"cada pago tiene operación, estado y sus cuatro etapas\", () => pagos.forEach((p) => { pm.expect(OPS).to.include(p.operacion); pm.expect([\"en-curso\", \"completado\", \"fallido\"]).to.include(p.estado); pm.expect(p.etapas).to.have.all.keys(\"solicitud\", \"autorizacion\", \"ejecucion\", \"finalizacion\"); }));",
+                  "pm.test(\"lo debitado y lo recibido traen su moneda\", () => pagos.filter((p) => p.estado === \"completado\" && p.etapas.ejecucion && p.etapas.ejecucion.debitado).forEach((p) => [\"debitado\", \"recibido\"].forEach((k) => pm.expect(p.etapas.ejecucion[k]).to.include.keys(\"value\", \"assetCode\", \"assetScale\"))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Avisos de pago",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/avisos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "avisos"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const avisos = pm.response.json();",
+                  "pm.test(\"es una lista\", () => pm.expect(avisos).to.be.an(\"array\"));",
+                  "pm.test(\"solo PagoCompletado o PagoFallido, con tipo, referencia y monto\", () => avisos.forEach((a) => { pm.expect([\"PagoCompletado\", \"PagoFallido\"]).to.include(a.evento); pm.expect(a.datos).to.include.keys(\"tipo\", \"referencia\", \"monto\"); }));",
+                  "if (avisos.length) pm.collectionVariables.set(\"ultimoAviso\", avisos[avisos.length - 1].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Avisos desde el último",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyClientes}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/avisos?desde={{ultimoAviso}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "avisos"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "{{ultimoAviso}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const ultimo = pm.collectionVariables.get(\"ultimoAviso\");",
+                  "pm.test(\"no repite el último aviso ya leído\", () => pm.expect(pm.response.json().map((a) => a.id)).to.not.include(ultimo));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Staging: mueven dinero (correr a mano)",
+      "description": "**Mueven dinero real de la Test Wallet y quedan en el registro que ve el jurado.** No se corren solas: son las mismas llamadas que hace staging, para probar una a una. Usan `API_KEY_STAGING` y las mismas llaves de Open Payments del bot. `grantId` es el `permisoId` de un permiso aprobado.",
+      "item": [
+        {
+          "name": "Cuota del periodo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyStaging}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/open-payments/cobrar-cuota",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "open-payments",
+                "cobrar-cuota"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grantId\": \"{{grantId}}\",\n  \"walletOrigen\": \"{{walletOrigen}}\",\n  \"monto\": 50000,\n  \"referencia\": \"{{participacionId}}\",\n  \"periodo\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "La cuota del periodo, con el permiso recurrente del participante. Llega a la billetera del grupo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "const pedido = JSON.parse(pm.request.body.raw);",
+                  "pm.test(\"responde el monto exacto que se pidió\", () => pm.expect(r.monto).to.eql(pedido.monto));",
+                  "pm.test(\"responde el periodo\", () => pm.expect(r.periodo).to.eql(pedido.periodo));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Deuda más mora",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyStaging}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/open-payments/cobrar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "open-payments",
+                "cobrar"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grantId\": \"{{grantId}}\",\n  \"walletOrigen\": \"{{walletOrigen}}\",\n  \"monto\": 52500,\n  \"referencia\": \"{{participacionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Con `grantId`: deuda más mora del participante."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "const pedido = JSON.parse(pm.request.body.raw);",
+                  "pm.test(\"responde el monto exacto que se pidió\", () => pm.expect(r.monto).to.eql(pedido.monto));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Parte de una actividad",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyStaging}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/open-payments/cobrar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "open-payments",
+                "cobrar"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"walletOrigen\": \"{{walletOrigen}}\",\n  \"monto\": 20000,\n  \"referencia\": \"{{actividadId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Sin `grantId`: usa el permiso recurrente aprobado de esa billetera."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "const pedido = JSON.parse(pm.request.body.raw);",
+                  "pm.test(\"responde el monto exacto que se pidió\", () => pm.expect(r.monto).to.eql(pedido.monto));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Premio de una actividad",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyStaging}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/open-payments/pagar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "open-payments",
+                "pagar"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"walletDestino\": \"{{walletDestino}}\",\n  \"monto\": 30000,\n  \"referencia\": \"{{actividadId}}\",\n  \"origen\": \"{{natilleraId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Desde la billetera del grupo, con el permiso `grupo` (#67)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "const pedido = JSON.parse(pm.request.body.raw);",
+                  "pm.test(\"responde el monto exacto que se pidió\", () => pm.expect(r.monto).to.eql(pedido.monto));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Liquidación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyStaging}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/open-payments/pagar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "open-payments",
+                "pagar"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"walletDestino\": \"{{walletDestino}}\",\n  \"monto\": 150000,\n  \"referencia\": \"{{participacionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Sin `origen`: liquidación o reembolso, desde la billetera del grupo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "const pedido = JSON.parse(pm.request.body.raw);",
+                  "pm.test(\"responde el monto exacto que se pidió\", () => pm.expect(r.monto).to.eql(pedido.monto));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Préstamo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyStaging}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/open-payments/desembolsar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "open-payments",
+                "desembolsar"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"walletDestino\": \"{{walletDestino}}\",\n  \"monto\": 100000,\n  \"referencia\": \"{{creditoId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Desde la billetera de la financiera, con el permiso `financiera` (#67)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "const pedido = JSON.parse(pm.request.body.raw);",
+                  "pm.test(\"responde el monto exacto que se pidió\", () => pm.expect(r.monto).to.eql(pedido.monto));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Compra: al vendedor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyStaging}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/open-payments/pagar-con-permiso",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "open-payments",
+                "pagar-con-permiso"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grantId\": \"{{grantIdCompra}}\",\n  \"walletOrigen\": \"{{walletOrigen}}\",\n  \"walletDestino\": \"{{walletDestino}}\",\n  \"monto\": 47500,\n  \"referencia\": \"{{ventaId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Con el permiso de un solo uso del comprador."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "const pedido = JSON.parse(pm.request.body.raw);",
+                  "pm.test(\"responde el monto exacto que se pidió\", () => pm.expect(r.monto).to.eql(pedido.monto));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Compra: comisión",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Api-Key",
+                "value": "{{apiKeyStaging}}"
+              },
+              {
+                "key": "X-OP-Wallet-Address",
+                "value": "{{opWalletAddress}}"
+              },
+              {
+                "key": "X-OP-Key-Id",
+                "value": "{{opKeyId}}"
+              },
+              {
+                "key": "X-OP-Private-Key",
+                "value": "{{opPrivateKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/open-payments/aportar-con-permiso",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "open-payments",
+                "aportar-con-permiso"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grantId\": \"{{grantIdCompra}}\",\n  \"walletOrigen\": \"{{walletOrigen}}\",\n  \"natilleraId\": \"{{natilleraId}}\",\n  \"monto\": 2500,\n  \"referencia\": \"{{ventaId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "El mismo permiso de un solo uso; la comisión llega a la billetera del grupo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"responde 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "const pedido = JSON.parse(pm.request.body.raw);",
+                  "pm.test(\"responde el monto exacto que se pidió\", () => pm.expect(r.monto).to.eql(pedido.monto));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "permisoPesos",
+      "value": ""
+    },
+    {
+      "key": "permisoOtraMoneda",
+      "value": ""
+    },
+    {
+      "key": "ultimoAviso",
+      "value": ""
+    }
+  ]
+}
