@@ -75,6 +75,7 @@ Una línea por archivo o componente: qué herramienta, para qué y cuánto (much
 | `scripts/revisar-entrega.mjs`, `CLAUDE.md`, `.claude/rules/`, `.claude/skills/`, `.claude/agents/`, `.claude/commands/director-web.md` | Claude Code (Claude Opus 5.5) | Reglas, skills, agentes y checklist alineados con la API de pagos en `pagos/`: Open Payments solo desde ahí, la web lee su registro y el bot le pide permisos y avisos de pago | Mucho |
 | Retiro de los logos SVG redibujados de `design-system/assets/logos/` y sus menciones en `design-system/README.md`, `docs/marca.md`, `assets/logos/README.md` y `components/Logo/README.md` | Claude Code (Claude Opus 5.5) | Buscar qué logos no usa nadie y quitar el redibujo vectorial, que no era idéntico al kit oficial | Mucho |
 | Ocultar la sección de créditos: `web/src/lib/secciones.ts`, `web/src/proxy.ts`, `web/src/components/Navegacion.tsx`, `web/src/app/(panel)/creditos/page.tsx` y `actions.ts`, `web/README.md` | Claude Code (Claude Opus 5.5) | Apagar Créditos en la entrega (menú, 404 y acción del servidor) sin borrar su código | Mucho |
+| `docs/tecnica/` (arquitectura, maquetas, estados y datos), enlaces en `README.md` y `docs/checklist-entrega.md` | Claude Code (Claude Opus 5.5) | Diagramas Mermaid de contexto, piezas y contratos, despliegue y flujos; maquetas de baja fidelidad de cada pantalla con los componentes del design system; estados y datos, contrastados con el código de `pagos/`, `web/` y `telegram/` | Mucho |
 
 ## Servicios externos
 

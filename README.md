@@ -21,7 +21,7 @@ Un bot de Telegram donde el grupo arma su natillera, cada participante autoriza 
 
 Las reglas de dinero (cobros, mora, crédito, liquidación) las aplica un **servicio externo de lógica financiera**, como un n8n que contiene esa lógica. No forma parte de esta hackathon: el proyecto lo llama por API.
 
-El diagrama, los contratos entre piezas y el orden de trabajo están en el [plan de trabajo](docs/plan-de-trabajo.md).
+El diagrama, los contratos entre piezas y el orden de trabajo están en el [plan de trabajo](docs/plan-de-trabajo.md). Los diagramas de arquitectura, las maquetas y la documentación técnica, en [`docs/tecnica/`](docs/tecnica/).
 
 ## Cómo usa Open Payments
 
