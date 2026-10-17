@@ -2,12 +2,14 @@ import { Composer, InlineKeyboard } from 'grammy';
 import { escaparHTML, formatoCOP, formatoPorcentaje } from '../../formato.js';
 import { formatoFecha, validarBilletera } from '../../natillera/reglas.js';
 import { AccionRechazadaError } from '../../externo/cliente.js';
-import { NATILLERA_CREADA, PARTICIPACION_PENDIENTE } from '../../externo/unirse.js';
+import { ID_PERMISO, PERMISO } from '../../externo/pagos.js';
+import { NATILLERA_CREADA, PARTICIPACION_PENDIENTE, topeDelPermiso } from '../../externo/unirse.js';
 
 // Unirse desde el enlace (US-004, #16) y autorizar el cobro (US-005, #19). El enlace abre /start <código>:
 // el bot muestra las reglas que tiene la natillera en staging, la persona acepta, escribe su billetera y
-// el bot crea su participación. Después autoriza el cobro; mientras no exista el servicio de pagos, con
-// un permiso de prueba que se anuncia como tal.
+// el bot crea su participación. Después autoriza el cobro: con la API de pagos, en su billetera (el bot
+// le da el enlace y la billetera la trae de vuelta con /start permiso_<id>); sin ella, con un permiso de
+// prueba que se anuncia como tal.
 
 export const ID = 'unirse';
 
@@ -15,6 +17,10 @@ export const datoUnirme = (codigo) => `un:si:${codigo}`;
 export const DATO_AHORA_NO = 'un:no';
 export const datoAutorizar = (participacionId) => `un:aut:${participacionId}`;
 export const datoNoAutorizar = (participacionId) => `un:nau:${participacionId}`;
+export const datoYaAprobe = (permisoId) => `un:per:${permisoId}`;
+// El enlace con que la billetera devuelve a la persona al chat; la API de pagos pone el id.
+export const PAYLOAD_PERMISO = 'permiso_';
+export const vueltaDelPermiso = (usuarioBot) => `https://t.me/${usuarioBot}?start=${PAYLOAD_PERMISO}{permisoId}`;
 
 // ---------- Textos (voz y tono: tuteo, primero el dato, máximo 3 líneas, la plata ubicada) ----------
 
@@ -41,26 +47,42 @@ export const textoFaltaAutorizar = (nombre) => `Ya te inscribiste en ${nombreHTM
 export const TEXTO_AHORA_NO = 'Listo, no te uniste. Si cambias de opinión, abre el enlace otra vez.';
 export const PREGUNTA_BILLETERA = '¿Cuál es la dirección de tu billetera? La necesitamos para cobrar tus cuotas.';
 
-export function textoAutorizar(estado) {
+// `conPagos`: el permiso es real y se aprueba en la billetera; si no, es de prueba y lo dice.
+export function textoAutorizar(estado, { conPagos = false } = {}) {
+  const cobro = `${formatoCOP(estado.ValorCuota)} ${cadaCuanto(estado.PeriodicidadMeses)}, hasta el ${formatoFecha(estado.FechaFinal, { anio: true })}`;
+  if (conPagos) {
+    return [
+      `Para terminar, autoriza desde tu billetera el cobro automático: ${cobro}.`,
+      `El tope es ${formatoCOP(topeDelPermiso(estado))} en total: tus cuotas y un margen por si alguna queda pendiente. Nunca se cobra más de eso.`,
+    ].join('\n');
+  }
   return [
-    `Para terminar, autoriza el cobro automático: ${formatoCOP(estado.ValorCuota)} ${cadaCuanto(estado.PeriodicidadMeses)}, hasta el ${formatoFecha(estado.FechaFinal, { anio: true })}. Nunca se cobra más de eso.`,
+    `Para terminar, autoriza el cobro automático: ${cobro}. Nunca se cobra más de eso.`,
     'Por ahora es una autorización de prueba: no se abre tu billetera ni se mueve plata.',
   ].join('\n');
 }
 
-export const BOTON_AUTORIZAR = 'Autorizar el cobro (prueba)';
+export const BOTON_AUTORIZAR = 'Autorizar el cobro';
+export const BOTON_AUTORIZAR_PRUEBA = 'Autorizar el cobro (prueba)';
+export const botonAutorizar = (conPagos) => (conPagos ? BOTON_AUTORIZAR : BOTON_AUTORIZAR_PRUEBA);
+export const BOTON_ABRIR_BILLETERA = 'Abrir mi billetera';
+export const BOTON_YA_APROBE = 'Ya aprobé';
 export const BOTON_NO_AUTORIZAR = 'Ahora no';
 export const textoValidado = (nombre) => `✅ Listo: autorizaste el cobro en ${nombreHTML(nombre)}. Te aviso cuando arranque.`;
 export const TEXTO_NO_AUTORIZO = 'Listo, no autorizaste el cobro. Cuando quieras hacerlo, abre el enlace de invitación otra vez.';
 export const TEXTO_NO_SE_PUDO_AUTORIZAR = 'No se pudo autorizar el cobro ahora. Vuelve a intentarlo en un rato desde el enlace de invitación.';
 export const TEXTO_NO_ES_TUYO = 'Este botón no es tuyo.';
+export const textoAbrirBilletera = (tope) =>
+  `Abre tu billetera y aprueba el cobro, con tope de ${formatoCOP(tope)}. Al terminar, la billetera te trae de vuelta aquí.\nSi no te trae, vuelve tú y toca «${BOTON_YA_APROBE}».`;
+export const TEXTO_PERMISO_PENDIENTE = `Todavía no veo la aprobación en tu billetera. Cuando la apruebes, toca «${BOTON_YA_APROBE}».`;
+export const TEXTO_PERMISO_DESCONOCIDO = 'No encuentro esa autorización. Abre el enlace de invitación otra vez para autorizar el cobro.';
 
 export function textoAvisoAdmin(persona, nombreNatillera, inscritos, cupo) {
   return `🐷 ${escaparHTML(persona ?? 'Alguien')} se unió a ${nombreHTML(nombreNatillera)}. Van ${inscritos} de ${cupo} para arrancar.`;
 }
 
-const tecladoAutorizar = (participacionId) =>
-  new InlineKeyboard().text(BOTON_AUTORIZAR, datoAutorizar(participacionId)).row().text(BOTON_NO_AUTORIZAR, datoNoAutorizar(participacionId));
+const tecladoAutorizar = (participacionId, conPagos) =>
+  new InlineKeyboard().text(botonAutorizar(conPagos), datoAutorizar(participacionId)).row().text(BOTON_NO_AUTORIZAR, datoNoAutorizar(participacionId));
 
 // ---------- El flujo: una sola pregunta, la billetera ----------
 
@@ -101,7 +123,9 @@ export function flujoUnirse({ registro, unirse, log }) {
       // Ya existe en staging: desde aquí nada se relanza (el flujo quedaría abierto y reintentar
       // inscribiría dos veces).
       try {
-        await ctx.reply(textoAutorizar(resultado.estado), { reply_markup: tecladoAutorizar(resultado.participacionId) });
+        await ctx.reply(textoAutorizar(resultado.estado, { conPagos: unirse.conPagos }), {
+          reply_markup: tecladoAutorizar(resultado.participacionId, unirse.conPagos),
+        });
       } catch (error) {
         log.error('No se pudo pedir la autorización después de inscribir:', error);
       }
@@ -139,7 +163,9 @@ export function crearUnirseBot({ registro, unirse, motor, log }) {
       if ((await unirse.estadoParticipacion(participacion)) === PARTICIPACION_PENDIENTE) {
         const estado = await unirse.leerNatillera(natillera);
         await ctx.reply(textoFaltaAutorizar(natillera.nombre), { parse_mode: 'HTML' });
-        await ctx.reply(textoAutorizar(estado), { reply_markup: tecladoAutorizar(participacion.participacion_id) });
+        await ctx.reply(textoAutorizar(estado, { conPagos: unirse.conPagos }), {
+          reply_markup: tecladoAutorizar(participacion.participacion_id, unirse.conPagos),
+        });
       } else {
         await ctx.reply(textoYaEstas(natillera.nombre), { parse_mode: 'HTML' });
       }
@@ -185,6 +211,10 @@ export function crearUnirseBot({ registro, unirse, motor, log }) {
     }
     await ctx.answerCallbackQuery();
     await quitarBotones(ctx);
+    if (unirse.conPagos) {
+      await pedirPermiso(ctx, participacion);
+      return;
+    }
     try {
       await unirse.autorizar(participacion);
     } catch (error) {
@@ -193,8 +223,66 @@ export function crearUnirseBot({ registro, unirse, motor, log }) {
       await ctx.reply(TEXTO_NO_SE_PUDO_AUTORIZAR);
       return;
     }
-    const natillera = registro.natillera(participacion.natillera_id);
-    await ctx.reply(textoValidado(natillera?.nombre ?? 'tu natillera'), { parse_mode: 'HTML' });
+    await validado(ctx, participacion);
+  });
+
+  const validado = (ctx, participacion) =>
+    ctx.reply(textoValidado(registro.natillera(participacion.natillera_id)?.nombre ?? 'tu natillera'), { parse_mode: 'HTML' });
+
+  // Con la API de pagos: el permiso se pide y la persona lo aprueba en su billetera. Si la API falla,
+  // la persona vuelve a tocar «Autorizar el cobro».
+  async function pedirPermiso(ctx, participacion) {
+    let pedido;
+    try {
+      pedido = await unirse.pedirPermiso(participacion, vueltaDelPermiso(ctx.me.username));
+    } catch (error) {
+      log.error(`No se pudo pedir el permiso de ${participacion.participacion_id}:`, error);
+      await ctx.reply(TEXTO_NO_SE_PUDO_AUTORIZAR);
+      return;
+    }
+    if (pedido.yaAutorizo) {
+      await validado(ctx, participacion);
+      return;
+    }
+    await ctx.reply(textoAbrirBilletera(pedido.tope), {
+      reply_markup: new InlineKeyboard()
+        .url(BOTON_ABRIR_BILLETERA, pedido.urlAprobacion)
+        .row()
+        .text(BOTON_YA_APROBE, datoYaAprobe(pedido.permisoId)),
+    });
+  }
+
+  // /start permiso_<id> (la billetera trae a la persona de vuelta) o «Ya aprobé». El id llega en un
+  // enlace que cualquiera puede escribir: solo actúa para la persona dueña de la participación.
+  async function volverDePermiso(ctx, permisoId) {
+    const permiso = ID_PERMISO.test(permisoId) ? registro.permiso(permisoId) : null;
+    const participacion = permiso && registro.participacion(permiso.participacion_id);
+    if (!participacion || Number(participacion.telegram_id) !== ctx.from.id) {
+      await ctx.reply(TEXTO_PERMISO_DESCONOCIDO);
+      return;
+    }
+    let resultado;
+    try {
+      resultado = await unirse.terminarPermiso(permiso);
+    } catch (error) {
+      if (error instanceof AccionRechazadaError) log.info(`ConfirmarAutorizacion rechazado para ${participacion.participacion_id}: ${error.motivo}`);
+      else log.error(`No se pudo terminar el permiso ${permisoId}:`, error);
+      await ctx.reply(TEXTO_NO_SE_PUDO_AUTORIZAR);
+      return;
+    }
+    if (resultado.estado === PERMISO.APROBADO) {
+      await validado(ctx, participacion);
+    } else if (resultado.estado === PERMISO.PENDIENTE) {
+      await ctx.reply(TEXTO_PERMISO_PENDIENTE, { reply_markup: new InlineKeyboard().text(BOTON_YA_APROBE, datoYaAprobe(permisoId)) });
+    } else {
+      log.info(`El permiso ${permisoId} quedó ${resultado.estado}: ${resultado.motivo ?? 'sin motivo'}`);
+      await ctx.reply(TEXTO_NO_AUTORIZO);
+    }
+  }
+
+  comandos.callbackQuery(/^un:per:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await volverDePermiso(ctx, ctx.match[1]);
   });
 
   comandos.callbackQuery(/^un:nau:(.+)$/, async (ctx) => {
@@ -207,5 +295,5 @@ export function crearUnirseBot({ registro, unirse, motor, log }) {
     await ctx.reply(TEXTO_NO_AUTORIZO);
   });
 
-  return { comandos, abrirInvitacion };
+  return { comandos, abrirInvitacion, volverDePermiso };
 }

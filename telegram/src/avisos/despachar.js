@@ -56,8 +56,12 @@ export function ubicar({ datos, contractId }, registro) {
   const natilleraId = campo(datos, 'natilleraId');
   if (natilleraId) return conNatillera({}, natilleraId);
 
-  // Los avisos del crédito traen creditoId, que el bot no conoce (el crédito lo crea la web), pero
-  // PrestamoDesembolsado trae también participanteId, que es el id de Telegram.
+  // Los avisos del crédito traen creditoId. El crédito lo crea la web al aprobar: si usa como CreditoId
+  // el solicitudId que le mandó el bot (3.4), el bot sabe de quién es. Si no, PrestamoDesembolsado trae
+  // también participanteId, que es el id de Telegram.
+  const creditoId = campo(datos, 'creditoId');
+  const solicitud = creditoId ? registro.solicitud(String(creditoId)) : null;
+  if (solicitud) return deParticipacion(registro.participacion(solicitud.participacion_id));
   const participanteId = Number(campo(datos, 'participanteId'));
   return (Number.isInteger(participanteId) && deParticipacion(registro.participacionDe(participanteId))) || null;
 }

@@ -18,7 +18,8 @@ export function invitacionPronto(nombre) {
   ].join('\n');
 }
 
-// Llega desde «Pedir préstamo» de la Mini App (t.me/<bot>?start=prestamo). Enganche de US-014 (#29).
+// Llega desde «Pedir préstamo» de la Mini App (t.me/<bot>?start=prestamo). Con staging abre el flujo
+// del préstamo (flujos/prestamo.js, US-014); sin él, responde que todavía no se puede.
 export const PAYLOAD_PRESTAMO = 'prestamo';
 
 export function prestamoPronto(nombre) {
@@ -28,9 +29,13 @@ export function prestamoPronto(nombre) {
   ].join('\n');
 }
 
+// La billetera devuelve a la persona con t.me/<bot>?start=permiso_<id> después de aprobar el cobro
+// (flujos/unirse.js, con la API de pagos).
+const PAYLOAD_PERMISO = 'permiso_';
+
 // `abrirInvitacion(ctx, codigo)` llega con la integración con staging (flujos/unirse.js); sin ella, el
-// enlace responde que todavía no se puede unir.
-export function start({ log, abrirInvitacion }) {
+// enlace responde que todavía no se puede unir. `volverDePermiso(ctx, permisoId)` llega con la API de pagos.
+export function start({ log, abrirInvitacion, abrirPrestamo, volverDePermiso }) {
   const comandos = new Composer();
 
   comandos.command('start', async (ctx) => {
@@ -41,7 +46,12 @@ export function start({ log, abrirInvitacion }) {
 
     // El payload del enlace profundo (t.me/<bot>?start=<payload>) llega en ctx.match.
     if (ctx.match === PAYLOAD_PRESTAMO) {
-      await ctx.reply(prestamoPronto(nombre));
+      if (abrirPrestamo) await abrirPrestamo(ctx);
+      else await ctx.reply(prestamoPronto(nombre));
+      return;
+    }
+    if (volverDePermiso && ctx.match?.startsWith(PAYLOAD_PERMISO)) {
+      await volverDePermiso(ctx, ctx.match.slice(PAYLOAD_PERMISO.length));
       return;
     }
     if (ctx.match) {

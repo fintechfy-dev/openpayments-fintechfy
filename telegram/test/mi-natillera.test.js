@@ -60,7 +60,8 @@ test('reglas, autorización y personas sin exponer el estado de nadie', () => {
   assert.deepEqual(v.reglas.map((r) => r.etiqueta), ['Cuota', 'Fechas', 'Cuotas', 'Mora diaria', 'Cupo para arrancar', 'Administra']);
   assert.equal(v.reglas[0].valor, '$50.000 cada mes');
   assert.equal(v.reglas[3].valor, '0,1 % si una cuota queda pendiente');
-  assert.equal(v.autorizacion, 'Autorizaste el cobro de tus cuotas, hasta $50.000 cada vez.');
+  // El tope del permiso es total, no por cobro (pagos/API.md).
+  assert.equal(v.autorizacion, 'Autorizaste desde tu billetera el cobro automático de tus cuotas, con tope de $50.000 en total.');
   assert.deepEqual(v.personas[0], { nombre: 'Andrés Restrepo', iniciales: 'AR', administra: true });
   for (const p of v.personas) assert.deepEqual(Object.keys(p), ['nombre', 'iniciales', 'administra']);
 });

@@ -9,6 +9,7 @@ import { crearRegistro } from './registro.js';
 import { crearClienteExterno } from './externo/cliente.js';
 import { crearNatilleraEnServicio } from './externo/crear-natillera.js';
 import { crearUnirse } from './externo/unirse.js';
+import { crearClientePagos } from './externo/pagos.js';
 import { crearAvisoWeb } from './web/indice.js';
 import { crearDespachador } from './avisos/despachar.js';
 import { archivoDeSecretos, iniciarWebhookDeAvisos, leerSecretosDeAvisos } from './avisos/webhook.js';
@@ -51,9 +52,12 @@ const crearNatillera = servicio
   : undefined;
 if (!servicio) log.warn('Sin SERVICIO_EXTERNO_URL: /crear termina en una vista previa y no llegan avisos.');
 
-const unirse = servicio ? crearUnirse({ servicio, registro, web, log }) : undefined;
+// API de pagos (pagos/API.md): con ella, el permiso de cobro se aprueba en la billetera de cada persona.
+const pagos = config.pagos.url ? crearClientePagos(config.pagos) : undefined;
+if (servicio && !pagos) log.warn('Sin PAGOS_URL: el permiso de cobro es de prueba y no se abre ninguna billetera.');
+const unirse = servicio ? crearUnirse({ servicio, registro, web, pagos, log }) : undefined;
 
-const bot = crearBot(config, { log, db, crearNatillera, servicio, registro, unirse });
+const bot = crearBot(config, { log, db, crearNatillera, servicio, registro, unirse, web });
 
 // Avisos de staging (#6): por webhook si hay puerto, si no, por el flujo en vivo.
 const avisos = new AbortController();
