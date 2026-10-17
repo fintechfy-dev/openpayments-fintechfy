@@ -1,9 +1,12 @@
-// «Mi natillera»: lo que ve un participante (US-008 y la entrada al préstamo de US-014). Por ahora con
-// los datos de ejemplo de datos-demo.js; con el contrato de #5 se piden al servicio externo.
+// «Mi natillera»: lo que ve un participante (US-008 y la entrada al préstamo de US-014). Los datos son
+// los de staging: los arma el bot en /mi_natillera y llegan en el fragmento del enlace (#d=..., ver
+// src/natillera/mi-natillera.js). Sin ellos, la página pide abrirla desde el bot; los datos de ejemplo
+// (datos-demo.js) solo salen con ?caso=, para revisar el diseño.
 // Todo lo que viene de los datos se pinta con textContent, nunca como HTML.
 
 import { iniciarTelegram, nombreDePila, parametros, pintarIconos, tg } from '../comun.js';
-import { CASOS, CASO_POR_DEFECTO } from './datos-demo.js';
+import { decodificarPanel } from '../../src/natillera/panel.js';
+import { CASOS } from './datos-demo.js';
 import { armarVista } from './vista.js';
 
 const $ = (id) => document.getElementById(id);
@@ -169,9 +172,11 @@ function mostrarPestana(nombre) {
   }
 }
 
-function pintar(caso) {
-  const v = armarVista(CASOS[caso].datos);
-  const nombre = nombreDePila() ?? CASOS[caso].datos.yo.nombre.split(' ')[0];
+// opciones: [{ etiqueta, datos }] (las natilleras de la persona, o los casos de ejemplo); i: la que se ve.
+function pintar(opciones, i, pie) {
+  const { datos } = opciones[i];
+  const v = armarVista(datos);
+  const nombre = nombreDePila() ?? String(datos.yo.nombre).split(' ')[0];
 
   $('avatar').textContent = nombre[0]?.toUpperCase() ?? '';
   $('saludo').textContent = `Hola, ${nombre}`;
@@ -182,16 +187,61 @@ function pintar(caso) {
   $('panel-reglas').replaceChildren(...panelReglas(v));
   $('panel-cobros').replaceChildren(...panelCobros(v));
 
-  $('casos').replaceChildren(...Object.entries(CASOS).map(([clave, c]) => {
-    const b = el('button', { clase: 'ma-chip', texto: c.etiqueta, atributos: { type: 'button', 'aria-pressed': String(clave === caso) } });
+  $('pie').textContent = pie;
+  $('casos').replaceChildren(...(opciones.length < 2 ? [] : opciones.map((o, j) => {
+    const b = el('button', { clase: 'ma-chip', texto: o.etiqueta, atributos: { type: 'button', 'aria-pressed': String(j === i) } });
     b.addEventListener('click', () => {
       tg?.HapticFeedback?.selectionChanged();
-      pintar(clave);
+      pintar(opciones, j, pie);
     });
     return b;
-  }));
+  })));
 
   pintarIconos();
+}
+
+// Sin datos del bot: la Mini App se abrió desde el botón del menú o fuera de Telegram. El bot vuelve a
+// leer staging con /start mi_natillera y responde con el enlace que trae los datos.
+function pintarSinDatos() {
+  const bot = parametros.get('bot');
+  const boton = el('button', { clase: 'nt-btn nt-btn--primario nt-btn--bloque', texto: 'Traer mis datos', atributos: { type: 'button' } });
+  boton.addEventListener('click', () => {
+    if (tg && bot && /^[A-Za-z0-9_]{5,32}$/.test(bot)) {
+      tg.openTelegramLink(`https://t.me/${bot}?start=mi_natillera`);
+      tg.close();
+    } else {
+      tg?.showAlert?.('Escríbele /mi_natillera al bot.');
+    }
+  });
+  $('panel-inicio').replaceChildren(
+    aviso('info', 'reloj', 'Tus datos los trae el bot', 'Toca el botón y el bot te manda tu natillera al día, o escríbele /mi_natillera.'),
+    boton,
+  );
+  $('pie').textContent = '';
+  pintarIconos();
+}
+
+const horaDe = (iso) => {
+  const fecha = new Date(iso);
+  return Number.isNaN(fecha.getTime())
+    ? ''
+    : fecha.toLocaleString('es-CO', { timeZone: 'America/Bogota', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' });
+};
+
+function arrancar() {
+  const datos = decodificarPanel(new URLSearchParams(location.hash.slice(1)).get('d') ?? '');
+  if (datos?.natilleras?.length) {
+    const opciones = datos.natilleras.map((d) => ({ etiqueta: d.natillera.nombre, datos: d }));
+    pintar(opciones, 0, `Datos del ${horaDe(datos.generado)}. Para verlos al día, vuelve a abrir «Mi natillera» desde el bot.`);
+    return;
+  }
+  const caso = parametros.get('caso');
+  if (CASOS[caso]) {
+    const opciones = Object.values(CASOS).map((c) => ({ etiqueta: c.etiqueta, datos: c.datos }));
+    pintar(opciones, Object.keys(CASOS).indexOf(caso), 'Datos de ejemplo, para revisar el diseño.');
+    return;
+  }
+  pintarSinDatos();
 }
 
 function conectarPestanas() {
@@ -210,6 +260,5 @@ function conectarPestanas() {
 
 iniciarTelegram();
 conectarPestanas();
-const pedido = parametros.get('caso');
-pintar(CASOS[pedido] ? pedido : CASO_POR_DEFECTO);
+arrancar();
 mostrarPestana(PESTANAS.includes(parametros.get('pestana')) ? parametros.get('pestana') : 'inicio');

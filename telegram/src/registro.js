@@ -31,9 +31,16 @@ export function crearRegistro(db) {
     obligacionPorContrato: db.prepare('SELECT * FROM obligaciones WHERE contract_id = ?'),
     participantes: db.prepare('SELECT telegram_id FROM participaciones WHERE natillera_id = ?'),
     participacionDe: db.prepare('SELECT * FROM participaciones WHERE telegram_id = ? ORDER BY rowid DESC LIMIT 1'),
+    guardarSolicitud: db.prepare('INSERT INTO solicitudes (solicitud_id, participacion_id, monto, plazo_meses, creada_en) VALUES (?, ?, ?, ?, ?)'),
+    solicitud: db.prepare('SELECT * FROM solicitudes WHERE solicitud_id = ?'),
+    solicitudDe: db.prepare('SELECT * FROM solicitudes WHERE participacion_id = ? ORDER BY creada_en DESC, rowid DESC LIMIT 1'),
+    guardarPermiso: db.prepare('INSERT INTO permisos (permiso_id, participacion_id, monto, creado_en) VALUES (?, ?, ?, ?)'),
+    permiso: db.prepare('SELECT * FROM permisos WHERE permiso_id = ?'),
+    permisoDe: db.prepare('SELECT * FROM permisos WHERE participacion_id = ? ORDER BY creado_en DESC, rowid DESC LIMIT 1'),
     participacionesEn: db.prepare('SELECT * FROM participaciones WHERE natillera_id = ? ORDER BY rowid'),
     guardarNombre: db.prepare('UPDATE participaciones SET nombre = ? WHERE participacion_id = ? AND nombre IS NULL'),
     participacionesDe: db.prepare('SELECT * FROM participaciones WHERE telegram_id = ? ORDER BY rowid DESC'),
+    natillerasPorNombre: db.prepare('SELECT * FROM natilleras WHERE lower(nombre) = lower(?) OR natillera_id = ? ORDER BY creada_en DESC'),
     natillerasDelAdmin: db.prepare('SELECT * FROM natilleras WHERE admin_telegram_id = ? ORDER BY creada_en DESC'),
   };
 
@@ -73,9 +80,24 @@ export function crearRegistro(db) {
     obligacionDe: (actividadId, telegramId) => sql.obligacion.get(actividadId, telegramId),
     // La participación más reciente de una persona: para los avisos que solo traen su id de Telegram.
     participacionDe: (telegramId) => sql.participacionDe.get(telegramId),
+    // Préstamos pedidos desde el bot (US-014): uno a la vez por participación.
+    guardarSolicitud({ solicitudId, participacionId, monto, plazoMeses, creadaEn }) {
+      sql.guardarSolicitud.run(solicitudId, participacionId, monto, plazoMeses, creadaEn);
+    },
+    solicitud: (id) => sql.solicitud.get(id),
+    solicitudDe: (participacionId) => sql.solicitudDe.get(participacionId),
+    // Permisos de cobro pedidos a la API de pagos (US-005).
+    guardarPermiso({ permisoId, participacionId, monto, creadoEn }) {
+      sql.guardarPermiso.run(permisoId, participacionId, monto, creadoEn);
+    },
+    permiso: (id) => sql.permiso.get(id),
+    // El último permiso pedido por una participación: su tope se muestra en «Mi natillera».
+    permisoDe: (participacionId) => sql.permisoDe.get(participacionId),
     // Para «Mi natillera»: todas las de una persona, la más reciente primero.
     participacionesDe: (telegramId) => sql.participacionesDe.all(telegramId),
     natillerasDelAdmin: (telegramId) => sql.natillerasDelAdmin.all(telegramId),
+    // Para /reloj: por nombre sin importar mayúsculas, o por su id.
+    natillerasPorNombre: (texto) => sql.natillerasPorNombre.all(texto, texto),
 
     // Para los avisos que solo traen el contrato que los originó.
     porContrato(contractId) {

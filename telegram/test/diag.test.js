@@ -50,6 +50,10 @@ test('/diag nunca muestra secretos y de las URL solo enseña el origen', async (
       WEB_INDICE_URL: 'http://localhost:3000/secreto',
       WEB_INDICE_API_KEY: 'llave-web',
       PAGOS_URL: 'http://localhost:3001/pagos',
+      PAGOS_API_KEY: 'llave-pagos',
+      OP_WALLET_ADDRESS: 'https://ilp.interledger-test.dev/app',
+      OP_KEY_ID: 'key-1',
+      OP_PRIVATE_KEY: 'clave-privada-b64',
     },
   });
   await bot.handleUpdate(mensaje('/diag', { chatId: CHAT_EQUIPO }));
@@ -58,7 +62,7 @@ test('/diag nunca muestra secretos y de las URL solo enseña el origen', async (
   assert.match(texto, /Servicio externo: https:\/\/externo\.example · avisos por flujo en vivo/);
   assert.match(texto, /Índice de la web: http:\/\/localhost:3000\n/);
   assert.match(texto, /Servicio de pagos: http:\/\/localhost:3001\n/);
-  for (const prohibido of [TOKEN_DE_PRUEBA, 'llave-xyz', 'llave-web', 'clave', '/api/v1', '/secreto']) {
+  for (const prohibido of [TOKEN_DE_PRUEBA, 'llave-xyz', 'llave-web', 'llave-pagos', 'clave-privada-b64', 'clave', '/api/v1', '/secreto']) {
     assert.ok(!texto.includes(prohibido), `/diag mostró ${prohibido}`);
   }
 });

@@ -1,5 +1,6 @@
 import { InlineKeyboard } from 'grammy';
 import { escaparHTML, formatoCOP } from '../formato.js';
+import { BOTON_PEDIR_PRESTAMO, datoPrestamo } from '../bot/flujos/prestamo.js';
 
 // Qué le dice el bot a quién por cada aviso de staging (telegram/INTEGRACION.md, sección 2). Voz y tono
 // del design system: primero el dato, máximo 3 líneas, sin culpa, sin emoji en mora ni en error, y lo
@@ -108,6 +109,7 @@ export const AVISOS = Object.freeze({
       const maximo = monto(c.datos, 'montoMaximoPrestamo');
       return `🐷 Ya puedes pedir un préstamo${maximo === null ? '' : ` de hasta ${formatoCOP(maximo)}`} en ${nombre(c)}.\nLo revisa y lo presta Financiera Aliada.`;
     },
+    botones: (c) => c.participacionId && new InlineKeyboard().text(BOTON_PEDIR_PRESTAMO, datoPrestamo(c.participacionId)),
   },
   PrestamoDesembolsado: { a: 'participante', texto: (c) => `✅ Te llegó tu préstamo de ${plata(c.datos, 'capital')} a tu billetera.` },
   DesembolsoFallo: { a: 'participante', texto: () => `No se pudo enviar tu préstamo a tu billetera.\n${LO_REVISAMOS}` },
