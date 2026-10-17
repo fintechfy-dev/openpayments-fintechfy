@@ -52,6 +52,7 @@ export const ESTADOS = {
     cerrada: { variante: "neutro", icono: "candado", texto: "Cerrada" },
   },
   participante: {
+    por_validar: { variante: "neutro", icono: "reloj", texto: "Por validar" },
     validado: { variante: "info", icono: "check", texto: "Validado" },
     activo: { variante: "exito", icono: "cuota", texto: "Activo" },
     en_mora: { variante: "aviso", icono: "reloj", texto: "En mora" },

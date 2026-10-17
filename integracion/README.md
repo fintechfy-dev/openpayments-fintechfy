@@ -34,6 +34,8 @@ flowchart LR
 
 ## Lo que expone staging
 
+**Especificación completa:** [`FND-20261015-natillera-2.openapi.json`](FND-20261015-natillera-2.openapi.json) (OpenAPI 3.1: rutas, parámetros de cada contrato y trigger, y los 110 webhooks). Para regenerarla: `curl -H "Authorization: Bearer $TOKEN" https://sandbox-staging.corebank.ai/api/ecosystems/FND-20261015-natillera-2/openapi > FND-20261015-natillera-2.openapi.json`. Lo verificado contra staging está en [`../web/INTEGRACION.md`](../web/INTEGRACION.md).
+
 Todo pasa por la puerta de entrada de staging, con `Authorization: Bearer <token>`. No sirve un token de sesión común: la puerta exige un JWT emitido con la plantilla de Clerk `motorcredito` (audiencia `motorcredito-api`) y el `org_id` del tenant. Para crear contratos y disparar acciones, el token necesita el rol `writer` o `admin`; con `reader` responde 403. El token **vence**: Willy define cuánto dura y quién lo renueva durante la demo (#65). Nunca va al navegador ni al repo.
 
 | Operación | Ruta | La usa |

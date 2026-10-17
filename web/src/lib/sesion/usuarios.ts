@@ -11,7 +11,7 @@ export interface UsuarioDemo {
   variableChat: "DEMO_FINANCIERA_TELEGRAM_CHAT_ID" | "DEMO_ADMIN_TELEGRAM_CHAT_ID";
 }
 
-// El administrador de demo es el de la natillera "Los Primos" en los datos de prueba.
+// El administrador de demo ve las natilleras cuyo administrador registró el bot con su chat de Telegram.
 export const USUARIOS_DEMO: readonly UsuarioDemo[] = [
   { usuario: "financiera", nombre: FINANCIERA, rol: "financiera", variableChat: "DEMO_FINANCIERA_TELEGRAM_CHAT_ID" },
   { usuario: "andres", nombre: "Andrés Restrepo", rol: "administrador", variableChat: "DEMO_ADMIN_TELEGRAM_CHAT_ID" },

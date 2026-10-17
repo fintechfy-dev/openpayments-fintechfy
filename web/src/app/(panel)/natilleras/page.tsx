@@ -91,6 +91,8 @@ export default async function Natilleras() {
                     <Link href={`/natilleras/${encodeURIComponent(n.id)}`} className="natilleras-enlace">
                       {n.nombre}
                     </Link>
+                    {/* Debajo del nombre y no en su propia columna: en 1024 px una columna más corta la tabla. */}
+                    <span className="natilleras-sub natilleras-id">ID: {n.id}</span>
                   </td>
                   <td data-etiqueta="Estado">
                     <Badge tipo="natillera" estado={n.estado} />

@@ -32,6 +32,8 @@ export const TEXTO_TIPO: Record<TipoPago, string> = {
   liquidacion: "Liquidación",
   desembolso: "Desembolso de préstamo",
   reembolso: "Reembolso",
+  venta: "Compra entre participantes",
+  comision: "Comisión de una compra",
 };
 
 /** El tipo en palabras; si el servicio externo manda uno nuevo, "Pago" en vez de romper la pantalla. */
@@ -138,7 +140,8 @@ export function anunciarPago(pago: Pago): string {
     const donde = etapa ? ` en ${NOMBRE_ETAPA[etapa.nombre]}` : "";
     return `Pago fallido${donde}: ${que}. Motivo: ${pago.motivo ?? "sin motivo informado"}.`;
   }
-  return `Pago completado: ${que}.`;
+  // Un pago simulado no pasó por Open Payments: quien usa lector de pantalla también debe saberlo.
+  return pago.simulado ? `Pago simulado, no pasó por Open Payments: ${que}.` : `Pago completado: ${que}.`;
 }
 
 const fmtHoraExacta = new Intl.DateTimeFormat("es-CO", {

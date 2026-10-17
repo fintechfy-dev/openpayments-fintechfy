@@ -9,6 +9,9 @@
 .natilleras-enlace:hover { text-decoration-thickness: 2px; }
 
 .natilleras-sub { display: block; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--tinta-suave); }
+/* El NatilleraId lo genera el bot y es largo (nat-<uuid>): se parte en vez de ensanchar la tabla. En
+   escritorio la celda principal es nowrap (app.css) para que el nombre no se parta; el ID sí. */
+.natilleras-id { margin-top: var(--espacio-1); max-width: 24ch; white-space: normal; word-break: break-all; }
 .natilleras-pendiente { color: var(--estado-aviso-texto); font-weight: 700; }
 
 /* Detalle */

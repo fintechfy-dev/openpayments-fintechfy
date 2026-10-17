@@ -16,6 +16,7 @@ Cada estado tiene variante de color, ícono y palabra (`Natillera.ESTADOS`). Nun
 
 | Estado | Badge | Ícono | Cuándo |
 | --- | --- | --- | --- |
+| Por validar | `nt-badge--neutro` | reloj | Se unió, pero aún no verifica su billetera ni autoriza el cobro (`PENDIENTE_VALIDACION` en el servicio externo) |
 | Validado | `nt-badge--info` | check | Billetera verificada y cobro autorizado |
 | Activo | `nt-badge--exito` | cuota | Al día con sus cuotas |
 | En mora | `nt-badge--aviso` | reloj | Tiene al menos una cuota sin cobrar. Naranja, no rojo: es un atraso, no una falta |

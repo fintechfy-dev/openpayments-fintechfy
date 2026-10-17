@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Aviso } from "@/components/Aviso";
-import { usaDatosDePrueba } from "@/lib/servicio";
 import { obtenerSesion, sesionConfigurada } from "@/lib/sesion";
 import { destinoSeguro } from "@/lib/sesion/acceso";
 import { USUARIOS_DEMO } from "@/lib/sesion/usuarios";
@@ -38,18 +37,16 @@ export default async function Ingresar({ searchParams }: Props) {
           </Aviso>
         )}
 
-        {usaDatosDePrueba ? (
-          <p className="ingreso__demo nt-muted">
-            Demo: usuarios{" "}
-            {USUARIOS_DEMO.map((u, i) => (
-              <span key={u.usuario}>
-                {i > 0 ? " y " : null}
-                <b>{u.usuario}</b>
-              </span>
-            ))}
-            . El código llega al Telegram de cada uno.
-          </p>
-        ) : null}
+        <p className="ingreso__demo nt-muted">
+          Demo: usuarios{" "}
+          {USUARIOS_DEMO.map((u, i) => (
+            <span key={u.usuario}>
+              {i > 0 ? " y " : null}
+              <b>{u.usuario}</b>
+            </span>
+          ))}
+          . El código llega al Telegram de cada uno.
+        </p>
 
         <p className="ingreso__participantes">
           ¿Eres participante de una natillera? Todo lo haces desde el bot de Telegram: no necesitas esta página.
