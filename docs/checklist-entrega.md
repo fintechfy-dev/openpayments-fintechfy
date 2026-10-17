@@ -11,18 +11,18 @@ node scripts/revisar-entrega.mjs --rama   # además, lo que le falta al diff de 
 
 Sale con código 1 solo si encuentra un secreto o un `.env` versionado. El resto son avisos. La regla `.claude/rules/checklist-entrega.md` pide correrlo y actualizar este documento en cada commit y PR.
 
-**Contrastado:** viernes 16 de octubre, 16:05 (hora de Bogotá), sobre `develop` en `a719c8b` (con #49, #50 y #51).
+**Contrastado:** sábado 17 de octubre, 8:45 (hora de Bogotá), sobre `develop` en `4df7cde`, con la página de entrega y evaluación de la hackathon.
 
 **Estados:** ✅ hecho, con evidencia en el repo · ⚠️ a medias · ❌ falta · 👥 depende de personas y no se ve en el repo: se marca en la página · ❓ pregunta abierta para la organización · ℹ️ dato
 
 ## Lo que falta, por urgencia
 
-1. ⚠️ **La API de pagos existe, pero todavía no ha movido dinero real** (`b-op`, `c-op`). `pagos/` usa el SDK `@interledger/open-payments` 7.4.0 y está publicada en `https://natillera-pagos.azurewebsites.net` (PR #71), con pruebas contra un Open Payments falso. Falta cargarle en Azure `OP_WALLET_GRUPO` y `OP_WALLET_FINANCIERA`, hacer el #3 en la Test Wallet y que staging deje de apuntar a `https://natillera-bff.example`: Willy configura ahí la dirección de la API de pagos, su llave y los encabezados `X-OP-*`, y la pasa a modo real (#55, `integracion/README.md`).
-2. ❌ **Sin evidencia de un pago de punta a punta** (`b-primer-pago`, `b-evidencia`, `s-video`). El video debe mostrar la solicitud, la autorización en la billetera, la ejecución y la finalización exitosa.
+1. ✅ **La API de pagos movió dinero real** (`b-op`, `c-op`). El 16 de octubre, staging cobró tres cuotas de 50.000 COP desde billeteras en euros y dólares a la billetera del grupo, con conversión de moneda, y el registro guarda sus cuatro etapas (`GET /api/registro`). Staging ya apunta a la API en modo real.
+2. ⚠️ **Falta el video de la demo** (`s-video`). El pago de punta a punta ya está hecho y tiene registro (`b-primer-pago`, `b-evidencia`); el video tiene que mostrar la solicitud, la autorización en la billetera, la ejecución y la finalización exitosa.
 3. ⚠️ **Issues del frente Pagos sin responsable en GitHub**: #3 y #4 (el plan se los da a Willy, que lleva la API de pagos), #12, #15, #20 a #23, #25, #28, #30 y #31. Tampoco #11 (release de entrega), #14 (secretos), #37 (guion con 4 billeteras) ni #38 (entregables del repositorio).
 4. ⚠️ **El checkpoint de las 15:00 no dejó registro** (`b-checkpoint`). Si se recortó algo, hay que anotarlo en `docs/plan-de-trabajo.md` y en los issues `recorte *`.
-5. ⚠️ **`AI_USAGE.md` tiene 3 secciones por completar**: el código de la hackathon, los archivos con poca o ninguna IA y lo que hizo el equipo. También falta el modelo de ChatGPT usado para el logo (`s-aiusage`).
-6. ⚠️ **Al README le faltan "Cómo usa Open Payments" y "Correr la demo"** (`s-readme`).
+5. ✅ **`AI_USAGE.md` completo** (`s-aiusage`): herramientas con su modelo (el del logo salió de los metadatos C2PA: ChatGPT `gpt-image`), ningún archivo hecho sin IA y lo que hizo el equipo.
+6. ✅ **README con «Cómo usa Open Payments» y «Correr la demo»** (`s-readme`).
 7. ❓ **La rama por defecto de GitHub es `develop`, no `main`.** El jurado abre el enlace del repositorio y ve la rama por defecto. Al fusionar `release/entrega` el sábado, decidir si se cambia a `main` o si se deja `develop` igual a `main` (`s-main`, #11).
 8. ❌ **No hay presentación ni video en el repo** (`hoy-slides-faltan`, `s-slides`, `s-subir`). La plantilla oficial no trae las diapositivas de usuario, uso de Open Payments ni aprendizajes.
 
