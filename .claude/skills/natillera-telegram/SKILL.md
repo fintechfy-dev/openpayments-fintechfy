@@ -33,7 +33,7 @@ Solo corre una copia del bot por token (si sale `409: Conflict`, hay otra abiert
 | `src/secretos.js`, `src/log.js` | Tapar secretos en logs; el logger nunca imprime un secreto |
 | `src/formato.js` | `formatoCOP`, porcentajes y `escaparHTML`, iguales a los del design system |
 | `src/bot/flujo.js` | Motor de flujos: preguntas paso a paso en una sola tarjeta, resumen con confirmar/corregir/cancelar |
-| `src/bot/flujos/<flujo>.js` | Cada flujo (por ahora `crear.js`): sus pasos, su resumen y su `alTerminar` |
+| `src/bot/flujos/<flujo>.js` | Cada flujo (`crear.js` y `unirse.js`): sus pasos, su resumen y su `alTerminar` |
 | `src/natillera/reglas.js` | Reglas puras de la natillera (fechas, montos, cupo, mora, cuotas). Las usan **el bot y la Mini App** |
 | `src/db.js`, `src/bot/sesion-storage.js` | Sesiones en SQLite (`node:sqlite`): un flujo a medias sobrevive a un reinicio |
 | `miniapp/` | Formulario web dentro de Telegram para crear la natillera; se publica en GitHub Pages (`MINIAPP_URL`) |

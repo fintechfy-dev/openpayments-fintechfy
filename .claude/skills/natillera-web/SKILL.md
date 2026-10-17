@@ -63,7 +63,7 @@ Todo lo que está en `app/(panel)/` exige sesión: `financiera` ve todo y respon
 - En cada página, Server Action y route handler nuevos del panel: `await requerirSesion()` (o `obtenerSesion()` en acciones y API, que devuelven un error en vez de redirigir). El layout y el `proxy` no bastan: una Server Action se puede llamar directo por HTTP.
 - Los criterios de acceso viven **una sola vez** en `src/lib/sesion/acceso.ts` (`puedeVerNatillera`, `puedeResponderCreditos`). Para filtrar pagos o bitácora usa `natillerasVisibles(sesion)`. No escribas `sesion.rol === "financiera"` suelto en una pantalla.
 - Una natillera ajena responde `notFound()`, igual que una inexistente.
-- Las rutas de máquina (`/api/indice/*` y `/api/avisos`, con y sin subruta) no usan sesión: se protegen con su llave (`X-Api-Key`) o la firma de los avisos, y se excluyen en `src/proxy.ts`. La vuelta del permiso es pública.
+- Las rutas de máquina (`/api/indice/*` y `/api/avisos`, con y sin subruta) no usan sesión: se protegen con su llave (`X-Api-Key`) o la firma de los avisos, y se excluyen en `src/proxy.ts`. La web no tiene rutas de permisos: la vuelta del permiso la atiende la API de pagos.
 
 ## Seguridad: las llaves no salen del servidor
 
