@@ -71,12 +71,19 @@ const EXTERNO = Object.freeze({
   MULTIPLO_PRESTAMO: '2',
 });
 
+const PAGOS = Object.freeze({
+  PAGOS_API_KEY: 'llave-clientes',
+  OP_WALLET_ADDRESS: 'https://ilp.interledger-test.dev/app',
+  OP_KEY_ID: 'key-1',
+  OP_PRIVATE_KEY: 'LS0tLS1CRUdJTiBQUklWQVRF',
+});
+
 test('las URL de los servicios son opcionales, pero si vienen deben ser http(s)', () => {
-  const config = loadConfig({ ...ENV_DE_PRUEBA, ...EXTERNO, PAGOS_URL: 'http://localhost:3001' });
+  const config = loadConfig({ ...ENV_DE_PRUEBA, ...EXTERNO, ...PAGOS, PAGOS_URL: 'http://localhost:3001' });
   assert.equal(config.externo.url, 'https://externo.example');
   assert.equal(config.pagosUrl, 'http://localhost:3001');
 
-  const errores = erroresDe({ ...ENV_DE_PRUEBA, ...EXTERNO, SERVICIO_EXTERNO_URL: 'ftp://x', PAGOS_URL: 'no es url' });
+  const errores = erroresDe({ ...ENV_DE_PRUEBA, ...EXTERNO, ...PAGOS, SERVICIO_EXTERNO_URL: 'ftp://x', PAGOS_URL: 'no es url' });
   assert.equal(errores.length, 2);
 });
 
@@ -90,6 +97,18 @@ test('con el servicio externo se exigen su token y las reglas del préstamo y de
   assert.deepEqual({ ...config.reglasServicio }, { diasEsperaCupo: 5, pagosParaPrestamo: 1, multiploPrestamo: 2 });
   assert.match(erroresDe({ ...ENV_DE_PRUEBA, ...EXTERNO, PAGOS_PARA_PRESTAMO: '0' })[0], /^PAGOS_PARA_PRESTAMO/);
   assert.match(erroresDe({ ...ENV_DE_PRUEBA, ...EXTERNO, MULTIPLO_PRESTAMO: '1.5' })[0], /^MULTIPLO_PRESTAMO/);
+});
+
+test('con la API de pagos se exigen su llave y las de Open Payments, y las dos secretas se tapan', () => {
+  const errores = erroresDe({ ...ENV_DE_PRUEBA, PAGOS_URL: 'https://pagos.example' });
+  assert.deepEqual(errores, ['PAGOS_API_KEY', 'OP_WALLET_ADDRESS', 'OP_KEY_ID', 'OP_PRIVATE_KEY'].map((n) => `Falta la variable ${n}.`));
+
+  const config = loadConfig({ ...ENV_DE_PRUEBA, ...PAGOS, PAGOS_URL: 'https://pagos.example' });
+  assert.deepEqual({ ...config.pagos.llaves }, { wallet: PAGOS.OP_WALLET_ADDRESS, keyId: 'key-1', privateKey: PAGOS.OP_PRIVATE_KEY });
+  assert.ok(config.secretos.includes('llave-clientes'));
+  assert.ok(config.secretos.includes(PAGOS.OP_PRIVATE_KEY));
+  // Sin PAGOS_URL no se pide nada: el permiso es de prueba.
+  assert.equal(loadConfig(ENV_DE_PRUEBA).pagos.url, undefined);
 });
 
 test('el índice de la web pide su llave y el puerto de avisos debe ser válido', () => {

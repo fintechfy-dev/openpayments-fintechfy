@@ -3,7 +3,7 @@ import { escaparHTML, formatoCOP } from '../../formato.js';
 import { formatoFecha } from '../../natillera/reglas.js';
 import { estadoDe } from '../../externo/cliente.js';
 import { BOTON_PAGAR_DEUDA, datoBotonDeuda } from '../../avisos/mensajes.js';
-import { BOTON_AUTORIZAR, datoAutorizar } from '../flujos/unirse.js';
+import { botonAutorizar, datoAutorizar } from '../flujos/unirse.js';
 import { BOTON_PEDIR_PRESTAMO, datoPrestamo } from '../flujos/prestamo.js';
 
 // «Mi natillera» (US-008, #26). Con staging, responde en el chat con lo que hay en sus contratos: un
@@ -63,7 +63,8 @@ const lineaAhorro = (n, p) =>
   `Llevas ${formatoCOP(p.TotalAportado)} ahorrado: ${p.CuotasPagadas} de ${plural(n.NumeroCuotas, 'cuota', 'cuotas')}.`;
 
 // Lo que ve un participante, según el estado de su participación: { texto, teclado? }. Máximo 3 líneas.
-export function resumenParticipacion(n, p) {
+// `conPagos`: la autorización es real (API de pagos); si no, es de prueba y lo dice.
+export function resumenParticipacion(n, p, { conPagos = false } = {}) {
   const nombre = nombreHTML(n.NombreNatillera);
   const pid = p.ParticipacionId;
   switch (Number(p.EstadoParticipacion)) {
@@ -71,9 +72,9 @@ export function resumenParticipacion(n, p) {
       return {
         texto: [
           `${nombre}: te inscribiste, pero te falta autorizar el cobro de tus cuotas.`,
-          `${formatoCOP(n.ValorCuota)} cada mes, hasta el ${formatoFecha(n.FechaFinal, { anio: true })}. Por ahora es una autorización de prueba.`,
+          `${formatoCOP(n.ValorCuota)} cada mes, hasta el ${formatoFecha(n.FechaFinal, { anio: true })}.${conPagos ? ' Se autoriza desde tu billetera.' : ' Por ahora es una autorización de prueba.'}`,
         ].join('\n'),
-        teclado: new InlineKeyboard().text(BOTON_AUTORIZAR, datoAutorizar(pid)),
+        teclado: new InlineKeyboard().text(botonAutorizar(conPagos), datoAutorizar(pid)),
       };
     case PARTICIPACION.VALIDADA:
       return {
@@ -172,7 +173,7 @@ export function miNatillera({ config, registro, servicio, log }) {
         pedidos.map(async ({ natillera, participacion }) => {
           if (!participacion) return resumenAdministra(await leer(natillera));
           const [n, p] = await Promise.all([leer(natillera), leer(participacion)]);
-          return resumenParticipacion(n, p);
+          return resumenParticipacion(n, p, { conPagos: Boolean(config.pagos?.url) });
         }),
       );
     } catch (error) {

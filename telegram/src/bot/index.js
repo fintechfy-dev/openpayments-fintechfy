@@ -103,7 +103,14 @@ export function crearBot(config, { log, db, crearNatillera, servicio, registro, 
     prestamoBot = crearPrestamoBot({ registro, servicio, motor, log, hoy });
   }
 
-  app.use(start({ log, abrirInvitacion: unirseBot?.abrirInvitacion, abrirPrestamo: prestamoBot?.abrirPrestamo }));
+  app.use(
+    start({
+      log,
+      abrirInvitacion: unirseBot?.abrirInvitacion,
+      abrirPrestamo: prestamoBot?.abrirPrestamo,
+      volverDePermiso: unirse?.conPagos ? unirseBot?.volverDePermiso : undefined,
+    }),
+  );
   app.use(cancelar({ motor }));
   app.use(diag({ config, db, inicio, ahora }));
   app.use(miNatillera({ config, registro, servicio, log }));

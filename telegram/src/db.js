@@ -50,6 +50,13 @@ export function abrirBaseDeDatos(ruta) {
       plazo_meses INTEGER NOT NULL,
       creada_en TEXT NOT NULL
     );
+    -- Permisos de cobro pedidos a la API de pagos (US-005): con /start permiso_<id> el bot sabe de quién es.
+    CREATE TABLE IF NOT EXISTS permisos (
+      permiso_id TEXT PRIMARY KEY,
+      participacion_id TEXT NOT NULL REFERENCES participaciones (participacion_id),
+      monto INTEGER NOT NULL,
+      creado_en TEXT NOT NULL
+    );
   `);
   // Columnas que llegaron después de la primera versión: las bases que ya existen las ganan aquí.
   agregarColumna(db, 'natilleras', 'codigo_invitacion', 'TEXT');

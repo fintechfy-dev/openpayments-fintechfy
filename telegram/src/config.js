@@ -86,7 +86,16 @@ export function loadConfig(env) {
   // `npm run registrar-avisos` en telegram/data/); sin él, el bot los lee del flujo en vivo.
   const avisosPuerto = numero('AVISOS_PUERTO', (n) => Number.isInteger(n) && n > 0 && n < 65536, 'un puerto entre 1 y 65535', { obligatoria: false });
 
+  // API de pagos (pagos/API.md). Con PAGOS_URL, el bot pide el permiso real de cada participante en su
+  // billetera; sin ella, el permiso es de prueba. Las llaves de Open Payments son las de la billetera
+  // cliente de la app (sus Developer Keys) y tienen que ser las mismas que manda staging: el permiso
+  // queda atado a la llave que lo pidió. OP_PRIVATE_KEY es el archivo private.key en base64.
   const pagosUrl = url('PAGOS_URL');
+  const conPagos = pagosUrl !== undefined;
+  const pagosApiKey = texto('PAGOS_API_KEY', { obligatoria: conPagos });
+  const opWallet = texto('OP_WALLET_ADDRESS', { obligatoria: conPagos });
+  const opKeyId = texto('OP_KEY_ID', { obligatoria: conPagos });
+  const opPrivateKey = texto('OP_PRIVATE_KEY', { obligatoria: conPagos });
   // Formulario de la Mini App (miniapp/). Sin ella, /crear pregunta todo en el chat.
   const miniappUrl = url('MINIAPP_URL', { soloHttps: true });
 
@@ -104,8 +113,9 @@ export function loadConfig(env) {
     webIndice: Object.freeze({ url: webIndiceUrl, apiKey: webIndiceApiKey }),
     avisos: Object.freeze({ puerto: avisosPuerto }),
     pagosUrl,
+    pagos: Object.freeze({ url: pagosUrl, apiKey: pagosApiKey, llaves: Object.freeze({ wallet: opWallet, keyId: opKeyId, privateKey: opPrivateKey }) }),
     miniappUrl,
     dbPath,
-    secretos: Object.freeze(listaDeSecretos(botToken, externoToken, webIndiceApiKey)),
+    secretos: Object.freeze(listaDeSecretos(botToken, externoToken, webIndiceApiKey, pagosApiKey, opPrivateKey)),
   });
 }
