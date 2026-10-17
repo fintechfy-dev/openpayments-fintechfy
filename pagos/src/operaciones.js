@@ -9,8 +9,9 @@ import { esMontoValido } from "./montos.js";
 // El tipo va en el aviso al bot. Dos casos comparten ruta y campos y no se pueden distinguir por el
 // cuerpo: /pagar con origen es un premio o una comisión devuelta, y sin origen una liquidación o un
 // reembolso; /pagar-con-permiso es una venta o una devolución. Se rotula el caso de la demo.
-const REGLAS = {
+export const REGLAS = {
   "cobrar-cuota": {
+    resumen: "Cobra la cuota del periodo con el permiso recurrente del participante y la lleva a la billetera del grupo.",
     campos: { grantId: "texto", walletOrigen: "wallet", monto: "monto", referencia: "texto", periodo: "entero" },
     tipo: () => "cuota",
     permiso: (c, p, cuenta) => p.aprobado(c.grantId, c.walletOrigen, cuenta),
@@ -18,6 +19,7 @@ const REGLAS = {
     respuesta: (c) => ({ periodo: c.periodo, monto: c.monto }),
   },
   cobrar: {
+    resumen: "Cobra deuda más mora (con grantId) o la parte de una actividad (sin grantId: usa el permiso recurrente de esa billetera). Llega a la billetera del grupo.",
     campos: { walletOrigen: "wallet", monto: "monto", referencia: "texto" },
     opcionales: { grantId: "texto" },
     tipo: (c) => (c.grantId ? "deuda" : "actividad"),
@@ -26,6 +28,7 @@ const REGLAS = {
     respuesta: (c) => ({ monto: c.monto }),
   },
   pagar: {
+    resumen: "Paga desde la billetera del grupo: premio de una actividad o comisión devuelta (con origen), liquidación o reembolso (sin origen). Usa el permiso del grupo (#67).",
     campos: { walletDestino: "wallet", monto: "monto", referencia: "texto" },
     opcionales: { origen: "texto" },
     tipo: (c) => (c.origen ? "premio" : "liquidacion"),
@@ -34,6 +37,7 @@ const REGLAS = {
     respuesta: (c) => ({ monto: c.monto }),
   },
   desembolsar: {
+    resumen: "Desembolsa un préstamo desde la billetera de la financiera a la del participante. Usa el permiso de la financiera (#67).",
     campos: { walletDestino: "wallet", monto: "monto", referencia: "texto" },
     tipo: () => "desembolso",
     permiso: (c, p, cuenta) => p.deRol("financiera", cuenta),
@@ -41,6 +45,7 @@ const REGLAS = {
     respuesta: (c) => ({ monto: c.monto }),
   },
   "pagar-con-permiso": {
+    resumen: "Paga de una billetera de participante a otra con un permiso de un solo uso: al vendedor en una compra, o al comprador en una devolución.",
     campos: { grantId: "texto", walletOrigen: "wallet", walletDestino: "wallet", monto: "monto", referencia: "texto" },
     tipo: () => "venta",
     permiso: (c, p, cuenta) => p.aprobado(c.grantId, c.walletOrigen, cuenta),
@@ -48,6 +53,7 @@ const REGLAS = {
     respuesta: (c) => ({ monto: c.monto }),
   },
   "aportar-con-permiso": {
+    resumen: "Lleva la comisión de una compra a la billetera del grupo con el mismo permiso de un solo uso del comprador.",
     campos: { grantId: "texto", walletOrigen: "wallet", natilleraId: "texto", monto: "monto", referencia: "texto" },
     tipo: () => "comision",
     permiso: (c, p, cuenta) => p.aprobado(c.grantId, c.walletOrigen, cuenta),

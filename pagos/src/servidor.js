@@ -1,8 +1,10 @@
 import { timingSafeEqual } from "node:crypto";
 import { createServer } from "node:http";
 import { leerCredenciales, sinCredenciales } from "./credenciales.js";
+import { archivoDocs, paginaDocs } from "./docs.js";
 import { ErrorHttp } from "./errores.js";
 import { llaveIdempotencia } from "./idempotencia.js";
+import { crearOpenApi } from "./openapi.js";
 
 // Staging da por fallida una llamada sin respuesta en 30 s. Se responde antes, a los ~20 s de
 // consultar, con un 503: el pago sigue por detrás y el reintento recibe el resultado.
@@ -17,7 +19,19 @@ export function crearServidor({ config, almacen, permisos, operaciones, pagos, a
     return { op: await clientes.para(credenciales), huella: credenciales.huella };
   };
 
+  const contrato = crearOpenApi({ urlPublica: config.urlPublica });
+
   const rutas = [
+    // El contrato y Swagger UI: públicos, no llevan secretos.
+    ["GET", /^\/api\/openapi\.json$/, async () => ({ cuerpo: contrato })],
+    ["GET", /^\/docs$/, async () => ({ redirigir: "/docs/" })],
+    ["GET", /^\/docs\/$/, async () => ({ pagina: paginaDocs() })],
+    ["GET", /^\/docs\/([A-Za-z0-9.-]+)$/, async (req, [nombre]) => {
+      const archivo = archivoDocs(nombre);
+      if (!archivo) throw new ErrorHttp(404, "Ruta desconocida");
+      return { archivo };
+    }],
+
     ["GET", /^\/api\/salud$/, async () => ({
       cuerpo: { ok: true, almacen: almacen.nombre, walletGrupo: config.walletGrupo, walletFinanciera: config.walletFinanciera, simuladas: [...config.simuladas] },
     })],
@@ -49,7 +63,8 @@ export function crearServidor({ config, almacen, permisos, operaciones, pagos, a
     }],
     // Pública: la abre el navegador del participante al volver de su billetera.
     ["GET", /^\/api\/permisos\/(p[0-9a-f]{16})\/retorno$/, async (req, [id], url) => {
-      return { redirigir: await permisos.retorno(id, url.searchParams) };
+      const { estado, vuelta } = await permisos.retorno(id, url.searchParams);
+      return vuelta ? { redirigir: vuelta } : { pagina: paginaDeVuelta(estado) };
     }],
 
     // Lo que leen el bot y la web: los avisos de pago y el registro de las cuatro etapas.
@@ -63,7 +78,7 @@ export function crearServidor({ config, almacen, permisos, operaciones, pagos, a
     }],
   ];
 
-  return createServer(async (req, res) => {
+  const servidor = createServer(async (req, res) => {
     const inicio = Date.now();
     const url = new URL(req.url, "http://local");
     let estado = 500;
@@ -72,7 +87,13 @@ export function crearServidor({ config, almacen, permisos, operaciones, pagos, a
       if (!ruta) throw new ErrorHttp(404, "Ruta desconocida");
       const parametros = url.pathname.match(ruta[1]).slice(1);
       const resultado = await ruta[2](req, parametros, url);
-      if (resultado.redirigir) {
+      if (resultado.archivo) {
+        estado = 200;
+        res.writeHead(200, { "Content-Type": resultado.archivo.tipo, "Cache-Control": "public, max-age=3600" }).end(resultado.archivo.contenido);
+      } else if (resultado.pagina) {
+        estado = 200;
+        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" }).end(resultado.pagina);
+      } else if (resultado.redirigir) {
         estado = 302;
         res.writeHead(302, { Location: resultado.redirigir, "Cache-Control": "no-store" }).end();
       } else {
@@ -89,6 +110,18 @@ export function crearServidor({ config, almacen, permisos, operaciones, pagos, a
       console.log(`${req.method} ${url.pathname} ${estado} ${Date.now() - inicio}ms`);
     }
   });
+  // Para la prueba de paridad entre el contrato y lo que de verdad se atiende.
+  servidor.rutas = rutas.map(([metodo, patron]) => ({ metodo, patron }));
+  return servidor;
+}
+
+// Sin vuelta (por ejemplo los permisos del grupo y de la financiera, que aprueba Willy), el navegador
+// se queda aquí. El texto no dice «aprobado»: el permiso se termina cuando alguien lo consulta con las llaves.
+function paginaDeVuelta(estado) {
+  const texto = estado === "rechazado" || estado === "cancelado"
+    ? "No se aprobó el permiso. Puedes cerrar esta ventana."
+    : "Listo, recibimos tu respuesta. Puedes cerrar esta ventana y volver al chat.";
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Natillera 2.0</title></head><body style="font-family:system-ui,sans-serif;max-width:32rem;margin:4rem auto;padding:0 1rem;line-height:1.5"><p>${texto}</p></body></html>`;
 }
 
 function responder(res, estado, cuerpo, encabezados = {}) {

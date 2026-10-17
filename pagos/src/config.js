@@ -23,7 +23,6 @@ export function leerConfig(env = process.env) {
   const config = {
     puerto: Number(env.PORT || 3200),
     urlPublica: requerida("URL_PUBLICA").replace(/\/+$/, ""),
-    botUsuario: requerida("BOT_USUARIO").replace(/^@/, ""),
     llaveStaging: requerida("API_KEY_STAGING"),
     llaveClientes: requerida("API_KEY_CLIENTES"),
     walletGrupo: wallet("OP_WALLET_GRUPO"),
