@@ -52,8 +52,10 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 | `web/src/app/natilleras/`, `creditos/`, `pagos/`, `bitacora/`, `api/pagos/` | Claude Code (Claude Opus 5.5, subagentes) | Pantallas de #9, #10, US-007-RPT y US-012-AUD, revisadas por un agente revisor y uno visual | Mucho |
 | `.claude/hooks/`, `.claude/settings.json`, `.claude/commands/director-web.md`, `.claude/agents/web-implementador.md` | Claude Code (Claude Opus 5.5) | Guardias automáticas de Claude (no escribe código en `pagos/`, ni `.env`, ni secretos; ESLint por archivo; pruebas antes de terminar; checklist antes de cada commit o PR) y `/director-web` corregido para no compilar en paralelo y registrar prompts mientras trabaja | Mucho |
 | `.github/workflows/calidad.yml`, `scripts/secretos.mjs` | Claude Code (Claude Opus 5.5) | CI en cada PR (checklist de entrega, `verificar` de la web, pruebas del bot y de `pagos/` cuando exista) y patrones de secretos declarados una sola vez | Mucho |
-| `integracion/README.md`, `telegram/INTEGRACION.md`, `web/INTEGRACION.md`, `pagos/README.md`, `docs/plan-de-trabajo.md`, `docs/discovery/4-logica-financiera/` | Claude Code (Claude Opus 5.5, subagentes de análisis y revisión) | Mapas de integración con la versión 0.2.0 del servicio externo (ventas), especificación de los pagos de Open Payments en el backend de la web y plan de trabajo, contrastados con el código del servicio externo y la documentación de Open Payments | Mucho |
-| `.claude/hooks/guardia-edicion.mjs`, `scripts/revisar-entrega.mjs`, `CLAUDE.md`, `.claude/rules/`, `.claude/skills/`, `.claude/agents/`, `.claude/commands/director-web.md` | Claude Code (Claude Opus 5.5) | El código de Open Payments pasa al backend de la web: la guardia y la checklist protegen y revisan sus carpetas nuevas, y las reglas y skills dicen dónde vive | Mucho |
+| `pagos/` (API de Open Payments: `src/`, `test/`, `API.md`, `.env.example`) | Claude Code (Claude Opus 5.5) | API propia de pagos (#3, #4, #67): permisos con su vuelta y verificación del hash, cobros y pagos de las 6 rutas de staging, idempotencia, rotación del token, avisos de pago y registro de las cuatro etapas; publicada en Azure. Decisión del equipo del 16 de octubre: la escribe la IA y se declara (`prompts/pagos-api-open-payments.md`) | Mucho; 32 pruebas con un Open Payments falso, sin probar aún un pago real en la Test Wallet |
+| `.claude/hooks/guardia-edicion.mjs`, `.claude/rules/ia-y-prompts.md` | Claude Code (Claude Opus 5.5) | Quitar el candado de `pagos/` y dejar escrita la nueva regla: `pagos/` lo escribe la IA y se declara con precisión | Mucho |
+| `integracion/README.md`, `telegram/INTEGRACION.md`, `web/INTEGRACION.md`, `pagos/README.md`, `docs/plan-de-trabajo.md`, `docs/checklist-entrega.md`, `docs/discovery/4-logica-financiera/` | Claude Code (Claude Opus 5.5, subagentes de análisis y revisión) | Mapas de integración con la versión 0.2.0 del servicio externo (ventas), contrato de la API de pagos con staging y plan de trabajo, contrastados con el código del servicio externo, la puerta de staging y la documentación de Open Payments, y alineados con la API de pagos del PR #71 | Mucho |
+| `scripts/revisar-entrega.mjs`, `CLAUDE.md`, `.claude/rules/`, `.claude/skills/`, `.claude/agents/`, `.claude/commands/director-web.md` | Claude Code (Claude Opus 5.5) | Reglas, skills, agentes y checklist alineados con la API de pagos en `pagos/`: Open Payments solo desde ahí, la web lee su registro y el bot le pide permisos y avisos de pago | Mucho |
 
 ## Servicios externos
 
@@ -62,7 +64,7 @@ _Por completar. Una línea por archivo o componente: qué herramienta, para qué
 
 ## Archivos hechos con poca o ninguna IA
 
-_Por completar. La política pone como ejemplo el servicio de Open Payments, que vive en `web/src/lib/open-payments/`, `web/src/app/api/open-payments/` y `web/src/app/api/permisos/`._
+_Por completar._ El servicio de Open Payments **no** está en esta lista: lo escribió Claude Code (ver la fila de `pagos/`). El equipo lo revisa y lo prueba en la Test Wallet antes de la demo.
 
 ## Lo que hizo el equipo
 
