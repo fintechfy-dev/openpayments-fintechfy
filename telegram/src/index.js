@@ -13,7 +13,8 @@ import { crearClientePagos } from './externo/pagos.js';
 import { crearAvisoWeb } from './web/indice.js';
 import { crearDespachador } from './avisos/despachar.js';
 import { archivoDeSecretos, iniciarWebhookDeAvisos, leerSecretosDeAvisos } from './avisos/webhook.js';
-import { escucharFlujoDeAvisos } from './avisos/flujo-en-vivo.js';
+import { crearVigiaDeEstados } from './avisos/estados.js';
+import { crearLectorDeAvisosDePago } from './avisos/pagos.js';
 
 // telegram/.env, se arranque desde donde se arranque. Si no existe, se usan las variables del sistema.
 const ENV = fileURLToPath(new URL('../.env', import.meta.url));
@@ -59,7 +60,7 @@ const unirse = servicio ? crearUnirse({ servicio, registro, web, pagos, log }) :
 
 const bot = crearBot(config, { log, db, crearNatillera, servicio, registro, unirse, web, pagos });
 
-// Avisos de staging (#6): por webhook si hay puerto, si no, por el flujo en vivo.
+// Avisos de staging (#6): por webhook si hay puerto; si no, vigilando el estado en staging.
 const avisos = new AbortController();
 let servidorDeAvisos;
 if (servicio) {
@@ -67,9 +68,18 @@ if (servicio) {
   if (config.avisos.puerto) {
     servidorDeAvisos = iniciarWebhookDeAvisos({ puerto: config.avisos.puerto, secretos: secretosDeAvisos, aviso: despachador.aviso, log });
   } else {
-    escucharFlujoDeAvisos({ servicio, procesar: despachador.cascada, log, signal: avisos.signal });
+    // El flujo en vivo de staging no trae los avisos (solo cascadas sin datos): el bot vigila el estado
+    // de sus natilleras hasta que la web le entregue los avisos de staging (#6).
+    crearVigiaDeEstados({ servicio, registro, api: bot.api, log }).escuchar({ signal: avisos.signal });
+    log.info('Avisos de estado: vigilando las natilleras en staging.');
   }
 }
+// Avisos de pago (PagoCompletado y PagoFallido): los da la API de pagos, no staging.
+if (pagos) {
+  crearLectorDeAvisosDePago({ pagos, registro, api: bot.api, log }).escuchar({ signal: avisos.signal });
+  log.info('Avisos de pago: leyendo la API de pagos.');
+}
+if (pagos && config.cobrarCuotasBot) log.warn('COBRAR_CUOTAS_BOT=si: el bot cobra las cuotas. Si staging está en modo real, la cuota se cobra dos veces.');
 
 let deteniendo = false;
 async function detener(senal) {

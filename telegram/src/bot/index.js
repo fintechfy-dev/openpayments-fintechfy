@@ -122,7 +122,7 @@ export function crearBot(config, { log, db, crearNatillera, servicio, registro, 
     app.use(cobros({ servicio, registro, log }));
     app.use(administrar({ config, registro, servicio, log, ahora }));
     app.use(prestamoBot.comandos);
-    const cobrador = pagos
+    const cobrador = pagos && config.cobrarCuotasBot
       ? crearCobros({ registro, servicio, pagos, log, esperar, avisar: (chatId, texto) => bot.api.sendMessage(chatId, texto, { parse_mode: 'HTML' }) })
       : undefined;
     app.use(reloj({ config, registro, servicio, log, cobrador }));

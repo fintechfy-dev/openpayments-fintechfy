@@ -47,6 +47,11 @@ export function crearRegistro(db) {
     participacionesDe: db.prepare('SELECT * FROM participaciones WHERE telegram_id = ? ORDER BY rowid DESC'),
     natillerasPorNombre: db.prepare('SELECT * FROM natilleras WHERE lower(nombre) = lower(?) OR natillera_id = ? ORDER BY creada_en DESC'),
     natillerasDelAdmin: db.prepare('SELECT * FROM natilleras WHERE admin_telegram_id = ? ORDER BY creada_en DESC'),
+    cursor: db.prepare('SELECT valor FROM cursores WHERE fuente = ?'),
+    foto: db.prepare('SELECT valor FROM fotos WHERE contract_id = ?'),
+    guardarFoto: db.prepare('INSERT INTO fotos (contract_id, valor) VALUES (?, ?) ON CONFLICT (contract_id) DO UPDATE SET valor = excluded.valor'),
+    natilleras: db.prepare('SELECT * FROM natilleras ORDER BY creada_en DESC'),
+    guardarCursor: db.prepare('INSERT INTO cursores (fuente, valor) VALUES (?, ?) ON CONFLICT (fuente) DO UPDATE SET valor = excluded.valor'),
   };
 
   return {
@@ -108,6 +113,20 @@ export function crearRegistro(db) {
     natillerasDelAdmin: (telegramId) => sql.natillerasDelAdmin.all(telegramId),
     // Para /reloj: por nombre sin importar mayúsculas, o por su id.
     natillerasPorNombre: (texto) => sql.natillerasPorNombre.all(texto, texto),
+    // El último aviso leído de una fuente (avisos/pagos.js); undefined si nunca leyó.
+    cursor: (fuente) => sql.cursor.get(fuente)?.valor,
+    guardarCursor(fuente, valor) {
+      sql.guardarCursor.run(fuente, valor);
+    },
+    // La última foto de un contrato que vio avisos/estados.js; undefined si nunca lo vio.
+    foto(contractId) {
+      const fila = sql.foto.get(contractId);
+      return fila ? JSON.parse(fila.valor) : undefined;
+    },
+    guardarFoto(contractId, foto) {
+      sql.guardarFoto.run(contractId, JSON.stringify(foto));
+    },
+    natilleras: () => sql.natilleras.all(),
 
     // Para los avisos que solo traen el contrato que los originó.
     porContrato(contractId) {

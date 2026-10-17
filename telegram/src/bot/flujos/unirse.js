@@ -1,7 +1,7 @@
 import { Composer, InlineKeyboard } from 'grammy';
 import { escaparHTML, formatoCOP, formatoPorcentaje } from '../../formato.js';
 import { formatoFecha, validarBilletera } from '../../natillera/reglas.js';
-import { AccionRechazadaError } from '../../externo/cliente.js';
+import { AccionRechazadaError, ServicioExternoError } from '../../externo/cliente.js';
 import { ID_PERMISO, PERMISO } from '../../externo/pagos.js';
 import { NATILLERA_CREADA, PARTICIPACION_PENDIENTE, topeDelPermiso } from '../../externo/unirse.js';
 
@@ -41,6 +41,7 @@ export function textoReglas(estado) {
 }
 
 export const TEXTO_ENLACE_INVALIDO = 'Ese enlace no corresponde a ninguna natillera. Pídele a quien te invitó que te lo mande otra vez.';
+export const TEXTO_NATILLERA_YA_NO_ESTA = 'Esa natillera ya no está activa. Pídele a quien te invitó el enlace de la natillera nueva.';
 export const textoCerrada = (nombre) => `${nombreHTML(nombre)} ya arrancó y no recibe más personas.`;
 export const textoYaEstas = (nombre) => `Ya estás en ${nombreHTML(nombre)} y tu cobro está autorizado. Te aviso cada vez que se cobre una cuota.`;
 export const textoFaltaAutorizar = (nombre) => `Ya te inscribiste en ${nombreHTML(nombre)}. Te falta autorizar el cobro de tus cuotas.`;
@@ -162,7 +163,17 @@ export function crearUnirseBot({ registro, unirse, motor, log }) {
       await ctx.reply(TEXTO_ENLACE_INVALIDO);
       return;
     }
+    try {
+      await abrirInvitacionDe(ctx, natillera, codigo);
+    } catch (error) {
+      // El enlace es de una natillera que ya no está en staging (por ejemplo, se limpiaron las de prueba).
+      if (!(error instanceof ServicioExternoError && error.estado === 404)) throw error;
+      log.warn(`El enlace de ${natillera.natillera_id} apunta a un contrato que ya no está en staging: ${error.detalle}`);
+      await ctx.reply(TEXTO_NATILLERA_YA_NO_ESTA);
+    }
+  }
 
+  async function abrirInvitacionDe(ctx, natillera, codigo) {
     // La misma persona dos veces: no se inscribe de nuevo (US-003, casos borde).
     const participacion = registro.participacionEn(natillera.natillera_id, ctx.from.id);
     if (participacion) {

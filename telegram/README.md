@@ -12,7 +12,7 @@ Los textos del bot siguen la [voz y tono](../design-system/docs/voz-y-tono.md) d
 
 - **Con el servicio externo de lógica financiera:** crea los contratos y ejecuta las acciones. Cada llamada está en [`INTEGRACION.md`](INTEGRACION.md).
 - **Con la API de pagos (`pagos/`):** pide el permiso de cada participante y lo termina cuando vuelve al chat después de aprobarlo en su billetera (US-005, US-005-INT). **Pendiente:** hoy autoriza con un permiso de prueba. Ver [`INTEGRACION.md`](INTEGRACION.md) y [`../pagos/API.md`](../pagos/API.md) (#4).
-- **Avisos:** mora, préstamo, ventas y liquidación vienen de staging, que se los entrega a la web; el cobro hecho o fallido lo avisa la API de pagos (#6). El bot le pide los suyos a cada una cada pocos segundos: no necesita dirección pública. **Pendiente (#6):** hoy escucha el flujo en vivo, que no trae avisos. Lo que falta está en [`INTEGRACION.md`](INTEGRACION.md).
+- **Avisos:** mora, préstamo, ventas y liquidación vienen de staging, que se los entrega a la web; el cobro hecho o fallido lo avisa la API de pagos (#6). El bot le pide los suyos a cada una cada pocos segundos: no necesita dirección pública. Los de pago ya llegan (`src/avisos/pagos.js`). **Pendiente (#6):** los de staging. Mientras tanto, el bot vigila el estado de sus natilleras en staging y avisa cuando arrancan, liquidan o cierran, y cuando alguien entra o sale de mora (`src/avisos/estados.js`). Lo que falta está en [`INTEGRACION.md`](INTEGRACION.md).
 
 El bot no mueve dinero: eso pasa en la API de pagos (`pagos/`), lo único que habla con Open Payments.
 

@@ -71,5 +71,9 @@ export function crearClientePagos({ url, apiKey, llaves, fetch = globalThis.fetc
     // cuerpo; un 503 es que el pago sigue en curso.
     cobrarCuota: ({ grantId, walletOrigen, monto, referencia, periodo }) =>
       llamar('POST', '/api/open-payments/cobrar-cuota', { grantId, walletOrigen, monto, referencia, periodo }),
+
+    // GET /api/avisos?desde=<cursor> → [{ id, evento, datos, ... }], en orden y de a 100 como máximo.
+    // Son los PagoCompletado y PagoFallido de cada pago que terminó (avisos/pagos.js).
+    avisos: (desde) => llamar('GET', `/api/avisos${desde ? `?desde=${encodeURIComponent(desde)}` : ''}`),
   };
 }

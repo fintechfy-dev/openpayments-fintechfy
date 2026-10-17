@@ -4,6 +4,7 @@ import { crearBotDePrueba, mensaje, textos, logSilencioso, CHAT_EQUIPO } from '.
 import { crearRegistro } from '../src/registro.js';
 import { abrirBaseDeDatos, EN_MEMORIA } from '../src/db.js';
 import { PagosError } from '../src/externo/pagos.js';
+import { SIN_COBRADOR } from '../src/bot/comandos/reloj.js';
 import { COBRO, crearCobros, textoCobros, textoCuotaCobrada, textoCuotaNoCobrada } from '../src/externo/cobros.js';
 
 // El bot orquesta el cobro de las cuotas: staging las registra y el bot mueve la plata con la API de
@@ -153,14 +154,18 @@ test('textoCobros resume los cobros para el chat del equipo', () => {
 
 // ---------- /reloj ----------
 
-function prepararBot({ conPagos = true } = {}) {
+// La API de pagos configurada; el bot solo cobra si además se le pide con COBRAR_CUOTAS_BOT=si.
+const ENV_PAGOS = { PAGOS_URL: 'https://pagos.example', PAGOS_API_KEY: 'llave', OP_WALLET_ADDRESS: 'https://ilp.interledger-test.dev/app', OP_KEY_ID: 'k', OP_PRIVATE_KEY: 'LS0t' };
+
+function prepararBot({ conPagos = true, cobrarCuotas = 'si' } = {}) {
   const registro = crearRegistro(abrirBaseDeDatos(EN_MEMORIA));
   registro.guardarNatillera({ natilleraId: 'nat-1', contractId: 'c-nat', nombre: 'test8', adminTelegramId: 5, creadaEn: 'x' });
   registro.guardarParticipacion({ participacionId: 'p1', contractId: 'c-p1', natilleraId: 'nat-1', telegramId: 10, nombre: 'Ana' });
   registro.guardarParticipacion({ participacionId: 'p2', contractId: 'c-p2', natilleraId: 'nat-1', telegramId: 11, nombre: 'Beto' });
   const servicio = stagingFalso();
   const pagos = conPagos ? pagosFalso() : undefined;
-  const { bot, llamadas } = crearBotDePrueba({ servicio, registro, pagos, esperar: async () => {} });
+  const env = conPagos ? { ...ENV_PAGOS, COBRAR_CUOTAS_BOT: cobrarCuotas } : {};
+  const { bot, llamadas } = crearBotDePrueba({ env, servicio, registro, pagos, esperar: async () => {} });
   return { bot, llamadas, servicio, pagos };
 }
 
@@ -198,5 +203,19 @@ test('/reloj cupo no cobra; sin PAGOS_URL, /reloj iniciar no cobra y /reloj cobr
   await sinPagos.bot.handleUpdate(enEquipo('/reloj iniciar test8'));
   assert.match(textos(sinPagos.llamadas).at(-1), /^✓ Iniciar/);
   await sinPagos.bot.handleUpdate(enEquipo('/reloj cobrar test8'));
-  assert.equal(textos(sinPagos.llamadas).at(-1), 'Sin PAGOS_URL: el bot no cobra con la API de pagos.');
+  assert.equal(textos(sinPagos.llamadas).at(-1), SIN_COBRADOR);
+});
+
+test('con la API de pagos pero sin COBRAR_CUOTAS_BOT=si, el bot no cobra: staging ya cobra en modo real', async () => {
+  const { bot, llamadas, servicio, pagos } = prepararBot({ cobrarCuotas: 'no' });
+  servicio.despuesDe = (s) => {
+    s.estados['c-nat'].EstadoNatillera = 1;
+    s.estados['c-p1'].CuotasPagadas = 1;
+  };
+  await bot.handleUpdate(enEquipo('/reloj iniciar test8'));
+  assert.equal(servicio.disparos.length, 1);
+  assert.match(textos(llamadas).at(-1), /^✓ Iniciar/);
+  await bot.handleUpdate(enEquipo('/reloj cobrar test8'));
+  assert.equal(textos(llamadas).at(-1), SIN_COBRADOR);
+  assert.equal(pagos.cobros.length, 0);
 });

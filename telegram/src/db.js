@@ -68,6 +68,16 @@ export function abrirBaseDeDatos(ruta) {
       intentado_en TEXT NOT NULL,
       PRIMARY KEY (participacion_id, periodo)
     );
+    -- Hasta qué aviso leyó el bot en cada fuente (por ejemplo 'pagos'): al reiniciar no repite avisos.
+    CREATE TABLE IF NOT EXISTS cursores (
+      fuente TEXT PRIMARY KEY,
+      valor TEXT NOT NULL
+    );
+    -- Lo último que el bot vio de cada contrato en staging (avisos/estados.js): avisa solo cuando cambia.
+    CREATE TABLE IF NOT EXISTS fotos (
+      contract_id TEXT PRIMARY KEY,
+      valor TEXT NOT NULL
+    );
   `);
   // Columnas que llegaron después de la primera versión: las bases que ya existen las ganan aquí.
   agregarColumna(db, 'natilleras', 'codigo_invitacion', 'TEXT');
