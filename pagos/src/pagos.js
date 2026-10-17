@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { isFinalizedGrantWithAccessToken } from "@interledger/open-payments";
+import { cerrarCobro, paso, tokenSinInteraccion, traducir } from "./cotizaciones.js";
 import { ErrorHttp } from "./errores.js";
 import { aUnidades, MontoInvalido } from "./montos.js";
 
@@ -11,7 +11,7 @@ const COBRO_VENCE_MS = 30 * 60 * 1000;
 
 const esperarPorDefecto = (ms) => new Promise((resolver) => setTimeout(resolver, ms));
 
-// Un pago son entre 5 y 7 solicitudes encadenadas a Open Payments:
+// Un pago son entre 5 y 9 solicitudes encadenadas a Open Payments:
 //   1. permiso sin interacción y cobro (incoming payment) en el servidor de quien recibe;
 //   2. permiso sin interacción y cotización (quote) en el de quien paga, justo antes de pagar
 //      (vence a los 5 minutos);
@@ -19,7 +19,11 @@ const esperarPorDefecto = (ms) => new Promise((resolver) => setTimeout(resolver,
 //   4. consultar hasta que termine, porque Open Payments no avisa. La señal de «pagado» está del
 //      lado de quien recibe: el pago saliente solo dice si falló.
 // Cada etapa queda en el registro para el jurado: solicitud, autorización, ejecución y finalización.
-export function crearPagos({ almacen, wallets, permisos, avisos, ahora = () => Date.now(), esperar = esperarPorDefecto }) {
+//
+// El monto llega siempre en la moneda de la billetera del grupo (pesos). Si quien paga o quien
+// recibe está en otra moneda, la cotización hace la conversión; cómo se fija el monto depende de
+// cuál de las dos billeteras está en pesos (ver fijarMonto).
+export function crearPagos({ almacen, wallets, permisos, avisos, walletGrupo, ahora = () => Date.now(), esperar = esperarPorDefecto }) {
   const iso = () => new Date(ahora()).toISOString();
   const guardar = (pago) => almacen.guardar("pago", pago.id, pago);
 
@@ -51,29 +55,54 @@ export function crearPagos({ almacen, wallets, permisos, avisos, ahora = () => D
     };
   }
 
-  async function permisoSinInteraccion(op, servidorPermisos, tipo, paso) {
-    let permiso;
+  function unidades(monto, billetera) {
     try {
-      permiso = await op.grant.request(
-        { url: servidorPermisos },
-        { access_token: { access: [{ type: tipo, actions: tipo === "quote" ? ["create", "read"] : ["create", "read", "complete"] }] } },
+      return { value: aUnidades(monto, billetera.assetScale), assetCode: billetera.assetCode, assetScale: billetera.assetScale };
+    } catch (error) {
+      if (error instanceof MontoInvalido) throw new ErrorHttp(422, error.message);
+      throw error;
+    }
+  }
+
+  // Tres casos, según en qué moneda esté cada billetera:
+  //   - quien recibe está en pesos (una cuota al grupo): el cobro pide el monto exacto y la cotización
+  //     calcula cuánto se le debita a quien paga, en su moneda;
+  //   - quien paga está en pesos (un premio desde el grupo): sale el monto exacto y llega lo convertido;
+  //   - ninguna está en pesos (una compra entre billeteras en euros y dólares): el grupo cotiza, sin
+  //     pagar, cuánto vale el monto en la moneda de quien recibe, y quien paga cubre eso.
+  // En los dos últimos el cobro no tiene monto fijo, así que no se completa solo: se cierra a mano.
+  async function fijarMonto(op, { monto, origen, destino, grupo, metadata }) {
+    const tokenCobro = await tokenSinInteraccion(op, destino.authServer, "incoming-payment", "permiso del cobro");
+    const crearCobro = (incomingAmount) =>
+      paso("cobro", () =>
+        op.incomingPayment.create(
+          { url: destino.resourceServer, accessToken: tokenCobro },
+          { walletAddress: destino.id, ...(incomingAmount ? { incomingAmount } : {}), expiresAt: new Date(ahora() + COBRO_VENCE_MS).toISOString(), metadata },
+        ),
       );
-    } catch (error) {
-      throw traducir(error, paso);
+    const cotizar = async (billetera, servidor, extra, nombre) => {
+      const token = await tokenSinInteraccion(op, billetera.authServer, "quote", `permiso de la ${nombre}`);
+      return paso(nombre, () => op.quote.create({ url: servidor, accessToken: token }, { walletAddress: billetera.id, receiver: cobro.id, method: "ilp", ...extra }));
+    };
+
+    let cobro;
+    if (destino.assetCode === grupo.assetCode) {
+      cobro = await crearCobro(unidades(monto, destino));
+      const cotizacion = await cotizar(origen, origen.resourceServer, {}, "cotización");
+      return { modo: "fijo-al-recibir", cobro, tokenCobro, cotizacion };
     }
-    if (!isFinalizedGrantWithAccessToken(permiso)) throw new ErrorHttp(502, `La billetera pidió interacción para el ${paso}`);
-    return permiso.access_token.value;
+    if (origen.assetCode === grupo.assetCode) {
+      cobro = await crearCobro(null);
+      const cotizacion = await cotizar(origen, origen.resourceServer, { debitAmount: unidades(monto, origen) }, "cotización");
+      return { modo: "fijo-al-enviar", cobro, tokenCobro, cotizacion };
+    }
+    cobro = await crearCobro(null);
+    const referencia = await cotizar(grupo, grupo.resourceServer, { debitAmount: unidades(monto, grupo) }, "cotización de referencia");
+    const cotizacion = await cotizar(origen, origen.resourceServer, { receiveAmount: referencia.receiveAmount }, "cotización");
+    return { modo: "convertido", cobro, tokenCobro, cotizacion, referencia };
   }
 
-  async function paso(nombre, llamada) {
-    try {
-      return await llamada();
-    } catch (error) {
-      throw traducir(error, nombre);
-    }
-  }
-
-  async function consultarHastaTerminar(op, pago, { cobro, tokenCobro, saliente, tokenPermiso }) {
+  async function consultarHastaTerminar(op, pago, { cobro, tokenCobro, esperado, saliente, tokenPermiso }) {
     // Por intentos y no por reloj: así el límite se cumple aunque el reloj de la demo esté detenido.
     for (let intento = 0; intento < CONSULTA_MAXIMA_MS / CONSULTA_CADA_MS; intento += 1) {
       await esperar(CONSULTA_CADA_MS);
@@ -81,7 +110,7 @@ export function crearPagos({ almacen, wallets, permisos, avisos, ahora = () => D
       // por fallido haría que staging lo reintente y cobre dos veces, así que se sigue consultando.
       try {
         const actual = await op.incomingPayment.get({ url: cobro.id, accessToken: tokenCobro });
-        if (actual.completed || BigInt(actual.receivedAmount.value) >= BigInt(cobro.incomingAmount.value)) {
+        if (actual.completed || BigInt(actual.receivedAmount.value) >= BigInt(esperado)) {
           pago.etapas.ejecucion.recibido = actual.receivedAmount;
           return { estado: "completado" };
         }
@@ -103,58 +132,41 @@ export function crearPagos({ almacen, wallets, permisos, avisos, ahora = () => D
       const pago = nuevoPago({ operacion, tipo, referencia, monto, periodo, origen: permiso.wallet, destino, simulado: false });
       await guardar(pago);
       try {
-        const [billeteraOrigen, billeteraDestino] = await Promise.all([wallets.obtener(permiso.wallet), wallets.obtener(destino)]);
-        if (billeteraOrigen.assetCode !== billeteraDestino.assetCode) {
-          throw new ErrorHttp(422, `Las billeteras están en monedas distintas (${billeteraOrigen.assetCode} y ${billeteraDestino.assetCode})`);
-        }
-        let valor;
-        try {
-          valor = aUnidades(monto, billeteraDestino.assetScale);
-        } catch (error) {
-          if (error instanceof MontoInvalido) throw new ErrorHttp(422, error.message);
-          throw error;
-        }
+        const [billeteraOrigen, billeteraDestino, billeteraGrupo] = await Promise.all([
+          wallets.obtener(permiso.wallet),
+          wallets.obtener(destino),
+          wallets.obtener(walletGrupo),
+        ]);
+        unidades(monto, billeteraGrupo);
         pago.etapas.autorizacion = { en: iso(), permisoId: permiso.id, tipoPermiso: permiso.tipo, aprobado: permiso.aprobado };
         await guardar(pago);
 
-        const tokenCobro = await permisoSinInteraccion(op, billeteraDestino.authServer, "incoming-payment", "permiso del cobro");
-        const cobro = await paso("cobro", () =>
-          op.incomingPayment.create(
-            { url: billeteraDestino.resourceServer, accessToken: tokenCobro },
-            {
-              walletAddress: billeteraDestino.id,
-              incomingAmount: { value: valor, assetCode: billeteraDestino.assetCode, assetScale: billeteraDestino.assetScale },
-              expiresAt: new Date(ahora() + COBRO_VENCE_MS).toISOString(),
-              metadata: { natillera: { operacion, tipo, referencia } },
-            },
-          ),
-        );
-        const tokenCotizacion = await permisoSinInteraccion(op, billeteraOrigen.authServer, "quote", "permiso de la cotización");
-        const cotizacion = await paso("cotización", () =>
-          op.quote.create(
-            { url: billeteraOrigen.resourceServer, accessToken: tokenCotizacion },
-            { walletAddress: billeteraOrigen.id, receiver: cobro.id, method: "ilp" },
-          ),
-        );
+        const metadata = { natillera: { operacion, tipo, referencia } };
+        const fijado = await fijarMonto(op, { monto, origen: billeteraOrigen, destino: billeteraDestino, grupo: billeteraGrupo, metadata });
+        const { cobro, tokenCobro, cotizacion } = fijado;
         const tokenPermiso = await permisos.tokenVigente(permiso.id, cuenta);
         const saliente = await paso("pago saliente", () =>
           op.outgoingPayment.create(
             { url: billeteraOrigen.resourceServer, accessToken: tokenPermiso },
-            { walletAddress: billeteraOrigen.id, quoteId: cotizacion.id, metadata: { natillera: { operacion, tipo, referencia } } },
+            { walletAddress: billeteraOrigen.id, quoteId: cotizacion.id, metadata },
           ),
         );
         pago.etapas.ejecucion = {
           en: iso(),
+          modo: fijado.modo,
           cobroId: cobro.id,
           cotizacionId: cotizacion.id,
+          ...(fijado.referencia ? { cotizacionDeReferenciaId: fijado.referencia.id } : {}),
           pagoSalienteId: saliente.id,
           debitado: cotizacion.debitAmount,
           recibido: null,
         };
         await guardar(pago);
 
-        const final = await consultarHastaTerminar(op, pago, { cobro, tokenCobro, saliente, tokenPermiso });
+        const esperado = cotizacion.receiveAmount.value;
+        const final = await consultarHastaTerminar(op, pago, { cobro, tokenCobro, esperado, saliente, tokenPermiso });
         if (final.estado === "completado") {
+          if (!cobro.incomingAmount) await cerrarCobro(op, cobro, tokenCobro);
           await terminar(pago, "completado");
           return pago;
         }
@@ -187,16 +199,4 @@ export function crearPagos({ almacen, wallets, permisos, avisos, ahora = () => D
       return pagos.sort((a, b) => (a.creado < b.creado ? 1 : -1)).slice(0, limite);
     },
   };
-}
-
-function traducir(error, paso) {
-  if (error instanceof ErrorHttp) return error;
-  const estado = error?.status;
-  const descripcion = error?.description ?? error?.message ?? "error desconocido";
-  if (paso === "pago saliente" && (estado === 403 || /insufficient|limit|exceed/i.test(descripcion))) {
-    return new ErrorHttp(402, `Sin fondos o tope del permiso superado: ${descripcion}`);
-  }
-  if (estado === 401 || estado === 403) return new ErrorHttp(403, `Open Payments negó el ${paso}: ${descripcion}`);
-  if (estado >= 400 && estado < 500) return new ErrorHttp(422, `Open Payments rechazó el ${paso}: ${descripcion}`);
-  return new ErrorHttp(502, `Open Payments falló en el ${paso}: ${descripcion}`);
 }

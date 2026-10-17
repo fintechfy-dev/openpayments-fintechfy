@@ -50,6 +50,17 @@ Ningún permiso lleva intervalo: el tope es total y lo manda el bot en `monto`, 
 
 Si no se manda `vuelta`, por ejemplo en los permisos `grupo` y `financiera` que aprueba Willy, el navegador ve una página que dice que ya puede cerrar la ventana. Solo se acepta https.
 
+## Monedas
+
+Los montos de la natillera (`monto` en todas las rutas) van siempre en la moneda de la billetera del grupo (`OP_WALLET_GRUPO`, pesos). Una billetera en otra moneda funciona: la cotización de Open Payments hace la conversión con la tasa de su proveedor. En la Test Wallet, el 16 de octubre, para que llegaran 50.000 COP se debitaban 15,08 EUR o 15,74 USD.
+
+- **Quien recibe está en pesos** (una cuota al grupo): el cobro pide el monto exacto y la cotización calcula cuánto se le debita a quien paga, en su moneda.
+- **Quien paga está en pesos** (un premio, una liquidación o un préstamo): sale el monto exacto en pesos y llega lo convertido.
+- **Ninguno está en pesos** (una compra entre billeteras en euros y dólares): el grupo cotiza, sin pagar, cuánto valen los pesos en la moneda de quien recibe, y quien paga cubre eso.
+- **El tope de un permiso** va en la moneda de quien paga: se cotiza el monto en pesos y se le suma la mitad, porque el tope cubre varios pagos y en euros cada pago lleva una comisión fija de cerca de 1 EUR.
+
+El registro muestra lo debitado y lo recibido, cada uno en su moneda (`ejecucion.debitado` y `ejecucion.recibido`), y el modo (`fijo-al-recibir`, `fijo-al-enviar` o `convertido`). Si no hay tasa entre dos monedas, el pago falla con `422`.
+
 ## Llaves de Open Payments
 
 Cada llamada que le habla a Open Payments trae las llaves de la billetera cliente de la app (la que tiene las *Developer Keys* en la Test Wallet):
@@ -77,7 +88,7 @@ El servicio externo no lee el cuerpo de un error: al contrato le llega `http-<c�
 | `402` | Sin fondos o tope del permiso superado | No (el participante recarga y se intenta otra vez, si el cortacircuitos no se disparó) |
 | `403` | El permiso no existe, no está aprobado o no se pudo renovar su token | No |
 | `404` | Operación o permiso desconocido | No |
-| `422` | Datos que no cuadran: otra billetera, otra llave, monedas distintas o una billetera que no existe | No |
+| `422` | Datos que no cuadran: otra billetera, otra llave, una billetera que no existe o dos monedas sin tasa entre ellas | No |
 | `502` | Open Payments falló | Sí |
 | `503` | El pago sigue en curso | Sí, y el reintento recibe el resultado si el pago termina antes del último reintento (unos 90 s) |
 

@@ -7,11 +7,22 @@ export function wallet(nombre, { assetCode = "COP", assetScale = 2 } = {}) {
   return { id: `${SERVIDOR_RECURSOS}/${nombre}`, assetCode, assetScale, authServer: SERVIDOR_PERMISOS, resourceServer: SERVIDOR_RECURSOS, publicName: nombre };
 }
 
+// Tasas de mentira, en pesos por unidad de cada moneda. Convierte redondeando a favor de la red:
+// hacia arriba lo que se debita, hacia abajo lo que llega.
+export const PESOS_POR = { COP: 1, EUR: 3600, USD: 3200 };
+
+function convertir(monto, a, redondeo) {
+  const pesos = (Number(monto.value) / 10 ** monto.assetScale) * PESOS_POR[monto.assetCode];
+  const exacto = (pesos / PESOS_POR[a.assetCode]) * 10 ** a.assetScale;
+  const valor = monto.assetCode === a.assetCode ? Number(monto.value) : redondeo === "arriba" ? Math.ceil(exacto - 1e-9) : Math.floor(exacto + 1e-9);
+  return { value: String(valor), assetCode: a.assetCode, assetScale: a.assetScale };
+}
+
 export function crearOpFalso(billeteras) {
   const porUrl = new Map(billeteras.map((w) => [w.id, w]));
   const llamadas = [];
   const red = { cobros: new Map(), cotizaciones: new Map(), salientes: new Map(), pendientes: new Map() };
-  const control = { salienteFalla: false, errorSaliente: null, completarCobro: true };
+  const control = { salienteFalla: false, errorSaliente: null, completarCobro: true, sinTasa: false };
   let n = 0;
 
   const op = {
@@ -64,11 +75,12 @@ export function crearOpFalso(billeteras) {
       async create({ url, accessToken }, args) {
         llamadas.push({ paso: "cobro", url, accessToken, args });
         n += 1;
+        const w = porUrl.get(args.walletAddress);
         const cobro = {
           id: `${url}/incoming-payments/${n}`,
           walletAddress: args.walletAddress,
-          incomingAmount: args.incomingAmount,
-          receivedAmount: { ...args.incomingAmount, value: "0" },
+          ...(args.incomingAmount ? { incomingAmount: args.incomingAmount } : {}),
+          receivedAmount: { value: "0", assetCode: w.assetCode, assetScale: w.assetScale },
           completed: false,
         };
         red.cobros.set(cobro.id, cobro);
@@ -78,13 +90,33 @@ export function crearOpFalso(billeteras) {
         llamadas.push({ paso: "consultar-cobro", url });
         return structuredClone(red.cobros.get(url));
       },
+      async complete({ url }) {
+        llamadas.push({ paso: "cerrar-cobro", url });
+        const cobro = red.cobros.get(url);
+        cobro.completed = true;
+        return structuredClone(cobro);
+      },
     },
     quote: {
       async create({ url, accessToken }, args) {
         llamadas.push({ paso: "cotizacion", url, accessToken, args });
         n += 1;
         const cobro = red.cobros.get(args.receiver);
-        const cotizacion = { id: `${url}/quotes/${n}`, receiver: args.receiver, debitAmount: cobro.incomingAmount, receiveAmount: cobro.incomingAmount };
+        const quienPaga = porUrl.get(args.walletAddress);
+        const quienRecibe = porUrl.get(cobro.walletAddress);
+        if (control.sinTasa && quienPaga.assetCode !== quienRecibe.assetCode) {
+          throw Object.assign(new Error("no rate"), { status: 400, description: `No hay tasa entre ${quienPaga.assetCode} y ${quienRecibe.assetCode}` });
+        }
+        let debitAmount;
+        let receiveAmount;
+        if (args.debitAmount) {
+          debitAmount = args.debitAmount;
+          receiveAmount = convertir(debitAmount, quienRecibe, "abajo");
+        } else {
+          receiveAmount = args.receiveAmount ?? cobro.incomingAmount;
+          debitAmount = convertir(receiveAmount, quienPaga, "arriba");
+        }
+        const cotizacion = { id: `${url}/quotes/${n}`, receiver: args.receiver, debitAmount, receiveAmount };
         red.cotizaciones.set(cotizacion.id, cotizacion);
         return cotizacion;
       },
@@ -96,10 +128,12 @@ export function crearOpFalso(billeteras) {
         n += 1;
         const saliente = { id: `${url}/outgoing-payments/${n}`, failed: control.salienteFalla, quoteId: args.quoteId };
         red.salientes.set(saliente.id, saliente);
-        const cobro = red.cobros.get(red.cotizaciones.get(args.quoteId).receiver);
+        const cotizacion = red.cotizaciones.get(args.quoteId);
+        const cobro = red.cobros.get(cotizacion.receiver);
         if (!control.salienteFalla && control.completarCobro) {
-          cobro.receivedAmount = { ...cobro.incomingAmount };
-          cobro.completed = true;
+          cobro.receivedAmount = { ...cotizacion.receiveAmount };
+          // Un cobro sin monto fijo no se completa solo: lo cierra quien lo creó.
+          cobro.completed = Boolean(cobro.incomingAmount);
         }
         return structuredClone(saliente);
       },
