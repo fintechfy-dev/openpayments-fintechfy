@@ -11,6 +11,7 @@ export const ANA = wallet("ana");
 export const BETO = wallet("beto");
 export const GRUPO = wallet("grupo");
 export const FINANCIERA = wallet("financiera");
+export const VUELTA_BOT = "https://t.me/natillera_bot?start=permiso_{permisoId}";
 
 // Las llaves de Open Payments de la app, como las mandarían el bot y staging en cada llamada.
 const { privateKey } = generateKeyPairSync("ed25519");
@@ -35,7 +36,6 @@ export async function levantar({ simuladas = [], limiteRespuestaMs, esperar = as
   });
   const config = {
     urlPublica: "https://pagos.prueba.test",
-    botUsuario: "natillera_bot",
     llaveStaging: LLAVE_STAGING,
     llaveClientes: LLAVE_CLIENTES,
     walletGrupo: GRUPO.id,
@@ -54,19 +54,20 @@ export async function levantar({ simuladas = [], limiteRespuestaMs, esperar = as
       body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
     });
     const texto = await res.text();
-    return { estado: res.status, cuerpo: texto ? JSON.parse(texto) : null, ubicacion: res.headers.get("location") };
+    const esJson = res.headers.get("content-type")?.includes("application/json");
+    return { estado: res.status, cuerpo: esJson && texto ? JSON.parse(texto) : texto || null, ubicacion: res.headers.get("location") };
   };
   const staging = (operacion, cuerpo, credenciales = CREDENCIALES) =>
     llamar("POST", `/api/open-payments/${operacion}`, { cuerpo, llave: LLAVE_STAGING, credenciales });
   const clientesApi = (metodo, ruta, cuerpo, credenciales = CREDENCIALES) => llamar(metodo, ruta, { cuerpo, llave: LLAVE_CLIENTES, credenciales });
 
   // Pide un permiso, simula que su dueño lo aprueba en la billetera y que el bot consulta el estado.
-  async function aprobarPermiso({ tipo, wallet: w, monto = 1_000_000, referencia = "ref" }) {
-    const pedido = await clientesApi("POST", "/api/permisos", { tipo, wallet: w?.id, monto, referencia });
+  async function aprobarPermiso({ tipo, wallet: w, monto = 1_000_000, referencia = "ref", vuelta = VUELTA_BOT }) {
+    const pedido = await clientesApi("POST", "/api/permisos", { tipo, wallet: w?.id, monto, referencia, vuelta });
     const { permisoId } = pedido.cuerpo;
-    const vuelta = await volverAprobado(permisoId);
+    const regreso = await volverAprobado(permisoId);
     const estado = await clientesApi("GET", `/api/permisos/${permisoId}`);
-    return { permisoId, pedido, vuelta, estado };
+    return { permisoId, pedido, vuelta: regreso, estado };
   }
 
   async function volverAprobado(permisoId) {

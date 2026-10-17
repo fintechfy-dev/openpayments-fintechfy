@@ -17,7 +17,7 @@ El laboratorio `playground/open-payments-lab` del servicio externo se leyó como
 | Quién llama | Ruta | Llave | Llaves de Open Payments |
 |---|---|---|---|
 | Staging | `POST /api/open-payments/{cobrar-cuota, cobrar, pagar, desembolsar, pagar-con-permiso, aportar-con-permiso}` | `X-Api-Key` = `API_KEY_STAGING` | Sí |
-| Bot | `POST /api/permisos` con `{ tipo, wallet, monto, referencia }` → `201 { permisoId, urlAprobacion }` | `X-Api-Key` = `API_KEY_CLIENTES` | Sí |
+| Bot | `POST /api/permisos` con `{ tipo, wallet, monto, referencia, vuelta }` → `201 { permisoId, urlAprobacion }` | `X-Api-Key` = `API_KEY_CLIENTES` | Sí |
 | Bot | `GET /api/permisos/{permisoId}` → `{ estado, grantId, motivo }` | `API_KEY_CLIENTES` | Sí, la primera vez después de la vuelta |
 | Bot | `POST /api/permisos/{permisoId}/cancelar` | `API_KEY_CLIENTES` | Sí, si estaba aprobado |
 | Navegador del participante | `GET /api/permisos/{permisoId}/retorno` | Pública | No |
@@ -35,6 +35,14 @@ Los cuerpos y las respuestas de staging son los de [`README.md`](README.md): `/c
 
 Ningún permiso lleva intervalo: el tope es total y lo manda el bot en `monto`, en pesos.
 
+**La vuelta (`vuelta`):** es la dirección https a la que vuelve el navegador del participante después de aprobar o rechazar en su billetera. La manda quien pide el permiso, así que la API no necesita saber nada de Telegram. Si incluye `{permisoId}`, se reemplaza por el id del permiso, que el bot todavía no conoce cuando lo pide. Para el bot:
+
+```json
+"vuelta": "https://t.me/<usuario_del_bot>?start=permiso_{permisoId}"
+```
+
+Si no se manda `vuelta`, por ejemplo en los permisos `grupo` y `financiera` que aprueba Willy, el navegador ve una página que dice que ya puede cerrar la ventana. Solo se acepta https.
+
 ## Llaves de Open Payments
 
 Cada llamada que le habla a Open Payments trae las llaves de la billetera cliente de la app (la que tiene las *Developer Keys* en la Test Wallet):
@@ -49,7 +57,7 @@ Si staging no puede mandar encabezados, los mismos datos pueden ir en el cuerpo 
 
 - **No se guardan:** ni en Table Storage ni en los logs. El cliente armado con ellas vive unos minutos en memoria y se pierde al reiniciar. Cada permiso guarda solo la *huella* de su llave (dirección + Key ID, en hash), nunca la llave.
 - **El token de un permiso queda atado a la llave que lo pidió.** El bot y staging tienen que mandar **la misma** llave. Si no, la API responde `422` («se pidió con otra llave») en vez de dejar que falle en la billetera.
-- **Por qué la vuelta no termina el permiso:** la abre el navegador del participante, que no tiene las llaves. La vuelta solo verifica el hash y redirige a `https://t.me/<bot>?start=permiso_<permisoId>`. El permiso se termina cuando el bot consulta `GET /api/permisos/{permisoId}` con las llaves, que es lo que ya hace al recibir ese `/start`.
+- **Por qué la vuelta no termina el permiso:** la abre el navegador del participante, que no tiene las llaves. La vuelta solo verifica el hash y redirige a la `vuelta` del permiso, por ejemplo al chat del bot. El permiso se termina cuando el bot consulta `GET /api/permisos/{permisoId}` con las llaves, que es lo que ya hace al recibir el `/start permiso_<id>`.
 
 ## Errores
 
@@ -88,7 +96,7 @@ El bot lee estos avisos aquí, aparte de los de staging que recibe la web, y gua
 ```bash
 cd pagos
 npm install
-npm test          # 32 pruebas con un Open Payments falso, sin red
+npm test          # 33 pruebas con un Open Payments falso, sin red
 cp .env.example .env   # llenar
 npm run dev
 ```
@@ -104,7 +112,7 @@ Suscripción Patrocinio, grupo `rg-natillera-pagos`: se borra completo después 
 | App Service `natillera-pagos`, plan `plan-natillera-pagos` B1 Linux, Node 24, Central US | Una sola copia, siempre encendida (Always On) y solo HTTPS. En eastus2 no había cuota de B1 |
 | Storage `stnatillerapagos`, tabla `pagos` | Permisos con sus tokens, pagos, avisos e idempotencia |
 
-La configuración vive en la App Service: `API_KEY_STAGING` y `API_KEY_CLIENTES` (generadas al azar), `TABLA_CONEXION`, `URL_PUBLICA`, `BOT_USUARIO`, `OP_WALLET_GRUPO`, `OP_WALLET_FINANCIERA` y `OPERACIONES_SIMULADAS`. Para ver las llaves: Portal → `natillera-pagos` → *Configuración* → *Variables de entorno*.
+La configuración vive en la App Service: `API_KEY_STAGING` y `API_KEY_CLIENTES` (generadas al azar), `TABLA_CONEXION`, `URL_PUBLICA`, `OP_WALLET_GRUPO`, `OP_WALLET_FINANCIERA` y `OPERACIONES_SIMULADAS`. Para ver las llaves: Portal → `natillera-pagos` → *Configuración* → *Variables de entorno*.
 
 Para desplegar, con la suscripción de Patrocinio activa: si la cuenta activa es otra, Kudu responde 403.
 
@@ -119,7 +127,7 @@ az webapp deploy -n natillera-pagos -g rg-natillera-pagos --src-path pagos.zip -
 
 - **Estiven (bot):**
   - `PAGOS_URL` = `https://natillera-pagos.azurewebsites.net`.
-  - En `/api/permisos` va `X-Api-Key: API_KEY_CLIENTES` más los tres encabezados `X-OP-*`.
+  - En `/api/permisos` va `X-Api-Key: API_KEY_CLIENTES` más los tres encabezados `X-OP-*`, y `vuelta` con el enlace a su chat (`https://t.me/<bot>?start=permiso_{permisoId}`).
   - Con el `/start permiso_<id>`, el `GET /api/permisos/{id}` lleva las llaves.
   - Los avisos de pago se piden aquí (`/api/avisos`), con su propio cursor.
 - **Willy (staging):**

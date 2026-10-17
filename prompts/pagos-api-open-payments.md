@@ -65,3 +65,17 @@ Claude avisó dos consecuencias y las resolvió así:
 
 - La vuelta del permiso no puede terminarlo, porque la abre el navegador del participante, que no tiene las llaves. El permiso se termina cuando el bot consulta el estado con las llaves.
 - El token de un permiso queda atado a la llave que lo pidió, así que el bot y staging tienen que mandar la misma.
+
+## 4. La vuelta del permiso la manda el bot (~19:00)
+
+```text
+para que necesita el api de openpayment el bot usuario?
+```
+
+Claude explicó que solo se usaba para redirigir al participante a `https://t.me/<bot>?start=permiso_<id>` después de aprobar, y propuso que el bot mandara su propia dirección de vuelta en cada `POST /api/permisos`.
+
+```text
+cambiala asi
+```
+
+Resultado: `BOT_USUARIO` sale de la configuración y `POST /api/permisos` recibe `vuelta` (solo https, con `{permisoId}` como comodín). Sin `vuelta`, el navegador ve una página que dice que ya puede cerrar la ventana.

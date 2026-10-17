@@ -73,7 +73,6 @@ test("candados: la misma llave va en fila; llaves distintas en paralelo", async 
 function envBase() {
   return {
     URL_PUBLICA: "https://pagos.prueba.test/",
-    BOT_USUARIO: "@natillera_bot",
     API_KEY_STAGING: "a",
     API_KEY_CLIENTES: "b",
     OP_WALLET_GRUPO: "$ilp.interledger-test.dev/grupo",
@@ -84,7 +83,7 @@ function envBase() {
 test("leerConfig: normaliza direcciones y no pide llaves de Open Payments", () => {
   const config = leerConfig(envBase());
   assert.equal(config.urlPublica, "https://pagos.prueba.test");
-  assert.equal(config.botUsuario, "natillera_bot");
+  assert.equal(config.botUsuario, undefined, "la API no necesita saber de Telegram");
   assert.equal(config.walletGrupo, "https://ilp.interledger-test.dev/grupo");
   assert.equal(config.tablaConexion, null);
   assert.equal(config.op, undefined);
