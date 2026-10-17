@@ -40,7 +40,7 @@ El oficial es el kit original en PNG: `design-system/assets/logos/kit/`.
 - Portadas, pantallas de bienvenida, pitch: `03_horizontal/logo_horizontal_640px.png`, siempre a 320px de ancho o más (con menos, la tagline no se lee).
 - Sobre fondo oscuro (`marca-fondo` o tema oscuro): marranito a color + `06_monocromos/nombre_blanco.png`. El nombre a color no se lee sobre oscuro.
 - De 24 a 40px: solo el marranito, sin texto. Favicon: `01_simbolo/marranito_32px.png`. Avatar del bot: `05_avatar/avatar_verde_oscuro_512px.png`.
-- Los SVG de `assets/logos/*.svg` son un redibujo; úsalos solo si necesitas vector.
+- No hay logo en vector: el redibujo en SVG se retiró porque no era idéntico al kit. Para impresión grande, usa los PNG de 1024 o 1600px.
 
 ## Texto para participantes
 

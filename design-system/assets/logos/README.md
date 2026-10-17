@@ -17,8 +17,6 @@ Reglas del kit:
 - Sobre fondos oscuros usen las versiones con fondo verde oscuro o el nombre en blanco (`06_monocromos/nombre_blanco.png`); el nombre a color no se lee sobre oscuro.
 - Las versiones monocromáticas convierten al marranito en una silueta: úsenlas solo donde no quepa el color.
 
-## SVG: el vector redibujado
-
-`logo-*.svg`, `simbolo*.svg` y `avatar-telegram.svg` son el redibujo en vector que hizo Claude Design: escalan sin perder calidad, pero no son idénticos al original (no tienen la hojita de la "i" ni el sombreado). Úsenlos solo cuando haga falta un vector, por ejemplo para impresión grande. Colores dentro de cada SVG: verde `#15412C`, rosado `#FAC5A9`, mostaza `#E2A431`, fondo oscuro `#1C4A35`; mono en `#2C342F`; alto contraste en negro.
+No hay logo en vector: el redibujo en SVG que hizo Claude Design se retiró porque no era idéntico al original (no tenía la hojita de la "i" ni el sombreado). Para impresión grande usen los PNG de 1024 o 1600 px del kit.
 
 `tablero-original.png` es el tablero que entregó el equipo, solo como referencia.
