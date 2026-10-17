@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { listarNatilleras } from "@/lib/servicio";
-import { puedeVerNatillera } from "./acceso";
+import { puedeVerNatillera, quedanVisibles } from "./acceso";
 import { DURACION_SESION_MS, LARGO_MINIMO_SECRETO, NOMBRE_COOKIE, firmarSesion, leerSesion, type DatosSesion } from "./firma";
 import { NOMBRE_COOKIE_RETO, VIGENCIA_CODIGO_MS, crearReto, leerReto, type Reto } from "./otp";
 import type { UsuarioDemo } from "./usuarios";
@@ -82,6 +82,11 @@ export async function crearSesion(usuario: UsuarioDemo): Promise<void> {
 
 export async function borrarSesion(): Promise<void> {
   (await cookies()).delete(NOMBRE_COOKIE);
+}
+
+/** La regla está en quedanVisibles (acceso.ts); aquí solo se consultan las natilleras, y no para la financiera. */
+export async function filtrarPorNatillera<T extends { natilleraId: string }>(sesion: DatosSesion, elementos: T[]): Promise<T[]> {
+  return quedanVisibles(sesion, elementos, sesion.rol === "financiera" ? new Set() : await natillerasVisibles(sesion));
 }
 
 /** Ids de las natilleras que esta sesión puede ver (para filtrar pagos y bitácora). */

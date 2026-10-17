@@ -378,6 +378,16 @@ describe("crearServicioStaging", () => {
     });
   });
 
+  it("pagos: con la API de pagos sale su registro, con la referencia ubicada en su natillera", async () => {
+    const registro = vi.fn(async () => [
+      { id: "op-1", tipo: "cuota", referencia: "p-1", monto: 50000, estado: "completado", creado: "2026-10-16T20:00:00Z", etapas: { solicitud: { en: "2026-10-16T20:00:00Z" }, finalizacion: { en: "2026-10-16T20:00:05Z", estado: "completado" } } },
+    ]);
+    const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: fetchFalso(contratos), pagos: { registro, salud: vi.fn() } });
+    const [p] = await s.listarPagos();
+    expect(p).toMatchObject({ id: "op-1", natilleraId: "nat-1", natilleraNombre: "Nombre del índice", participanteNombre: "Ana", estado: "completado" });
+    expect(registro).toHaveBeenCalledOnce();
+  });
+
   it("créditos de prueba: uno por estado sobre los participantes reales, con el tope del contrato", async () => {
     const f = fetchFalso(contratos);
     const s = crearServicioStaging({ urlBase: URL_BASE, token: TOKEN, indice: indiceCon([natillera], participaciones), fetch: f });

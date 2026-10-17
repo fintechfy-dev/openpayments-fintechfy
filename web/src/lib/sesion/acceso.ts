@@ -19,6 +19,14 @@ export function puedeVerNatillera(
   return mismoNombre(natillera.administrador, sesion.nombre);
 }
 
+/** Lo que la sesión puede ver de una lista por natillera. La financiera (superadmin) ve todo, también lo
+ *  que no se pudo ubicar en ninguna natillera (natilleraId vacío, por ejemplo un pago del registro de la
+ *  API de pagos con una referencia desconocida); un administrador, solo lo de sus natilleras visibles. */
+export function quedanVisibles<T extends { natilleraId: string }>(sesion: DatosSesion, elementos: T[], visibles: ReadonlySet<string>): T[] {
+  if (sesion.rol === "financiera") return elementos;
+  return elementos.filter((e) => visibles.has(e.natilleraId));
+}
+
 /** Solo la financiera presta: solo ella ve y responde solicitudes de crédito. */
 export function puedeResponderCreditos(sesion: DatosSesion): boolean {
   return sesion.rol === "financiera";

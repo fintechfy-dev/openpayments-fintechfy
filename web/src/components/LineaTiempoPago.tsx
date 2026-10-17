@@ -2,6 +2,7 @@ import { formatoFechaHora } from "@/lib/fechas";
 import { ICONO_ETAPA, NOMBRE_ETAPA, TEXTO_DIRECCION, TEXTO_ESTADO_ETAPA, textoTipo, describirEtapas, etapasOrdenadas, horaExacta } from "@/lib/pagos";
 import type { EstadoEtapa, Pago } from "@/lib/servicio/tipos";
 import { Badge } from "./Badge";
+import { MarcaSimulado } from "./MarcaSimulado";
 import { Dinero } from "./Dinero";
 import { Icono } from "./Icono";
 import "./LineaTiempoPago.css";
@@ -40,6 +41,7 @@ export function LineaTiempoPago({ pago, nivelTitulo = 3, id }: Props) {
           {textoTipo(pago.tipo)} · {pago.participanteNombre}
         </Titulo>
         <Badge tipo="pago" estado={pago.estado} />
+        {pago.simulado ? <MarcaSimulado /> : null}
       </div>
       <dl className="linea-pago__resumen">
         <div>

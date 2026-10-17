@@ -79,7 +79,8 @@ export interface SolicitudCredito {
 
 export type DecisionCredito = "aprobar" | "no_aprobar";
 
-export type TipoPago = "cuota" | "deuda" | "actividad" | "premio" | "liquidacion" | "desembolso" | "reembolso";
+// venta y comision los manda la API de pagos (pagos/API.md): compra entre participantes y su comisión.
+export type TipoPago = "cuota" | "deuda" | "actividad" | "premio" | "liquidacion" | "desembolso" | "reembolso" | "venta" | "comision";
 
 /** Las cuatro etapas de un pago de Open Payments, en este orden. */
 export const ETAPAS = ["solicitud", "autorizacion", "ejecucion", "finalizacion"] as const;
@@ -106,6 +107,8 @@ export interface Pago {
   monto: number;
   estado: EstadoPago;
   etapas: EtapaPago[];
+  /** true si la API de pagos lo simuló (OPERACIONES_SIMULADAS): no pasó por Open Payments. */
+  simulado?: boolean;
   /** Solo si falló: en palabras simples ("Fondos insuficientes"). */
   motivo?: string;
   creado: FechaISO;

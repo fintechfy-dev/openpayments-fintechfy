@@ -93,6 +93,7 @@ describe("pagos recién terminados (lo que se anuncia)", () => {
 
   it("arma el mensaje con tipo, persona, monto y, si falló, etapa y motivo", () => {
     expect(anunciarPago(pago("a", "completado"))).toBe("Pago completado: cuota de Marta Restrepo por $50.000.");
+    expect(anunciarPago({ ...pago("s", "completado"), simulado: true })).toBe("Pago simulado, no pasó por Open Payments: cuota de Marta Restrepo por $50.000.");
     expect(anunciarPago(pago("b", "fallido", { motivo: "Fondos insuficientes" }))).toBe(
       "Pago fallido en Ejecución: cuota de Marta Restrepo por $50.000. Motivo: Fondos insuficientes.",
     );

@@ -308,3 +308,100 @@ Resultado (18:59): Claude Code escribió `web/src/lib/servicio/creditos-prueba.t
 ```text
 realiza commit y push
 ```
+
+## 2026-10-16 · 19:02 (hora de Bogotá) · Claude Code (Claude Opus 5.5)
+
+```text
+realiza git pull de develop y revisa que hay y que podemos complementar
+```
+
+## 2026-10-16 · 19:18 (hora de Bogotá) · Claude Code (Claude Opus 5.5)
+
+Comando `/director-web` con este encargo:
+
+```text
+https://natillera-pagos.azurewebsites.net/api/openapi.json revisa este swagger para complementar
+```
+
+## 2026-10-16 · 19:20 (hora de Bogotá) · Claude Code (Claude Opus 5.5) → subagente `web-implementador` (registro)
+
+```text
+Repo: /Users/octopus/Proyectos Johan/openpayments-fintechfy. Issue #24 (US-007-RPT, registro de pagos para el jurado) dentro de #53: /pagos con el registro real de la API de pagos.
+
+**Tus archivos (solo estos):** `web/src/lib/servicio/registro-pagos.ts` y `web/src/lib/servicio/registro-pagos.test.ts`. Lógica pura, sin fetch ni `server-only`.
+
+**Qué construir:** `export function pagosDelRegistro(crudos: unknown[], buscar: (referencia: string) => { natilleraId: string; natilleraNombre: string; participanteNombre: string } | null): Pago[]`.
+- Lee cada elemento de forma tolerante: el que no tenga `id`, `tipo` o `creado` se descarta con un console.warn (sin tumbar los demás).
+- tipo: los de la API van tal cual a `TipoPago` (cuota, deuda, actividad, premio, liquidacion, desembolso, venta, comision); uno desconocido → se conserva el texto como tipo NO: usa "cuota"? No: descarta el pago con console.warn para no inventar.
+- direccion: cuota, deuda, actividad, comision → "entrante" (llega a la billetera del grupo); premio, liquidacion, desembolso, venta → "saliente".
+- natillera y persona: con `buscar(referencia)`; si no se encuentra, natilleraId "", natilleraNombre "Sin identificar" y participanteNombre = la referencia (que se vea, no se esconda). Si `buscar` devuelve null para una referencia de crédito o actividad es normal.
+- estado: completado → "completado"; fallido → "fallido"; en-curso → "autorizado" si la autorización existe, si no "pendiente".
+- etapas, en el orden de ETAPAS: cada una "hecha" con su fecha `en` si existe; la ejecución con detalle técnico corto para el jurado: "Cobro <cobroId> · Cotización <cotizacionId> · Pago saliente <pagoSalienteId>" (recorta cada id a sus últimos 8 caracteres para que quepa; el id completo puede ir al final o en otro campo si el tipo lo permite — no cambies el tipo); la autorización con "Permiso <permisoId>" (tipoPermiso si viene); si una etapa trae `simulado: true`, detalle "Simulada: no pasó por Open Payments". Finalización: "hecha" si estado completado, "fallida" si fallido (con el motivo como detalle); si aún no hay finalización y el pago sigue en curso, la primera etapa que falte es "actual" y las siguientes "pendiente". Si el pago falló, la etapa en la que falló es la primera nula después de la última hecha (o la finalización): esa va "fallida".
+- motivo (solo si falló): el `motivo` de la finalización en palabras simples; si viene técnico (por ejemplo "Sin fondos o tope del permiso superado: ..."), quédate con lo que va antes de ":".
+- monto = monto de la API; simulado = el `simulado` del pago (o true si alguna etapa vino simulada); creado = creado; id = id.
+- Orden: del más reciente al más antiguo.
+
+**Pruebas:** un pago real completado con ids (fixture escrito a mano con la forma de arriba), uno en curso sin ejecución (ejecución "actual"), uno fallido en la ejecución con motivo técnico, uno simulado, tipos entrante y saliente, referencia que no se encuentra, elemento malformado descartado sin tumbar la lista, y un tipo desconocido descartado.
+
+**Estás en paralelo con otro agente.** No corras `npm run build`, `npm run verificar` ni `npm run dev` (comparten .next/ y la copia del design system); verifica con `npm --prefix web run typecheck`, `npm --prefix web run lint` y `npm --prefix web run test`. Sin dependencias nuevas.
+
+Contexto: `pagos/API.md` (la API de pagos, publicada en https://natillera-pagos.azurewebsites.net) y su contrato OpenAPI en https://natillera-pagos.azurewebsites.net/api/openapi.json (esquema `Pago`). La forma real de cada pago sale de `pagos/src/pagos.js` (funciones `nuevoPago`, `terminar` y donde llena `pago.etapas.*`): `{ id, operacion ("cobrar-cuota"|"cobrar"|"pagar"|"desembolsar"|"pagar-con-permiso"|"aportar-con-permiso"), tipo ("cuota"|"deuda"|"actividad"|"premio"|"liquidacion"|"desembolso"|"venta"|"comision"), referencia (participacionId, actividadId o creditoId), monto (pesos), periodo|null, origen, destino, simulado (bool), estado ("en-curso"|"completado"|"fallido"), creado (ISO), etapas: { solicitud: {en} , autorizacion: null | {en, permisoId, tipoPermiso, aprobado} | {en, simulado:true}, ejecucion: null | {en, cobroId, cotizacionId, pagoSalienteId, debitado, recibido} | {en, simulado:true}, finalizacion: null | {en, estado, motivo} } }`. `debitado`/`recibido` son montos de Open Payments (objeto con value, assetCode, assetScale) o null: léelos de forma tolerante. Ya existen (no los reescribas): `web/src/lib/servicio/pagos-api.ts` (cliente; `SaludPagos { ok, error?, simuladas: string[] }`), `saludPagos()` y `usaRegistroDePagos` en `web/src/lib/servicio/index.ts`, y en `web/src/lib/servicio/tipos.ts` los tipos `Pago` (con `simulado?: boolean` nuevo), `EtapaPago`, `TipoPago` (con `venta` y `comision` nuevos) y `ETAPAS`. NO edites `staging.ts`, `index.ts`, `tipos.ts` ni `pagos-api.ts` (los conecta quien coordina); si necesitas algo fuera de tus archivos, repórtalo.
+
+Pruebas con Vitest, sin red. Antes de dar una prueba por buena, rompe a propósito la línea que protege y mírala fallar (.claude/rules/pruebas.md). Textos en español con tildes y la voz de design-system/docs/voz-y-tono.md. Sigue `.claude/agents/web-implementador.md` y las skills natillera-web y natillera-design-system. Devuelve tu veredicto (`LISTO` · `LISTO-CON-PENDIENTES` · `BLOQUEADO`) con el informe del formato del agente, incluida la salida final de typecheck, lint y test.
+```
+
+## 2026-10-16 · 19:20 (hora de Bogotá) · Claude Code (Claude Opus 5.5) → subagente `web-implementador` (pantalla)
+
+```text
+Repo: /Users/octopus/Proyectos Johan/openpayments-fintechfy. Issue #24 (US-007-RPT, registro de pagos para el jurado) dentro de #53: la pantalla /pagos con la API de pagos.
+
+**Tu carpeta:** `web/src/app/(panel)/pagos/` (page.tsx, RegistroPagos.tsx y lo que necesites crear dentro, con su CSS). Puedes hacer un cambio mínimo en `web/src/components/LineaTiempoPago.tsx` si hace falta para la marca de simulado; repórtalo. El resto es de solo lectura.
+
+**Qué construir:**
+1. **Estado de la API de pagos** arriba del registro, para el jurado: page.tsx llama a `saludPagos()` de `@/lib/servicio` (null si la web no tiene la API configurada). Con `ok: true` y `simuladas` vacío: aviso de éxito corto "Pagos reales por Open Payments". Con `ok: true` y alguna simulada: aviso info "Estas operaciones se simulan: <lista en palabras>". Con `ok: false`: aviso de alerta "La API de pagos todavía no puede pagar" y el `error` tal como llega (es texto de configuración, no tiene secretos). Con null: no muestres este bloque.
+2. **El aviso que ya existe** ("Estos cobros todavía no pasan por Open Payments", prop `sinOpenPayments`): hoy se muestra siempre que hay staging. Cámbialo para que se muestre solo si la web NO usa el registro de pagos (`usaRegistroDePagos` de `@/lib/servicio` es false) y hay staging (`usaStaging`), o si algún pago visible viene con `simulado: true`. Cuidado: RegistroPagos es un componente de cliente que se refresca cada 3 s desde /api/pagos: calcula lo de "algún pago simulado" con los pagos actuales, no solo los iniciales.
+3. **Marca "Simulado"** en cada pago con `simulado: true`: en la fila (junto al estado o el tipo) y en el detalle, como texto + ícono (nunca solo color), con los componentes y tokens del design system (Badge o etiqueta neutra). La etapa ya trae su detalle "Simulada: no pasó por Open Payments".
+4. Los tipos nuevos `venta` y `comision` ya tienen texto en `@/lib/pagos` (TEXTO_TIPO); comprueba que se ven bien.
+
+Responsive desde 360 px, accesible (el aviso de estado no debe anunciarse cada 3 s dentro de la región viva del registro; usa `anunciar={false}` de Aviso si queda dentro), vista previa de referencia en `design-system/components/*/preview.html` (aviso, badge). Pruebas: si extraes lógica (por ejemplo "¿mostrar aviso?" o el texto de las operaciones simuladas), en un archivo puro con su prueba.
+
+**Estás en paralelo con otro agente.** No corras `npm run build`, `npm run verificar` ni `npm run dev` (comparten .next/ y la copia del design system); verifica con `npm --prefix web run typecheck`, `npm --prefix web run lint` y `npm --prefix web run test`. Sin dependencias nuevas.
+
+Contexto: `pagos/API.md` (la API de pagos, publicada en https://natillera-pagos.azurewebsites.net) y su contrato OpenAPI en https://natillera-pagos.azurewebsites.net/api/openapi.json (esquema `Pago`). La forma real de cada pago sale de `pagos/src/pagos.js` (funciones `nuevoPago`, `terminar` y donde llena `pago.etapas.*`): `{ id, operacion ("cobrar-cuota"|"cobrar"|"pagar"|"desembolsar"|"pagar-con-permiso"|"aportar-con-permiso"), tipo ("cuota"|"deuda"|"actividad"|"premio"|"liquidacion"|"desembolso"|"venta"|"comision"), referencia (participacionId, actividadId o creditoId), monto (pesos), periodo|null, origen, destino, simulado (bool), estado ("en-curso"|"completado"|"fallido"), creado (ISO), etapas: { solicitud: {en} , autorizacion: null | {en, permisoId, tipoPermiso, aprobado} | {en, simulado:true}, ejecucion: null | {en, cobroId, cotizacionId, pagoSalienteId, debitado, recibido} | {en, simulado:true}, finalizacion: null | {en, estado, motivo} } }`. `debitado`/`recibido` son montos de Open Payments (objeto con value, assetCode, assetScale) o null: léelos de forma tolerante. Ya existen (no los reescribas): `web/src/lib/servicio/pagos-api.ts` (cliente; `SaludPagos { ok, error?, simuladas: string[] }`), `saludPagos()` y `usaRegistroDePagos` en `web/src/lib/servicio/index.ts`, y en `web/src/lib/servicio/tipos.ts` los tipos `Pago` (con `simulado?: boolean` nuevo), `EtapaPago`, `TipoPago` (con `venta` y `comision` nuevos) y `ETAPAS`. NO edites `staging.ts`, `index.ts`, `tipos.ts` ni `pagos-api.ts` (los conecta quien coordina); si necesitas algo fuera de tus archivos, repórtalo.
+
+Pruebas con Vitest, sin red. Antes de dar una prueba por buena, rompe a propósito la línea que protege y mírala fallar (.claude/rules/pruebas.md). Textos en español con tildes y la voz de design-system/docs/voz-y-tono.md. Sigue `.claude/agents/web-implementador.md` y las skills natillera-web y natillera-design-system. Devuelve tu veredicto (`LISTO` · `LISTO-CON-PENDIENTES` · `BLOQUEADO`) con el informe del formato del agente, incluida la salida final de typecheck, lint y test.
+```
+
+Los dos subagentes se cortaron (19:23) por un error de conexión de Claude Code («Self-signed certificate detected»), después de escribir `registro-pagos.ts` y `presentacion.ts` sin pruebas ni la conexión a la pantalla. La persona escribió:
+
+```text
+continua
+```
+
+Claude Code (director) terminó a mano lo que faltaba: pruebas, conexión en `staging.ts`, la pantalla `/pagos` y la marca «Simulado».
+
+## 2026-10-16 · 19:28 (hora de Bogotá) · Claude Code (Claude Opus 5.5) → subagente `web-revisor`
+
+```text
+Repo: /Users/octopus/Proyectos Johan/openpayments-fintechfy. Revisa el trabajo NO comiteado de la rama feature/web-53-integracion-staging (`git status`, `git diff -- web/` y los archivos nuevos sin seguimiento): /pagos con la API de pagos (#24 dentro de #53). Contrato de esa API: `pagos/API.md` y https://natillera-pagos.azurewebsites.net/api/openapi.json; forma real de cada pago en `pagos/src/pagos.js`.
+
+Archivos: `web/src/lib/servicio/pagos-api.ts` (cliente: GET /api/registro con X-Api-Key, GET /api/salud pública), `registro-pagos.ts` (traduce el registro a Pago), `staging.ts` (`pagosDeLaApi` y opción `pagos`), `index.ts` (PAGOS_URL/PAGOS_API_KEY, `saludPagos`, `usaRegistroDePagos`), `tipos.ts` (TipoPago con venta y comision, `simulado`), `web/src/lib/pagos.ts`, `web/src/lib/sesion/acceso.ts` (`quedanVisibles`) e `index.ts` (`filtrarPorNatillera`), `web/src/app/api/pagos/route.ts`, `web/src/app/(panel)/pagos/{page.tsx,RegistroPagos.tsx,presentacion.ts}`, `web/src/components/{MarcaSimulado.tsx,LineaTiempoPago.tsx}` y `web/.env.example`.
+
+**No compiles: corre solo typecheck, lint y test** (el build ya pasó). Fíjate en especial en: que la llave PAGOS_API_KEY no llegue al navegador ni a ningún log o error (sin NEXT_PUBLIC_, solo en lib/servicio); el acceso (un administrador no debe ver pagos de natilleras ajenas ni los "Sin identificar"; la financiera sí); qué pasa en /pagos si /api/registro falla o la llave es mala (¿se cae la pantalla entera?); que un pago simulado nunca se vea como real de Open Payments; el mapeo de etapas (en curso, fallido, simulado) contra pagos/src/pagos.js; y accesibilidad del aviso de estado dentro del registro que se refresca cada 3 s. Sigue `.claude/agents/web-revisor.md` y devuelve veredicto y hallazgos con severidad y ruta:línea.
+```
+
+## 2026-10-16 · 19:34 (hora de Bogotá) · Claude Code (Claude Opus 5.5) → subagente `web-revisor` (segunda pasada)
+
+```text
+Repo: /Users/octopus/Proyectos Johan/openpayments-fintechfy. Segunda pasada sobre /pagos con la API de pagos (rama feature/web-53-integracion-staging, trabajo no comiteado). En la primera devolviste CAMBIOS-NECESARIOS. Verifica las correcciones y que no rompan nada:
+
+🟠1 /pagos se caía si /api/registro fallaba → `web/src/app/(panel)/pagos/page.tsx` atrapa el error y monta RegistroPagos con `inicial=[]` y `falloInicial` (RegistroPagos.tsx); nuevo `web/src/app/(panel)/error.tsx` que reexporta el de app/. Comprobado en la web real con una llave falsa: la pantalla se ve con el aviso de estado de la API y el de falla.
+🟡2 error de red mostrado como configuración → `SaludPagos.alcanzable` en `web/src/lib/servicio/pagos-api.ts`; `saludPagos()` en `index.ts` registra el detalle y devuelve `alcanzable:false`; `presentacion.ts` dice "No pudimos consultar el estado de la API de pagos".
+🟡3 aviso verde sobre datos de prueba → `usaRegistroDePagos = usaStaging && clientePagos !== null` y `saludPagos()` devuelve null si no se usa el registro.
+🟡4 anuncio del lector de pantalla → `anunciarPago` en `web/src/lib/pagos.ts` dice "Pago simulado, no pasó por Open Payments: …".
+⚪5 comentario de dirección en registro-pagos.ts; ⚪6 JSDoc de natillerasVisibles en lib/sesion/index.ts. ⚪7 (el estado de la API no se refresca con el polling) queda anotado para el PR.
+
+**No compiles: corre solo typecheck, lint y test** (el build ya pasó). Sigue `.claude/agents/web-revisor.md` y devuelve veredicto y hallazgos con severidad y ruta:línea.
+```
+
+Resultado (19:38): `web-revisor` dio CAMBIOS-NECESARIOS (1 🟠: /pagos se caía si /api/registro fallaba) y, tras las correcciones, CAMBIOS-MENORES con un 🟡 (hora y estado vacío falsos cuando falla la primera lectura), también corregido. Comprobado en la web real contra la API de pagos publicada con una llave falsa a propósito. `npm --prefix web run verificar`: 20 archivos, 203 pruebas, build compilado. Queda anotado el ⚪ 7: el estado de la API no se refresca con el polling.

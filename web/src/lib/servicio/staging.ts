@@ -7,13 +7,16 @@ import type { LectorIndice, RegistroNatillera, RegistroParticipacion } from "@/l
 import { bitacoraDeNatillera } from "./bitacora-staging";
 import { leerEventos, type EventoContrato } from "./eventos-staging";
 import { ErrorServicio } from "./http";
+import type { ClientePagos } from "./pagos-api";
 import { pagosDeParticipacion } from "./pagos-staging";
+import { pagosDelRegistro, type UbicacionReferencia } from "./registro-pagos";
 import { solicitudesDePrueba, type NatilleraParaCreditos } from "./creditos-prueba";
 import { combinarConIndice, leerPaginaTabla, type ContratosDelMotor, type FilaTabla } from "./tabla-staging";
 import type {
   EstadoNatillera,
   EstadoParticipante,
   FechaISO,
+  Pago,
   SolicitudCredito,
   Natillera,
   NatilleraResumen,
@@ -26,6 +29,8 @@ export interface OpcionesStaging {
   urlBase: string;
   token: string;
   indice: LectorIndice;
+  /** La API de pagos: si está, /pagos sale de su registro real de Open Payments y no de los eventos. */
+  pagos?: ClientePagos;
   fetch?: typeof fetch;
 }
 
@@ -347,6 +352,19 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
     return { contrato, participaciones };
   }
 
+  /** El registro de la API de pagos, con cada referencia (una participación) ubicada en su natillera.
+   *  Las de créditos y actividades no son participaciones: salen como «Sin identificar» y se ven igual. */
+  async function pagosDeLaApi(pagos: ClientePagos): Promise<Pago[]> {
+    const [crudos, fuente] = await Promise.all([pagos.registro(), lector()]);
+    const ubicaciones = new Map<string, UbicacionReferencia>();
+    for (const n of await fuente.natilleras()) {
+      for (const p of await fuente.participaciones(n.natilleraId)) {
+        ubicaciones.set(p.participacionId, { natilleraId: n.natilleraId, natilleraNombre: n.nombre, participanteNombre: p.nombre });
+      }
+    }
+    return pagosDelRegistro(crudos, (referencia) => ubicaciones.get(referencia) ?? null);
+  }
+
   /** Lo que respondió la financiera a cada crédito de prueba. Solo en memoria: no crea nada en staging. */
   const decisiones = new Map<string, { estado: "por_desembolsar" | "rechazado"; fecha: FechaISO }>();
 
@@ -409,6 +427,7 @@ export function crearServicioStaging(opciones: OpcionesStaging): Servicio {
       return { ...s, estado: d.estado, fechaRespuesta: d.fecha };
     },
     async listarPagos() {
+      if (opciones.pagos) return pagosDeLaApi(opciones.pagos);
       return reunir("pagos", await (await lector()).natilleras(), async (registro) => {
         const a = await armar(registro);
         if (!a) return [];

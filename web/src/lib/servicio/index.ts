@@ -6,6 +6,7 @@ import { cache } from "react";
 
 import { lectorIndice } from "@/lib/indice";
 import { crearServicioHttp } from "./http";
+import { crearClientePagos, type SaludPagos } from "./pagos-api";
 import { servicioDePrueba } from "./mock";
 import { crearServicioStaging } from "./staging";
 import type { Servicio } from "./tipos";
@@ -26,6 +27,13 @@ function servicioMalConfigurado(motivo: string): Servicio {
   };
 }
 
+// API de pagos (pagos/API.md): /pagos lee de ella el registro real de Open Payments cuando está configurada.
+const clientePagos = (() => {
+  const url = process.env.PAGOS_URL?.trim();
+  const apiKey = process.env.PAGOS_API_KEY?.trim();
+  return url && apiKey ? crearClientePagos({ urlBase: url, apiKey }) : null;
+})();
+
 function crearServicio(): Servicio {
   // Staging (#53, web/INTEGRACION.md): Bearer y la lista desde el índice que alimenta el bot.
   const urlStaging = process.env.SERVICIO_EXTERNO_URL?.trim();
@@ -35,7 +43,7 @@ function crearServicio(): Servicio {
       console.error("SERVICIO_EXTERNO_URL está definida pero falta SERVICIO_EXTERNO_TOKEN en web/.env.local");
       return servicioMalConfigurado("Falta SERVICIO_EXTERNO_TOKEN: la web no puede hablar con staging.");
     }
-    return crearServicioStaging({ urlBase: urlStaging, token, indice: lectorIndice });
+    return crearServicioStaging({ urlBase: urlStaging, token, indice: lectorIndice, pagos: clientePagos ?? undefined });
   }
 
   const url = process.env.SERVICIO_URL?.trim();
@@ -59,6 +67,22 @@ export const creditosDePrueba = usaStaging;
 /** true cuando la web muestra datos de prueba (sin SERVICIO_EXTERNO_URL ni SERVICIO_URL). */
 export const usaDatosDePrueba = servicio === servicioDePrueba;
 
+/** true si /pagos lee el registro de la API de pagos. Solo con staging: con los datos de prueba, el registro
+ *  real no se usa y su estado no debe pintarse sobre pagos de ejemplo. */
+export const usaRegistroDePagos = usaStaging && clientePagos !== null;
+
+/** El estado de la API de pagos, o null si /pagos no usa su registro. Sin respuesta, se registra el detalle
+ *  aquí y la pantalla dice solo que no se pudo consultar. */
+export async function saludPagos(): Promise<SaludPagos | null> {
+  if (!usaRegistroDePagos || !clientePagos) return null;
+  try {
+    return await clientePagos.salud();
+  } catch (e) {
+    console.error("No se pudo consultar el estado de la API de pagos", e);
+    return { alcanzable: false, ok: false, simuladas: [] };
+  }
+}
+
 export const listarNatilleras = () => servicio.listarNatilleras();
 // cache(): generateMetadata y la página piden la misma natillera; así es una sola petición por visita.
 export const obtenerNatillera = cache((id: string) => servicio.obtenerNatillera(id));
@@ -69,3 +93,4 @@ export const listarBitacora = () => servicio.listarBitacora();
 
 export type * from "./tipos";
 export { ETAPAS } from "./tipos";
+export type { SaludPagos } from "./pagos-api";

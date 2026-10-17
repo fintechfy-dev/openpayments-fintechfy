@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { destinoSeguro, puedeResponderCreditos, puedeVerNatillera } from "./acceso";
+import { destinoSeguro, puedeResponderCreditos, puedeVerNatillera, quedanVisibles } from "./acceso";
 import { firmarSesion, leerSesion, type DatosSesion } from "./firma";
 import { LimitadorIntentos, MAX_INTENTOS, VENTANA_MS } from "./intentos";
 import { codigoCorrecto, crearReto, generarCodigo, leerReto, limpiarCodigo, mensajeCodigo, VIGENCIA_CODIGO_MS } from "./otp";
@@ -138,5 +138,15 @@ describe("acceso", () => {
     expect(destinoSeguro("https://malo.com")).toBe("/natilleras");
     expect(destinoSeguro("/ingresar")).toBe("/natilleras");
     expect(destinoSeguro(undefined)).toBe("/natilleras");
+  });
+});
+
+describe("quedanVisibles", () => {
+  const pagos = [{ natilleraId: "nat-1" }, { natilleraId: "nat-2" }, { natilleraId: "" }];
+  it("la financiera ve todo, también lo que no se ubicó en ninguna natillera", () => {
+    expect(quedanVisibles(financiera, pagos, new Set())).toEqual(pagos);
+  });
+  it("un administrador solo ve lo de sus natilleras, y nunca lo que no tiene natillera", () => {
+    expect(quedanVisibles(admin, pagos, new Set(["nat-1"]))).toEqual([{ natilleraId: "nat-1" }]);
   });
 });
