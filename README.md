@@ -50,7 +50,7 @@ Todo está en línea; no hace falta instalar nada para verlo funcionar.
 | Bot de Telegram | https://t.me/natillerahackbot | Abrir el chat y escribir `/start` |
 | Web de la financiera y el administrador | https://natillera-web.azurewebsites.net | `/` es pública; el panel pide usuario y un código de 6 dígitos que llega por Telegram |
 | API de pagos (Open Payments) | https://natillera-pagos.azurewebsites.net/docs | Swagger público; las rutas piden su `X-Api-Key` |
-| Servicio externo de lógica financiera (staging) | Portal y API: https://sandbox-staging.corebank.ai · Swagger: https://motorcredito-api-staging.corebank.ai/swagger/index.html | Portal con cuenta de la organización; el bot y la web llaman a su API (`/api/...`) con un Bearer JWT. Contrato en [`integracion/README.md`](integracion/README.md) |
+| Servicio externo de lógica financiera (staging) | Portal y API: https://sandbox-staging.corebank.ai · Swagger: https://motorcredito-api-staging.corebank.ai/swagger/index.html | Portal: usuario y contraseña, con el usuario `wsierra@fintechfy.ai` (la contraseña no va en el repo). El bot y la web llaman a su API (`/api/...`) con un Bearer JWT. Contrato en [`integracion/README.md`](integracion/README.md) |
 | Billeteras de prueba | https://wallet.interledger-test.dev | Cuenta de la Test Wallet de Interledger |
 
 **Dónde está el código y cómo se prueba:**

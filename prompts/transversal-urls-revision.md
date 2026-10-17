@@ -12,3 +12,12 @@ prueba, y las carpetas `src/` de cada pieza para los puntos de entrada. Con eso 
 revisar» (URLs en vivo con cómo se entra, dónde empieza el código de cada pieza y cómo se prueba) y la fila de la web en
 «Correr la demo». Actualizó la fila `s-demo-link` de `docs/checklist-entrega.md` y la fila en `AI_USAGE.md`. No se
 lanzaron subagentes.
+
+## 2026-10-17 · ≈10:11 (hora de Bogotá) · Claude Code (Claude Opus 5.5)
+
+```text
+dime la lista de urls que incluiste y ademas incluye que que para entrar al servicio externos de staging debes de entrar con usuario y contrasena con wsierra@fintechfy.ai
+```
+
+Claude Code agregó en la fila del servicio externo de «Para revisar» que el portal de staging se abre con usuario y
+contraseña, con el usuario `wsierra@fintechfy.ai`, y dejó escrito que la contraseña no va en el repo.
