@@ -1,11 +1,13 @@
 ---
 name: natillera-web
-description: Cómo construir y cambiar la web de Natillera 2.0 (carpeta web/, Next.js + TypeScript) con buenas prácticas - estructura, capa de datos del servicio externo, componentes de servidor, diseño responsive desde móvil, accesibilidad, seguridad de la X-Api-Key, pruebas y verificación. Úsala siempre que toques algo dentro de web/, agregues una pantalla (natilleras, solicitudes de crédito, registro de pagos para el jurado, bitácora), conectes la web al servicio externo, arregles un error de la web o revises un PR del frente Web, aunque el pedido no diga "Next.js".
+description: Cómo construir y cambiar la web de Natillera 2.0 (carpeta web/, Next.js + TypeScript) con buenas prácticas - estructura, capa de datos del servicio externo, rutas del backend (índice y avisos), componentes de servidor, diseño responsive desde móvil, accesibilidad, seguridad del token y las llaves, pruebas y verificación. Úsala siempre que toques algo dentro de web/, agregues una pantalla (natilleras, solicitudes de crédito, registro de pagos para el jurado, bitácora) o una ruta del backend, conectes la web al servicio externo, arregles un error de la web o revises un PR del frente Web, aunque el pedido no diga "Next.js".
 ---
 
 # Web de Natillera 2.0
 
-La web es para **la financiera y el administrador**: gestionar natilleras, aprobar créditos, ver el registro de pagos que se le muestra al jurado y la bitácora. No mueve dinero: pide y muestra. Las reglas de dinero las aplica el servicio externo de lógica financiera, y los pagos los hace el servicio de pagos.
+La web es para **la financiera y el administrador**: gestionar natilleras, aprobar créditos, ver el registro de pagos que se le muestra al jurado y la bitácora. Las reglas de dinero las aplica el servicio externo de lógica financiera.
+
+Desde el 16 de octubre la web es además el **backend** del bot: guarda el índice que le manda el bot y recibe los avisos de staging para entregárselos. Qué integrar y con qué campos está en `web/INTEGRACION.md`. **La web no tiene código de Open Payments:** los pagos viven en la API de pagos (`pagos/`, guía en `pagos/API.md`) y la pantalla `/pagos` lee su `GET /api/registro`.
 
 Junto con esta skill usa `natillera-design-system`: todo lo visual sale de ahí.
 
@@ -34,9 +36,11 @@ web/src/
     pagos/                US-007-RPT registro de pagos para el jurado
     bitacora/             US-012-AUD bitácora del administrador
     api/                  route handlers que la página consulta desde el navegador (polling)
+    api/indice/, api/avisos/                  rutas de máquina del backend (bot y staging)
   components/             piezas reutilizables en React sobre las clases nt- del design system
   lib/natillera.ts        formatoCOP, ESTADOS e íconos: el mismo comportamiento que design-system/components/bundle.js
   lib/servicio/           la ÚNICA puerta a staging (el motor) y a la API de pagos; sin datos de prueba
+  lib/pagos.ts            lógica de la pantalla del registro de pagos (no es Open Payments)
   styles/app.css          solo el layout de la app; los componentes vienen de bundle.css
   styles/ds/              copia generada de tokens.css, bundle.css y fuentes (no se edita ni se sube)
 ```
@@ -59,10 +63,11 @@ Todo lo que está en `app/(panel)/` exige sesión: `financiera` (superadmin) ve 
 - En cada página, Server Action y route handler nuevos del panel: `await requerirSesion()` (o `obtenerSesion()` en acciones y API, que devuelven un error en vez de redirigir). El layout y el `proxy` no bastan: una Server Action se puede llamar directo por HTTP.
 - Los criterios de acceso viven **una sola vez** en `src/lib/sesion/acceso.ts` (`puedeVerNatillera`, `quedanVisibles`). Para filtrar pagos, bitácora o créditos usa `filtrarPorNatillera(sesion, lista)`, también en las Server Actions. No escribas `sesion.rol === "financiera"` suelto en una pantalla.
 - Una natillera ajena responde `notFound()`, igual que una inexistente.
+- Las rutas de máquina (`/api/indice/*` y `/api/avisos`, con y sin subruta) no usan sesión: se protegen con su llave (`X-Api-Key`) o la firma de los avisos, y se excluyen en `src/proxy.ts`. La web no tiene rutas de permisos: la vuelta del permiso la atiende la API de pagos.
 
-## Seguridad: la llave no sale del servidor
+## Seguridad: las llaves no salen del servidor
 
-El repo es público y la web llama a un servicio con `X-Api-Key`.
+El repo es público y la web guarda varias llaves: el token de staging (`SERVICIO_API_KEY`, que va como `Authorization: Bearer`), la llave con que la llama el bot, el secreto de firma de los avisos y la llave para leer la API de pagos. Compara llaves y firmas en tiempo constante.
 
 - `lib/servicio/index.ts` empieza con `import "server-only"`: si alguien lo importa desde un componente de cliente, el build falla. No lo quites.
 - Las variables con la llave **nunca** llevan prefijo `NEXT_PUBLIC_`; ese prefijo las mete en el JavaScript del navegador.

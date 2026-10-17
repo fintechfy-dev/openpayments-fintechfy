@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
-import { ANA, BETO, CREDENCIALES, FINANCIERA, GRUPO, levantar, LLAVE_CLIENTES, LLAVE_PRIVADA_BASE64 } from "./helpers/app-prueba.js";
+import { ANA, BETO, CREDENCIALES, FINANCIERA, GRUPO, levantar, LLAVE_CLIENTES, LLAVE_PRIVADA_BASE64, VUELTA_BOT } from "./helpers/app-prueba.js";
 
 let app;
 afterEach(async () => app?.cerrar());
@@ -27,7 +27,7 @@ test("permiso recurrente: pedirlo, aprobarlo y volver al chat del bot", async ()
 
 test("permiso: si el participante lo rechaza o el hash no cuadra, queda rechazado y vuelve al chat", async () => {
   app = await levantar();
-  const rechazado = await app.clientes("POST", "/api/permisos", { tipo: "recurrente", wallet: ANA.id, monto: 1000 });
+  const rechazado = await app.clientes("POST", "/api/permisos", { tipo: "recurrente", wallet: ANA.id, monto: 1000, vuelta: VUELTA_BOT });
   const vuelta = await app.llamar("GET", `/api/permisos/${rechazado.cuerpo.permisoId}/retorno?result=grant_rejected`);
   assert.equal(vuelta.estado, 302);
   assert.equal((await app.clientes("GET", `/api/permisos/${rechazado.cuerpo.permisoId}`)).cuerpo.estado, "rechazado");
@@ -256,4 +256,23 @@ test("la vuelta no termina el permiso: lo termina el bot al consultar, con las l
   // Consultar otra vez no vuelve a continuar ni pide llaves.
   assert.equal((await app.clientes("GET", `/api/permisos/${permisoId}`, undefined, {})).cuerpo.estado, "aprobado");
   assert.equal(app.contar("continuar"), 1);
+});
+
+test("la vuelta la decide quien pide el permiso; sin vuelta, el navegador ve una página y nada más", async () => {
+  app = await levantar();
+  const propia = await app.aprobarPermiso({ tipo: "recurrente", wallet: ANA, vuelta: "https://natillera.test/listo?permiso={permisoId}&x=1" });
+  assert.equal(propia.vuelta.ubicacion, `https://natillera.test/listo?permiso=${propia.permisoId}&x=1`);
+
+  const sinVuelta = await app.clientes("POST", "/api/permisos", { tipo: "grupo", monto: 5_000_000 });
+  const pagina = await app.volverAprobado(sinVuelta.cuerpo.permisoId);
+  assert.equal(pagina.estado, 200);
+  assert.equal(pagina.ubicacion, null);
+  assert.match(pagina.cuerpo, /Puedes cerrar esta ventana/);
+  // El permiso del grupo lo termina quien lo consulte con las llaves (Willy, #67).
+  assert.equal((await app.clientes("GET", `/api/permisos/${sinVuelta.cuerpo.permisoId}`)).cuerpo.estado, "aprobado");
+
+  for (const mala of ["http://t.me/bot", "javascript:alert(1)", "no es url", 42]) {
+    const respuesta = await app.clientes("POST", "/api/permisos", { tipo: "recurrente", wallet: ANA.id, monto: 1000, vuelta: mala });
+    assert.equal(respuesta.estado, 400, String(mala));
+  }
 });

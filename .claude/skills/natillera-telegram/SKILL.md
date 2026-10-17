@@ -5,7 +5,7 @@ description: Cómo construir y cambiar el bot de Telegram de Natillera 2.0 (carp
 
 # Bot de Telegram de Natillera 2.0
 
-El bot es la cara del producto para los participantes y el administrador. **No mueve dinero ni guarda el estado de las natilleras: pide y muestra.** Las reglas de dinero las aplica el servicio externo y los pagos los hace `pagos/`. El plan y las decisiones están en `telegram/docs/plan-esqueleto.md` (esqueleto, motor de flujos, sesiones) y `telegram/docs/crear-natillera.md` (el flujo y la Mini App de crear natillera); léelos antes de cambiar algo de la arquitectura.
+El bot es la cara del producto para los participantes y el administrador. **No mueve dinero ni guarda el estado de las natilleras: pide y muestra.** Las reglas de dinero las aplica el servicio externo, y los pagos de Open Payments los hace la API de pagos (`pagos/`), que también le da al bot los permisos y los avisos de pago; los avisos de staging se los pide a la web. Qué llamar y con qué campos está en `telegram/INTEGRACION.md`. El plan y las decisiones están en `telegram/docs/plan-esqueleto.md` (esqueleto, motor de flujos, sesiones) y `telegram/docs/crear-natillera.md` (el flujo y la Mini App de crear natillera); léelos antes de cambiar algo de la arquitectura.
 
 Usa junto con esta skill `natillera-design-system`: todos los textos que lee un participante siguen `design-system/docs/voz-y-tono.md`.
 
@@ -33,7 +33,7 @@ Solo corre una copia del bot por token (si sale `409: Conflict`, hay otra abiert
 | `src/secretos.js`, `src/log.js` | Tapar secretos en logs; el logger nunca imprime un secreto |
 | `src/formato.js` | `formatoCOP`, porcentajes y `escaparHTML`, iguales a los del design system |
 | `src/bot/flujo.js` | Motor de flujos: preguntas paso a paso en una sola tarjeta, resumen con confirmar/corregir/cancelar |
-| `src/bot/flujos/<flujo>.js` | Cada flujo (por ahora `crear.js`): sus pasos, su resumen y su `alTerminar` |
+| `src/bot/flujos/<flujo>.js` | Cada flujo (`crear.js` y `unirse.js`): sus pasos, su resumen y su `alTerminar` |
 | `src/natillera/reglas.js` | Reglas puras de la natillera (fechas, montos, cupo, mora, cuotas). Las usan **el bot y la Mini App** |
 | `src/db.js`, `src/bot/sesion-storage.js` | Sesiones en SQLite (`node:sqlite`): un flujo a medias sobrevive a un reinicio |
 | `miniapp/` | Formulario web dentro de Telegram para crear la natillera; se publica en GitHub Pages (`MINIAPP_URL`) |
@@ -73,7 +73,7 @@ Usa el motor de `src/bot/flujo.js` en vez de manejar la conversación a mano: ya
 ## Telegram tiene límites que cambian el diseño
 
 - **El bot no puede escribirle primero a nadie** (SUP-003): solo responde a quien ya le escribió. Por eso la invitación es un **enlace profundo** `https://t.me/<bot>?start=<payload>`; el payload llega en `ctx.match` del comando `/start`. El payload es visible y lo puede copiar cualquiera: que sea un identificador opaco de la invitación, nunca datos de la natillera ni algo que dé permisos por sí solo.
-- **Avisos del sistema** (cobro hecho, mora, liquidación, #6) solo llegan a quien ya abrió el chat con el bot: guarda su `chat.id` al unirse.
+- **Avisos del sistema** (cobro hecho, mora, liquidación, #6): el bot los pide cada pocos segundos (los de staging a la web, los de pago a la API de pagos) y solo llegan a quien ya abrió el chat con el bot: guarda su `chat.id` al unirse.
 - Mensajes de máximo 4.096 caracteres; botones con teclados en línea (`InlineKeyboard`) en vez de pedir que escriban comandos largos.
 
 ## Textos
