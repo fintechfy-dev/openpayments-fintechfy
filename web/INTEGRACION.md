@@ -36,7 +36,7 @@ Todas van en `web/.env.example`, sin valores. El código ya usa los nombres de l
 
 **Límites de staging:** 20 lecturas y 5 escrituras por segundo desde la dirección IP del servidor de la web. Una pantalla que hace un `GET` por natillera y otro por participación se pasa rápido: guarda las lecturas unos segundos o trae varias de una vez con `POST /api/contracts/search` y su lista de `concepts`.
 
-**Crear el contrato de crédito no tiene llave de idempotencia** (solo las acciones la tienen). Si la llamada se cae por tiempo, busca primero por `CreditoId` con `POST /api/contracts/search` antes de reintentar, para no crear dos créditos.
+**El `CreditoId` del contrato es el `solicitudId` que mandó el bot** (así el bot reconoce los avisos del crédito, `telegram/src/avisos/despachar.js`). La web reserva la solicitud en el índice antes del `POST`, para no crear dos créditos. **Crear el contrato de crédito no tiene llave de idempotencia** (solo las acciones la tienen). Si la llamada se cae por tiempo, busca primero por `CreditoId` con `POST /api/contracts/search` antes de reintentar, para no crear dos créditos.
 
 ### Lo que confirma la especificación (16 oct, 17:00)
 

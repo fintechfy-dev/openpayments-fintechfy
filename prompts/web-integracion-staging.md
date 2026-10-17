@@ -483,3 +483,11 @@ commit push y PR
 ```
 
 El hook bloqueó el commit del merge de develop (mezcla `.claude/` con código de otros PRs). Claude Code preguntó y la persona respondió: «Cerrar el merge igual (Recomendado)».
+
+## 2026-10-16 · 21:07 (hora de Bogotá) · Claude Code (Claude Opus 5.5)
+
+```text
+actualiza contra develop
+```
+
+Al traer develop (préstamo desde el bot, #29), Claude Code vio que el bot espera que el `CreditoId` sea el mismo `solicitudId` (`telegram/src/avisos/despachar.js`) y alineó `creditoIdDe` en `web/src/lib/servicio/creditos-staging.ts` (antes `cred-<solicitudId>`).

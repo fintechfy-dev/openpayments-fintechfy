@@ -23,8 +23,9 @@ export function estadoCreditoDeStaging(valor: number | string): EstadoCredito | 
   return ESTADOS_STAGING.find(([nombre]) => nombre === valor)?.[1] ?? null;
 }
 
-/** El CreditoId sale de la solicitud: así el crédito del motor se reconoce sin guardar nada más. */
-export const creditoIdDe = (solicitudId: string) => `cred-${solicitudId}`;
+/** El CreditoId es el mismo solicitudId del bot: así la web reconoce el crédito del motor sin guardar nada
+ *  más, y el bot sabe de quién es cada aviso del crédito (telegram/src/avisos/despachar.js). */
+export const creditoIdDe = (solicitudId: string) => solicitudId;
 
 export interface UbicacionCredito {
   natilleraId: string;

@@ -425,7 +425,7 @@ describe("crearServicioStaging", () => {
       const cuerpo = JSON.parse(String(post[1]!.body));
       expect(cuerpo.templateName).toBe("natillera-credito-ahorro");
       expect(cuerpo.parameters).toMatchObject({
-        CreditoId: { type: "Text", value: "cred-sol-1" },
+        CreditoId: { type: "Text", value: "sol-1" },
         ParticipanteId: { type: "Text", value: "111" },
         WalletParticipante: { type: "Text", value: "$staging/ana" },
         Capital: { type: "Currency", value: 100000 },
@@ -433,7 +433,7 @@ describe("crearServicioStaging", () => {
         PlazoMeses: { type: "Integer", value: 3 },
       });
       expect(cuerpo.parameters.FechaInicio.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(guardadas[0]).toMatchObject({ solicitudId: "sol-1", decision: "aprobada", creditoId: "cred-sol-1", respondio: "Doña Rosa" });
+      expect(guardadas[0]).toMatchObject({ solicitudId: "sol-1", decision: "aprobada", creditoId: "sol-1", respondio: "Doña Rosa" });
     });
 
     it("sin tasa configurada no aprueba ni escribe en staging; no aprobar sí se puede", async () => {
@@ -486,8 +486,8 @@ describe("crearServicioStaging", () => {
     });
 
     it("el estado sale del contrato del motor cuando ya existe", async () => {
-      const credito = { contractId: "c-cred-1", createdAt: "2026-10-16T21:00:00Z", concepts: { CreditoId: "cred-sol-1", ParticipacionId: "p-1", EstadoCredito: "2", TasaMensual: "0.02", CuotaMensual: "34675" } };
-      const { s } = montar({ creditos: [credito], decisiones: [{ solicitudId: "sol-1", decision: "aprobada", creditoId: "cred-sol-1", respondio: "x", fecha: "2026-10-16T21:00:00Z" }] });
+      const credito = { contractId: "c-cred-1", createdAt: "2026-10-16T21:00:00Z", concepts: { CreditoId: "sol-1", ParticipacionId: "p-1", EstadoCredito: "2", TasaMensual: "0.02", CuotaMensual: "34675" } };
+      const { s } = montar({ creditos: [credito], decisiones: [{ solicitudId: "sol-1", decision: "aprobada", creditoId: "sol-1", respondio: "x", fecha: "2026-10-16T21:00:00Z" }] });
       expect((await s.listarSolicitudesCredito())[0]).toMatchObject({ estado: "en_mora", tasaMensualPct: 2, cuotaMensual: 34675 });
     });
   });
