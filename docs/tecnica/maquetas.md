@@ -25,7 +25,7 @@ flowchart LR
     HOME["/ · página pública"] --> ING["/ingresar<br/>código de 6 dígitos por Telegram"]
     ING --> NATS["/natilleras"]
     NATS --> DET["/natilleras/[id]"]
-    ING --> CRED["/creditos"]
+    ING -.-> CRED["/creditos<br/>oculta en la entrega"]
     ING --> PAGOS["/pagos · registro para el jurado"]
     ING --> BIT["/bitacora"]
   end
@@ -133,6 +133,8 @@ flowchart TB
 ```
 
 ### Créditos
+
+**Oculta en la entrega:** el flujo no se alcanzó a probar de punta a punta, así que `/creditos` no sale en el menú y responde 404. Se vuelve a mostrar con `SECCION_CREDITOS_VISIBLE` en `web/src/lib/secciones.ts`.
 
 ```mermaid
 flowchart TB

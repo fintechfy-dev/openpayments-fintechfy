@@ -11,6 +11,8 @@ import { AvisoRespuestas } from "./AvisoRespuestas";
 import { agruparSolicitudes, textoAhorro, textoCondiciones, textoPendientes } from "./logica";
 import { RespuestaSolicitud } from "./RespuestaSolicitud";
 import "./creditos.css";
+import { notFound } from "next/navigation";
+import { SECCION_CREDITOS_VISIBLE } from "@/lib/secciones";
 import { FINANCIERA } from "@/lib/financiera";
 
 export const metadata = { title: "Créditos" };
@@ -20,6 +22,7 @@ export const dynamic = "force-dynamic";
 
 
 export default async function Pagina() {
+  if (!SECCION_CREDITOS_VISIBLE) notFound();
   // La financiera ve todas; un administrador, las de sus natilleras (la regla es filtrarPorNatillera).
   const sesion = await requerirSesion();
   const solicitudes = await filtrarPorNatillera(sesion, await listarSolicitudesCredito());
