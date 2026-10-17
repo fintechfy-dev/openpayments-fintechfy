@@ -32,6 +32,6 @@ Se abre con `/mi_natillera` o con el botón **Mi natillera** junto al cuadro de 
 
 ## Pendientes
 
-- **#5:** pedir los datos reales al servicio externo. Como la página es estática, hará falta que el bot (o el servicio) responda por https y valide el `initData` de Telegram para saber quién pide. Esto se decide con #5 y #6.
+- **#5:** los datos reales. El bot lee staging y abre la Mini App con los datos en el fragmento del enlace (`#d=...`), como el panel de `/administrar`; para refrescarlos se vuelve a abrir desde un botón del bot. El botón del menú es uno solo para todos, así que no puede llevar esos datos.
 - **US-014 (#29):** el flujo de pedir el préstamo en el chat.
 - **Varias natilleras por persona:** hoy se muestra una. Si alguien está en varias, hace falta un selector (pendiente del plan del esqueleto).

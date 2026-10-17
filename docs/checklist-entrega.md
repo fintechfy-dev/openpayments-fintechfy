@@ -17,9 +17,9 @@ Sale con código 1 solo si encuentra un secreto o un `.env` versionado. El resto
 
 ## Lo que falta, por urgencia
 
-1. ⚠️ **La API de pagos existe, pero todavía no ha movido dinero real** (`b-op`, `c-op`). `pagos/` usa el SDK `@interledger/open-payments` 7.4.0 y está publicada en `https://natillera-pagos.azurewebsites.net` (PR #71), con 32 pruebas contra un Open Payments falso. Falta cargarle en Azure `BOT_USUARIO`, `OP_WALLET_GRUPO` y `OP_WALLET_FINANCIERA`, hacer el #3 en la Test Wallet y que staging deje de apuntar a `https://natillera-bff.example`: Willy configura ahí la dirección de la API de pagos, su llave y los encabezados `X-OP-*`, y la pasa a modo real (#55, `integracion/README.md`).
+1. ⚠️ **La API de pagos existe, pero todavía no ha movido dinero real** (`b-op`, `c-op`). `pagos/` usa el SDK `@interledger/open-payments` 7.4.0 y está publicada en `https://natillera-pagos.azurewebsites.net` (PR #71), con pruebas contra un Open Payments falso. Falta cargarle en Azure `OP_WALLET_GRUPO` y `OP_WALLET_FINANCIERA`, hacer el #3 en la Test Wallet y que staging deje de apuntar a `https://natillera-bff.example`: Willy configura ahí la dirección de la API de pagos, su llave y los encabezados `X-OP-*`, y la pasa a modo real (#55, `integracion/README.md`).
 2. ❌ **Sin evidencia de un pago de punta a punta** (`b-primer-pago`, `b-evidencia`, `s-video`). El video debe mostrar la solicitud, la autorización en la billetera, la ejecución y la finalización exitosa.
-3. ⚠️ **Ningún issue del frente Pagos tiene responsable**: #3, #4, #12, #15, #20 a #23, #25, #28, #30 y #31. Tampoco #11 (release de entrega), #14 (secretos), #37 (guion con 4 billeteras) ni #38 (entregables del repositorio).
+3. ⚠️ **Issues del frente Pagos sin responsable en GitHub**: #3 y #4 (el plan se los da a Willy, que lleva la API de pagos), #12, #15, #20 a #23, #25, #28, #30 y #31. Tampoco #11 (release de entrega), #14 (secretos), #37 (guion con 4 billeteras) ni #38 (entregables del repositorio).
 4. ⚠️ **El checkpoint de las 15:00 no dejó registro** (`b-checkpoint`). Si se recortó algo, hay que anotarlo en `docs/plan-de-trabajo.md` y en los issues `recorte *`.
 5. ⚠️ **`AI_USAGE.md` tiene 3 secciones por completar**: el código de la hackathon, los archivos con poca o ninguna IA y lo que hizo el equipo. También falta el modelo de ChatGPT usado para el logo (`s-aiusage`).
 6. ⚠️ **Al README le faltan "Cómo usa Open Payments" y "Correr la demo"** (`s-readme`).
@@ -101,8 +101,8 @@ Lo que el repo ya permite mostrar de cada criterio, para armar la presentación.
 |---|---|---|
 | `c-problema` | Definición del problema | ✅ README, "El problema" |
 | `c-op` | Uso de Open Payments | ❌ Ver "Lo que falta", punto 1 |
-| `c-ux` | Experiencia de usuario | ⚠️ El bot ya crea la natillera con botones o con la Mini App (US-001) y la web muestra natilleras, créditos, pagos y bitácora con datos de prueba. Falta unirse, autorizar y ver aportes reales |
-| `c-tecnica` | Calidad técnica | ⚠️ Pruebas en la web y el bot. La API de pagos ya tiene idempotencia por ruta y cuerpo ("sin doble cobro", #21) y rotación del token con candado ("token vigente antes de cada cobro", #22), con 32 pruebas; falta probarlas con un pago real |
+| `c-ux` | Experiencia de usuario | ⚠️ El bot ya crea la natillera con botones o con la Mini App (US-001) y la web muestra natilleras, créditos, pagos y bitácora con datos de prueba. El bot crea la natillera, invita, une y autoriza con un permiso de prueba, y /mi_natillera muestra lo de staging. Falta el permiso real con la API de pagos, los avisos y la Mini App con datos reales |
+| `c-tecnica` | Calidad técnica | ⚠️ Pruebas en la web y el bot. La API de pagos ya tiene idempotencia por ruta y cuerpo ("sin doble cobro", #21) y rotación del token con candado ("token vigente antes de cada cobro", #22), con sus pruebas; falta probarlas con un pago real |
 | `c-presentacion` | Presentación | ❌ No hay presentación |
 | `c-inclusion` | Inclusión (Premio Puntored) | ⚠️ El README lo plantea (nadie del grupo custodia el dinero), pero falta escribirlo para la presentación |
 | `c-innovacion` | Innovación | 👥 |

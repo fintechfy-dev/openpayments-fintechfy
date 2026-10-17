@@ -40,9 +40,9 @@ flowchart LR
 
 | Cuándo | Qué |
 |---|---|
-| **Ahora** | Willy: cargar en la API de pagos `BOT_USUARIO`, `OP_WALLET_GRUPO` y `OP_WALLET_FINANCIERA` (hoy `/api/salud` responde 503) y hacer el **#3** en la Test Wallet: dos cobros con un mismo permiso recurrente y dos pagos con un mismo permiso de un solo uso. Confirmar la 0.2.0 en el tenant (#66) y el token (#65). Johan: web en Azure (#68) con el índice y los avisos. Estiven: permisos con la API de pagos y avisos de las dos fuentes |
+| **Ahora** | Willy: cargar en la API de pagos `OP_WALLET_GRUPO` y `OP_WALLET_FINANCIERA` (hoy `/api/salud` responde 503) y hacer el **#3** en la Test Wallet: dos cobros con un mismo permiso recurrente y dos pagos con un mismo permiso de un solo uso. Confirmar la 0.2.0 en el tenant (#66) y el token (#65). Johan: web en Azure (#68) con el índice y los avisos. Estiven: permisos con la API de pagos y avisos de las dos fuentes |
 | **20:00 · punto de control** | ¿La 0.2.0 está instalada y hay capacidad para la compra? Si las dos respuestas son sí, entran las ventas (solo la compra). Se recomienda dejar las devoluciones fuera de la demo |
-| **20:00 a medianoche** | Avisos a través de la web, permisos del bot con su vuelta al chat y `/pagos` con el registro. Antes del modo real, los dueños aprueban una vez los permisos `grupo` y `financiera` (#67). Después Willy configura en staging la dirección de la API de pagos, su llave y los encabezados `X-OP-*`, y la pasa a modo real (#55) |
+| **20:00 a medianoche** | Avisos a través de la web, permisos del bot con su vuelta al chat y `/pagos` con el registro. Antes del modo real, los dueños aprueban una vez los permisos `grupo` y `financiera` y se terminan con `GET /api/permisos/{id}` y las mismas `X-OP-*` de staging (#67). Después Willy configura en staging la dirección de la API de pagos, su llave, los encabezados `X-OP-*`, el cortacircuitos apagado y los reintentos más largos, y la pasa a modo real (#55) |
 | **Medianoche · punto de control** | **Un cobro real de punta a punta disparado desde staging** |
 | **Madrugada** | La compra, si se aprobó a las 20:00 |
 | **Sábado 06:00** | Corre el reloj real de staging: crear las natilleras de la demo después de esta hora |
@@ -55,8 +55,10 @@ flowchart LR
 | Riesgo | Qué hacer | Issue |
 |---|---|---|
 | El cobro recurrente con un solo permiso nunca se probó cobrando de verdad, y un intervalo correría en tiempo real mientras la demo adelanta fechas | Probarlo primero; para la demo, permiso sin intervalo con un tope total que alcance para cuotas, mora y actividades; plan B, un permiso de un solo uso por cuota | #3 |
-| La API de pagos solo se probó con un Open Payments falso (32 pruebas) y le falta configuración en Azure | Cargar la configuración y hacer el #3 antes de medianoche | #3, #4 |
+| La API de pagos solo se probó con un Open Payments falso y le falta configuración en Azure | Cargar la configuración y hacer el #3 antes de medianoche | #3, #4 |
 | Los permisos de la billetera del grupo y de la financiera no están aprobados cuando staging pasa a modo real: fallan premios, liquidaciones y préstamos | Sus dueños los aprueban una vez antes; la API guarda y renueva los tokens | #67 |
+| El cortacircuitos de staging: con 5 respuestas que no sean 2xx seguidas (un cobro lento ya suma 4), staging deja de llamar la API de pagos para todos hasta que la reactiven | Willy lo apaga (`enfermaTrasFallosConsecutivos` = 0) antes del modo real y sabe reactivarla (`estado: "Activa"`) | #55 |
+| Los reintentos de staging terminan a los 90 s y la API espera hasta 3 minutos: un pago confirmado tarde queda fallido en staging aunque el dinero se movió | Alargar la escalera de reintentos en staging, por ejemplo `[2, 10, 60, 120]` | #55 |
 | Staging y el bot mandan llaves de Open Payments distintas: el permiso queda atado a la del bot y la API responde 422 | Usar la misma billetera cliente y la misma llave en los dos | #55 |
 | La llave privada que staging manda como encabezado fijo se puede leer con cualquier token de la organización | Es de una billetera de prueba: rotarla después del evento | #55 |
 | El token de staging vence en plena demo | Willy define la duración y quién lo renueva | #65 |

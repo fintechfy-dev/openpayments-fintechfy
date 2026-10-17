@@ -61,7 +61,7 @@ Una compra a medias no admite devolución.
 
 ## Cómo se conecta con lo que construimos
 
-- **Pagos.** El servicio externo mueve el dinero llamando a los **pagos de Open Payments** del proyecto, que viven en el backend de la web, con el contrato [`apis/open-payments.api.json`](apis/open-payments.api.json): `cobrar-cuota`, `cobrar`, `pagar`, `desembolsar` y, desde la 0.2.0, `pagar-con-permiso` y `aportar-con-permiso`. Para la demo, los pagos van contra la Test Wallet de Interledger con dinero real de prueba.
+- **Pagos.** El servicio externo mueve el dinero llamando a la **API de pagos** del proyecto (`pagos/`, publicada en `https://natillera-pagos.azurewebsites.net`), con el contrato [`apis/open-payments.api.json`](apis/open-payments.api.json): `cobrar-cuota`, `cobrar`, `pagar`, `desembolsar` y, desde la 0.2.0, `pagar-con-permiso` y `aportar-con-permiso`. Para la demo, los pagos van contra la Test Wallet de Interledger con dinero real de prueba.
 - **Avisos al bot de Telegram,** a través de la web: permiso rechazado, mora y recordatorios, préstamo disponible, pagos y reembolsos fallidos, premio pagado, natillera activa o cerrada y, desde la 0.2.0, todo el recorrido de una venta y de una devolución.
 - **Reloj.** Los cálculos programados corren a diario a las 06:00 (hora de Bogotá). Para acelerar la demo se pueden disparar con la fecha deseada.
 

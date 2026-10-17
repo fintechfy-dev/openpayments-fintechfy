@@ -11,8 +11,8 @@ Los textos del bot siguen la [voz y tono](../design-system/docs/voz-y-tono.md) d
 ## Contratos
 
 - **Con el servicio externo de lógica financiera:** crea los contratos y ejecuta las acciones. Cada llamada está en [`INTEGRACION.md`](INTEGRACION.md).
-- **Con la API de pagos (`pagos/`):** pide el permiso de cada participante y lo termina cuando vuelve al chat después de aprobarlo en su billetera (US-005, US-005-INT). Ver [`INTEGRACION.md`](INTEGRACION.md) y [`../pagos/API.md`](../pagos/API.md) (#4).
-- **Avisos:** mora, préstamo, ventas y liquidación vienen de staging, que se los entrega a la web; el cobro hecho o fallido lo avisa la API de pagos (#6). El bot le pide los suyos a cada una cada pocos segundos: no necesita dirección pública.
+- **Con la API de pagos (`pagos/`):** pide el permiso de cada participante y lo termina cuando vuelve al chat después de aprobarlo en su billetera (US-005, US-005-INT). **Pendiente:** hoy autoriza con un permiso de prueba. Ver [`INTEGRACION.md`](INTEGRACION.md) y [`../pagos/API.md`](../pagos/API.md) (#4).
+- **Avisos:** mora, préstamo, ventas y liquidación vienen de staging, que se los entrega a la web; el cobro hecho o fallido lo avisa la API de pagos (#6). El bot le pide los suyos a cada una cada pocos segundos: no necesita dirección pública. **Pendiente (#6):** hoy escucha el flujo en vivo, que no trae avisos. Lo que falta está en [`INTEGRACION.md`](INTEGRACION.md).
 
 El bot no mueve dinero: eso pasa en la API de pagos (`pagos/`), lo único que habla con Open Payments.
 
@@ -33,9 +33,9 @@ Node.js 24 o más nuevo y [grammY](https://grammy.dev). Todo se corre **dentro d
    ```
 4. Escríbele `/start` al bot. En la terminal queda el id del chat, que sirve como `TEAM_CHAT_ID`.
 5. En el chat del equipo, `/diag` muestra la configuración en uso y cuántas sesiones hay guardadas. En cualquier otro chat no responde.
-6. `/crear` (o el botón de la bienvenida) arma la natillera: con `MINIAPP_URL` ofrece el formulario de la Mini App o responder en el chat; sin ella, pregunta en el chat con botones. Las respuestas sobreviven a un reinicio del bot y `/cancelar` deja todo como estaba. Las sesiones quedan en `telegram/data/bot.db` (ignorada por git). Por ahora termina en una vista previa: crear de verdad espera el contrato de #5.
+6. `/crear` (o el botón de la bienvenida) arma la natillera: con `MINIAPP_URL` ofrece el formulario de la Mini App o responder en el chat; sin ella, pregunta en el chat con botones. Las respuestas sobreviven a un reinicio del bot y `/cancelar` deja todo como estaba. Las sesiones quedan en `telegram/data/bot.db` (ignorada por git). Con `SERVICIO_EXTERNO_URL` crea la natillera en staging, la registra, le avisa a la web y entrega el enlace de invitación; sin ella termina en una vista previa.
 
-7. `/mi_natillera` (o el botón **Mi natillera** junto al cuadro de texto) responde en el chat con lo que hay en staging: cuánto lleva, la próxima cuota o cuántos faltan para arrancar, y el botón que le toca. Sin `SERVICIO_EXTERNO_URL` abre la Mini App, que muestra datos de ejemplo.
+7. `/mi_natillera` responde en el chat con lo que hay en staging: cuánto lleva, la próxima cuota o cuántos faltan para arrancar, y el botón que le toca. Sin `SERVICIO_EXTERNO_URL` abre la Mini App. El botón **Mi natillera** junto al cuadro de texto abre siempre la Mini App, que por ahora muestra datos de ejemplo: es uno solo para todos los chats, así que no puede llevar los datos de cada persona en el enlace.
 8. `/administrar` es el panel del administrador: abre la Mini App `miniapp/admin/` con cada natillera que administra (nombre y fecha de creación para distinguirlas), quién falta por autorizar, cómo va el arranque y el enlace para compartir. Los datos los lee el bot de staging y viajan en el fragmento del enlace (`#d=...`), que no sale del teléfono; para refrescarlos se vuelve a escribir `/administrar`. Sin `MINIAPP_URL` responde en el chat, un mensaje por natillera. `/invitar` pregunta de cuál natillera si administras varias.
 
 **Mini App:** está en [`miniapp/`](miniapp/): el formulario de crear en `miniapp/` y «Mi natillera» en `miniapp/natillera/`. Se publica en GitHub Pages (`MINIAPP_URL`). Cómo publicarla: [`docs/crear-natillera.md`](docs/crear-natillera.md); la pantalla del participante: [`docs/mi-natillera.md`](docs/mi-natillera.md).

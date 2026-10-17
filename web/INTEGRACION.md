@@ -74,7 +74,7 @@ La lista de avisos y a quién va cada uno está en [`../telegram/INTEGRACION.md`
 
 ## 3. Cada pantalla contra staging
 
-Las funciones de `Servicio` (`tipos.ts`) no cambian; cambia de dónde sacan los datos. Para listar, sirven el índice o la búsqueda de staging (`GET /api/contracts` con `templateName`, o `POST /api/contracts/search`).
+Las funciones de `Servicio` no cambian; cambia de dónde sacan los datos. Para el registro de la API de pagos, `tipos.ts` sí cambia: `TipoPago` necesita `venta` y `comision` (un reembolso llega como `liquidacion`) y `Pago` necesita `simulado`. Para listar, sirven el índice o la búsqueda de staging (`GET /api/contracts` con `templateName`, o `POST /api/contracts/search`).
 
 | Pantalla | Función | Llamadas a staging | Campos de `currentStateRaw` |
 |---|---|---|---|
