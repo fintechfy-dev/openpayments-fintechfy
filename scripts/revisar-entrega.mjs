@@ -146,7 +146,7 @@ if (conRama) {
     else ok("b-prompts", "La rama agrega prompts");
     if (!cambiados.includes("AI_USAGE.md")) aviso("s-aiusage", "La rama cambia código pero no toca AI_USAGE.md");
     else ok("s-aiusage", "La rama actualiza AI_USAGE.md");
-    if (deCodigo.some((f) => f.startsWith("pagos/"))) aviso("b-servicio", "La rama toca pagos/: debe estar escrito por el equipo con poca o ninguna IA, y AI_USAGE.md lo declara con precisión");
+    if (deCodigo.some((f) => f.startsWith("pagos/"))) aviso("b-servicio", "La rama toca pagos/: la API de pagos la escribe Claude y se declara (ia-y-prompts.md). AI_USAGE.md y prompts/pagos-*.md tienen que decirlo con precisión, y el equipo tiene que poder explicar cada paso");
   }
 }
 

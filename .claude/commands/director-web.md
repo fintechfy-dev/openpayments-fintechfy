@@ -1,5 +1,5 @@
 ---
-description: Orquesta la construcción de la web de Natillera 2.0 - planifica, reparte pantallas entre agentes web-implementador en paralelo, revisa con web-revisor, verifica con web-verificador-visual, corrige y cierra con la skill natillera-pr. No toca pagos/ ni telegram/, y no hace push ni PR sin confirmarlo.
+description: Orquesta la construcción de la web de Natillera 2.0 - planifica, reparte pantallas entre agentes web-implementador en paralelo, revisa con web-revisor, verifica con web-verificador-visual, corrige y cierra con la skill natillera-pr. No toca pagos/ (la API de pagos, con su propio frente) ni telegram/, y no hace push ni PR sin confirmarlo.
 argument-hint: "[qué construir: issue, pantalla o 'todo lo pendiente']"
 ---
 
@@ -13,7 +13,7 @@ Si el encargo viene vacío, toma los issues abiertos del frente Web (`gh issue l
 
 ## Frontera
 
-- Solo `web/` y lo compartido que la web necesite (`design-system/` si hace falta un token). No tocas `pagos/` (lo escribe el equipo a mano) ni `telegram/`.
+- Solo `web/` y lo compartido que la web necesite (`design-system/` si hace falta un token). No tocas `pagos/` (la API de pagos, con su propio frente) ni `telegram/`. La web no tiene código de Open Payments: la pantalla `/pagos` lee el registro de esa API.
 - No revisas ni juzgas lo visual tú mismo: eso es de `web-revisor` y `web-verificador-visual`.
 - Commit sí, al final y según `natillera-pr`. **Push y PR solo si el encargo lo pide de forma explícita**; si no, pregunta antes (`git-y-entrega.md`).
 

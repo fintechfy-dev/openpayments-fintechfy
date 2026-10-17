@@ -64,7 +64,7 @@ Si staging no puede mandar encabezados, los mismos datos pueden ir en el cuerpo 
 
 - **No se guardan:** ni en Table Storage ni en los logs. El cliente armado con ellas vive unos minutos en memoria y se pierde al reiniciar. Cada permiso guarda solo la *huella* de su llave (dirección + Key ID, en hash), nunca la llave.
 - **El token de un permiso queda atado a la llave que lo pidió.** El bot y staging tienen que mandar **la misma** llave. Si no, la API responde `422` («se pidió con otra llave») en vez de dejar que falle en la billetera.
-- **Por qué la vuelta no termina el permiso:** la abre el navegador del participante, que no tiene las llaves. La vuelta solo verifica el hash y redirige a la `vuelta` del permiso, por ejemplo al chat del bot. El permiso se termina cuando el bot consulta `GET /api/permisos/{permisoId}` con las llaves, que es lo que ya hace al recibir el `/start permiso_<id>`.
+- **Por qué la vuelta no termina el permiso:** la abre el navegador del participante, que no tiene las llaves. La vuelta solo verifica el hash y redirige a la `vuelta` del permiso, por ejemplo al chat del bot. El permiso se termina cuando el bot consulta `GET /api/permisos/{permisoId}` con las llaves al recibir el `/start permiso_<id>` (pendiente en el bot: `telegram/INTEGRACION.md`, sección 2).
 
 ## Errores
 
@@ -74,12 +74,12 @@ El servicio externo no lee el cuerpo de un error: al contrato le llega `http-<c�
 |---|---|---|
 | `400` | Cuerpo inválido o faltan las llaves de Open Payments | No |
 | `401` | Falta `X-Api-Key` o no es la correcta | No |
-| `402` | Sin fondos o tope del permiso superado | No (el participante recarga y se intenta otra vez) |
+| `402` | Sin fondos o tope del permiso superado | No (el participante recarga y se intenta otra vez, si el cortacircuitos no se disparó) |
 | `403` | El permiso no existe, no está aprobado o no se pudo renovar su token | No |
 | `404` | Operación o permiso desconocido | No |
 | `422` | Datos que no cuadran: otra billetera, otra llave, monedas distintas o una billetera que no existe | No |
 | `502` | Open Payments falló | Sí |
-| `503` | El pago sigue en curso | Sí, y el reintento recibe el resultado |
+| `503` | El pago sigue en curso | Sí, y el reintento recibe el resultado si el pago termina antes del último reintento (unos 90 s) |
 
 **Idempotencia:** la llave es la ruta más el cuerpo completo, sin las llaves de Open Payments, y dura 5 minutos. Mientras el pago sigue, el reintento recibe `503`. Solo se guarda un pago exitoso.
 
@@ -89,10 +89,13 @@ El servicio externo no lee el cuerpo de un error: al contrato le llega `http-<c�
 
 Al terminar cada pago se agrega un aviso `PagoCompletado` o `PagoFallido` con `{ tipo, referencia, monto, periodo?, motivo?, simulado? }`. El `tipo` puede ser `cuota`, `deuda`, `actividad`, `premio`, `liquidacion`, `desembolso`, `venta` o `comision`.
 
-Dos casos comparten ruta y no se distinguen por el cuerpo, así que se rotulan como el de la demo:
+**Cortacircuitos de staging:** cada respuesta que no sea 2xx, incluidos los `503` de los reintentos y los 4xx, suma a una racha. Con 5 seguidos, staging marca la API como «enferma» y deja de llamarla para todos hasta que un administrador la reactive. Willy lo apaga o lo sube para la demo (`pagos/README.md`, «Reglas que pone staging»).
+
+Tres casos comparten ruta y no se distinguen por el cuerpo, así que se rotulan como el de la demo:
 
 - `/pagar` con `origen` sale como `premio`, aunque sea una comisión devuelta.
 - `/pagar` sin `origen` sale como `liquidacion`, aunque sea un reembolso.
+- `/pagar-con-permiso` sale como `venta`, aunque sea una devolución o el pago de su deuda.
 
 El bot lee estos avisos aquí, aparte de los de staging que recibe la web, y guarda su propio cursor.
 
@@ -141,5 +144,6 @@ az webapp deploy -n natillera-pagos -g rg-natillera-pagos --src-path pagos.zip -
   - Dirección base de la API de pagos: `https://natillera-pagos.azurewebsites.net/api/open-payments`.
   - Credencial: `API_KEY_STAGING`.
   - Los tres encabezados `X-OP-*` con **la misma** llave que usa el bot.
-  - Antes del modo real, aprobar los permisos `grupo` y `financiera` (#67).
+  - Antes del modo real, aprobar los permisos `grupo` y `financiera` (#67) y terminarlos con `GET /api/permisos/{id}` y las mismas `X-OP-*` que usa staging, hasta que respondan `aprobado`.
+  - Apagar o subir el cortacircuitos y alargar los reintentos de la API en staging (`gobierno.enfermaTrasFallosConsecutivos` y `gobierno.reintentosSegundos`).
 - **Johan (web):** la pantalla `/pagos` lee `GET /api/registro` de esta API. La web ya no necesita las rutas `/api/open-payments/*` ni `/api/permisos/*`.

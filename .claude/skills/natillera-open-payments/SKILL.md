@@ -1,64 +1,74 @@
 ---
 name: natillera-open-payments
-description: Conocimiento de Open Payments (Interledger) para Natillera 2.0 - permisos GNAP, el cobro recurrente con un solo permiso, incoming payment, quote, outgoing payment, las 4 etapas que mira el jurado, la Test Wallet y el contrato que el servicio externo le pide a pagos/. Úsala cuando alguien pregunte cómo funciona un pago, un grant o la autorización de la billetera, cuando se diseñe o revise el servicio de pagos (pagos/), el retorno de la autorización al bot (US-005, US-005-INT) o el registro de pagos, o cuando falle un pago en la Test Wallet. En pagos/ explica y revisa, pero no escribe el código: la política de IA de la hackathon pide que el equipo lo escriba.
+description: Conocimiento de Open Payments (Interledger) para Natillera 2.0 y de su API de pagos (pagos/) - permisos GNAP, el permiso recurrente con tope total, el de un solo uso de la compra, los de la billetera del grupo y de la financiera, incoming payment, quote, outgoing payment, las 4 etapas que mira el jurado, la Test Wallet, las llaves que llegan en cada llamada y las 6 operaciones que llama staging. Úsala cuando alguien pregunte cómo funciona un pago, un permiso o la autorización de la billetera, cuando se escriba, cambie o revise la API de pagos (pagos/), la vuelta del permiso al bot (US-005, US-005-INT) o el registro de pagos, o cuando falle un pago en la Test Wallet.
 ---
 
 # Open Payments en Natillera 2.0
 
 ## Primero, la regla de la hackathon
 
-**El código de `pagos/` lo escribe el equipo.** La política de IA lo pone como ejemplo de archivo con poca o ninguna IA y los mentores lo revisan línea por línea (`.claude/rules/ia-y-prompts.md`). En esa carpeta, Claude:
-- **Sí:** explica conceptos y la API, responde dudas, revisa el código que escribió el equipo, ayuda a leer un error del SDK, propone pruebas o pasos para depurar.
-- **No:** escribe archivos de `pagos/` ni entrega bloques de código listos para pegar. Si se lo piden, recuerda la regla y ofrece explicar el paso o revisar lo que escriban. Si el equipo decide usar IA de todos modos, que quede declarado con precisión en `AI_USAGE.md`.
+**La API de pagos (`pagos/`) la escribe Claude y se declara con precisión** (decisión del equipo del 16 de octubre en la tarde; `.claude/rules/ia-y-prompts.md`). La política pone el servicio de Open Payments como ejemplo de código con poca IA y los mentores lo revisan línea por línea. Por eso, cada cambio en `pagos/`:
 
-Fuera de `pagos/` (bot, web, integración) puede escribir código que **consume** el servicio de pagos por su contrato.
+- se registra en `prompts/pagos-*.md` (el prompt real) y en la fila de `pagos/` de `AI_USAGE.md`;
+- se explica al equipo paso por paso: quien presenta tiene que poder contar qué pide cada llamada y por qué;
+- llega con sus pruebas (`cd pagos && npm test`, con un Open Payments falso) y, antes de la demo, con un pago real en la Test Wallet.
+
+La guía de la API es `pagos/API.md` (rutas, llaves, errores, Azure); el contrato con staging, `pagos/README.md`. Si cambian, se cambian en el mismo PR, junto con `docs/discovery/4-logica-financiera/apis/open-payments.api.json` si cambia lo que manda staging.
 
 ## Las piezas
 
-- **Wallet address** (payment pointer): URL pública de una billetera (`https://ilp.interledger-test.dev/<nombre>`). `GET` sobre ella da `authServer`, `resourceServer`, `assetCode` y `assetScale`.
-- **Authorization server (GNAP):** emite permisos (*grants*). Un grant para `outgoing-payment` exige que la persona apruebe en su billetera (interacción).
-- **Resource server:** donde se crean `incoming-payment`, `quote` y `outgoing-payment` con el token del grant.
-- **Test Wallet:** `wallet.interledger-test.dev`, con saldo de práctica. Cada billetera del equipo y de los participantes de la demo vive ahí. La moneda la define cada billetera (`assetCode`/`assetScale`); no hay conversión en el corte de la hackathon: todas deben compartir moneda (US-005).
+- **Wallet address** (payment pointer): URL pública de una billetera (`https://ilp.interledger-test.dev/<nombre>`). `GET` sobre ella da `authServer`, `resourceServer`, `assetCode` y `assetScale`. El SDK no los busca solo: por cada billetera se llama `walletAddress.get` y se pasan a mano.
+- **Authorization server (GNAP):** emite permisos (*grants*). Los de `incoming-payment` y `quote` no piden interacción. **Todo permiso de `outgoing-payment` lo aprueba el dueño de la billetera**, también los de la billetera del grupo y de la financiera.
+- **Resource server:** donde se crean `incoming-payment`, `quote` y `outgoing-payment` con el token del permiso.
+- **Llaves de desarrollador** (*Key ID* y `private.key` de la billetera cliente de la app): solo identifican a la app y firman las solicitudes. No dan permiso para gastar de ninguna billetera. **La API no las guarda:** llegan en cada llamada (`X-OP-Wallet-Address`, `X-OP-Key-Id`, `X-OP-Private-Key` en base64) desde el bot y desde staging, que tienen que mandar **la misma** llave: el token de cada permiso queda atado a ella (si no coincide, `422`).
+- **Test Wallet:** `wallet.interledger-test.dev`, con saldo de práctica. Maneja pesos colombianos (COP, dos decimales): todas las billeteras de la demo pueden ir en COP y no hay conversión.
 
-## El flujo de un cobro de cuota
+## Los permisos (US-005)
 
-SDK: `@interledger/open-payments` (cliente autenticado con `walletAddressUrl`, `keyId` y `privateKey` de la billetera de la natillera). Antes de usar una función, verifica su firma en el README y los tipos de la versión instalada (`node_modules/@interledger/open-payments`).
+El bot los pide con `POST /api/permisos` (`tipo`, `wallet`, `monto`, `referencia` y `vuelta`, la dirección https de su chat: `https://t.me/<bot>?start=permiso_{permisoId}`, con `{permisoId}` tal cual). **Ninguno lleva intervalo:** el tope es total y va en `monto`. Con intervalo, el tope sería por intervalo, la billetera rechazaría un cobro que por sí solo lo supere (deuda con mora, una actividad cara) y el intervalo correría en tiempo real mientras la demo adelanta fechas.
 
-1. **Una sola vez por participante, al unirse (US-005):** grant de `outgoing-payment` sobre **su** billetera con `limits` y `interact`:
-   - `limits.debitAmount`: tope total = cuota × número de cuotas.
-   - `limits.interval`: intervalo ISO 8601 repetido (por ejemplo `R/2026-11-01T14:00:00Z/P1M`) para que el tope por periodo sea la cuota. **Esto es el riesgo SUP-001 (issue #3): pruébalo primero en la Test Wallet** antes de construir encima.
-   - `interact.finish` con `method: 'redirect'`, la URI de retorno (la página web de "autorización completada") y un `nonce`. Al volver, verifica el `hash` del retorno con ese nonce antes de aceptarlo (hash verification).
-2. **La persona aprueba en su billetera** (la URL `interact.redirect`) y vuelve con `interact_ref`. El servicio hace `grant.continue` y guarda el access token del grant (con su `manage` URL para rotarlo). El bot recibe "validado" (US-005-INT). Solo se aceptan retornos de solicitudes pendientes; aprobar dos veces cuenta como un solo permiso.
-3. **Cada periodo (US-007), sin intervención de la persona:**
-   - `incoming-payment` en la billetera de la natillera por el valor de la cuota.
-   - `quote` sobre la billetera del participante con `receiver` = ese incoming payment.
-   - `outgoing-payment` con el token del grant recurrente y el `quoteId`.
-   - Si el token venció, se rota (`token.rotate`) antes de cobrar (US-007-INT); si no se puede, **no** se genera mora: se avisa al equipo y se pide reautorizar.
-4. **Premios, liquidación y desembolsos:** pagos salientes desde la billetera de la natillera (o de la financiera) hacia la de cada persona, con su propio grant (sin interacción si la billetera es de la financiera).
+- `recurrente`: cuotas, deuda y actividades. El tope alcanza para todas las cuotas más la mora y las actividades; una cuota por periodo ya la garantiza staging.
+- `un-solo-uso`: compra y devolución. Tope igual al valor completo, sin receptor fijo: en la compra cubre dos pagos a dos destinos (vendedor y comisión) que suman exactamente el valor.
+- `grupo` y `financiera` (#67): las billeteras de donde salen premios, liquidación y préstamos. Su dueño los aprueba **una vez** antes de la demo, y después alguien los termina con `GET /api/permisos/{id}` y las mismas llaves `X-OP-*` que usa staging; sin eso, esas operaciones responden `403` aunque las llaves estén bien.
+
+**La vuelta** (`GET /api/permisos/{id}/retorno`) la abre el navegador del participante, que no tiene las llaves: solo verifica el `hash` (SHA-256 del nonce de la app, el de la billetera, `interact_ref` y la URL del servidor de permisos, en base64), o marca el rechazo si llega `result=grant_rejected` o `grant_invalid`, y redirige a la `vuelta` del permiso (sin `vuelta`, muestra una página para cerrar la ventana). El permiso se termina cuando el bot consulta `GET /api/permisos/{id}` con las llaves. El enlace de aprobación puede vencer a los 10 minutos, antes de los 15 que cuenta el bot en una compra.
+
+Esto es el riesgo SUP-001 (issue #3): **probar dos cobros con el mismo permiso recurrente y dos pagos con el mismo de un solo uso**, en la red real. El laboratorio previo solo llegó a que la Test Wallet aprobara un permiso; nunca cobró con él. Plan B: un permiso de un solo uso por cuota.
+
+## Un pago (por ejemplo, la cuota del periodo)
+
+Staging llama `POST /api/open-payments/cobrar-cuota`. La API:
+
+1. Pide un permiso sin interacción y crea un `incoming-payment` en la billetera del grupo.
+2. Pide un permiso sin interacción y crea un `quote` en el servidor del participante con `receiver` = ese incoming payment, justo antes de pagar (vence a los 5 minutos).
+3. Crea el `outgoing-payment` con el token del permiso recurrente. Antes, revisa el token: si le quedan menos de 3 minutos (dura 10), lo rota, con un candado por permiso, porque la rotación anula el token anterior.
+4. Consulta el **incoming payment** hasta que esté completo; el outgoing payment solo tiene estado de fallido. Si no se confirma en unos 20 segundos, responde `503` y sigue consultando por detrás.
+5. Responde `{ "periodo", "monto" }` con el monto **exacto** pedido, en pesos.
+
+Staging solo ve `http-<código>` de un error, así que cada código dice algo por sí solo (tabla en `pagos/API.md`) y reintenta solo ante `5xx`, `429` o sin respuesta. La idempotencia es por ruta más cuerpo, sin las llaves; responde `503` (nunca `409`) mientras el pago sigue y guarda solo los éxitos.
+
+**Cortacircuitos de staging:** cada respuesta que no sea 2xx (también los `503` de los reintentos) suma a una racha; con 5 seguidas, staging deja de llamar la API para todos hasta que un administrador la reactive. Los reintentos de staging terminan unos 90 segundos después de la primera llamada, antes de los 3 minutos que espera la API. Por eso conviene responder rápido y no devolver errores que se pueden evitar (detalle en `pagos/README.md`).
 
 ## Las 4 etapas que mira el jurado
 
-La demo debe mostrar un pago real con **Solicitud → Autorización → Ejecución → Finalización** (registro en la web, US-007-RPT). Mapeo sugerido para que todos usen los mismos nombres:
+La demo debe mostrar un pago real con **Solicitud → Autorización → Ejecución → Finalización**. La API las guarda y la web las muestra con `GET /api/registro` (US-007-RPT):
 
 | Etapa | Qué pasó en Open Payments |
 |---|---|
-| Solicitud | Se creó el incoming payment (o se pidió el grant) |
-| Autorización | Hay un grant vigente con su token |
-| Ejecución | Se creó el quote y el outgoing payment |
-| Finalización | El outgoing payment terminó y el incoming payment quedó completo |
+| Solicitud | Llegó la llamada de staging |
+| Autorización | Hay un permiso aprobado y vigente, con su token |
+| Ejecución | Se crearon el incoming payment, el quote y el outgoing payment |
+| Finalización | El incoming payment quedó completo (o el pago falló) |
 
-Un fallo se reporta con la etapa donde ocurrió y un motivo en palabras simples ("Fondos insuficientes", "Autorización vencida", "Billetera no encontrada", "Límite de la autorización alcanzado").
-
-## El contrato con el servicio externo
-
-El servicio externo de lógica financiera le pide a `pagos/` cuatro operaciones (`docs/discovery/4-logica-financiera/apis/open-payments.api.json`), con `X-Api-Key`: `POST /cobrar-cuota`, `/cobrar`, `/pagar` y `/desembolsar`. `pagos/README.md` es el documento vivo del frente; si el contrato cambia, se cambia ahí y en ese JSON en el mismo PR.
+Un fallo se reporta con la etapa donde ocurrió y un motivo en palabras simples ("Fondos insuficientes", "Autorización vencida", "Billetera no encontrada", "Límite de la autorización alcanzado"). Al terminar cada pago la API agrega un aviso `PagoCompletado` o `PagoFallido`, que el bot lee en `GET /api/avisos`: staging no avisa «cobro hecho».
 
 ## Secretos
 
-La llave privada de la billetera (`privateKey`), su `keyId` y la `X-Api-Key` van en `pagos/.env`, nunca en el repo ni en un log. Los tokens de los grants son secretos también: no van en logs, mensajes del bot ni en el registro que ve el jurado (ahí va el id del recurso, no el token).
+`API_KEY_STAGING`, `API_KEY_CLIENTES` y la conexión al almacén viven en la configuración de la App Service, nunca en el repo. Las llaves de Open Payments viven en el `.env` del bot y en la configuración de staging, y viajan en cada llamada. Los tokens de los permisos quedan en el almacén de la API: no van en logs, ni en mensajes del bot, ni en el registro que ve el jurado (ahí va el id del recurso, no el token). El `grantId` que recibe staging es un id propio de la API, no el de Open Payments.
 
 ## Documentación
 
 - Conceptos y flujo: https://openpayments.dev (sección de grants y del flujo de un pago).
-- SDK de Node: el README de `@interledger/open-payments` (`npm view @interledger/open-payments readme`) y sus tipos.
-- Extensión de VS Code «Open Payments SDK Snippets» (`op-grant-op`, `op-quote-create`, `op-op-create`): útil para que el equipo escriba el código a mano.
+- SDK de Node: el README de `@interledger/open-payments` (`npm view @interledger/open-payments readme`) y sus tipos. Antes de usar una función, verifica su firma en la versión instalada (`pagos/node_modules/@interledger/open-payments`).
+- Extensión de VS Code «Open Payments SDK Snippets» (`op-grant-op`, `op-quote-create`, `op-op-create`): sirve para explicarle cada paso al equipo.
+- El laboratorio `playground/open-payments-lab` del servicio externo es código previo al evento: se lee como referencia, no se copia.
