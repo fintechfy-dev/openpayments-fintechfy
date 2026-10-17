@@ -1,23 +1,12 @@
 # Arranque del repositorio
 
-## 2026-10-16 · Claude Code (Claude Opus)
+**Herramienta:** Claude Code (Claude Opus) · **Fecha:** 16 de octubre de 2026
 
-```text
-ya cree el repositorio en github
+El equipo le pidió a la IA preparar el repositorio para trabajar durante el evento:
 
-https://github.com/fintechfy-dev/openpayments-fintechfy
+- Subir el discovery hecho antes del evento y el documento fuente.
+- Armar el README, el `.gitignore`, `AI_USAGE.md` y esta carpeta de prompts.
+- Organizar el trabajo en tres frentes (Telegram, Web y Pagos) con GitFlow, issues y etiquetas.
+- Tratar la lógica financiera como un servicio externo, ajeno a la hackathon.
 
-necesito cargar todo el material al repo para poder trabajar con mi equipo, ayame con eso ya que necesito todos los proceso de descubrimiento alla arriba
-```
-
-```text
-te doy permiso explicito de hacerlo, hazlo ya
-```
-
-```text
-me esta bloqueando es por el acceso, necesito que me des instrucciones para acceder con mi usuario de github
-```
-
-```text
-LISTO YA LO HICE, VERIFICA QUE SI ESTE BIEN Y VUELVE A PUSHEAR LOS CAMBIOS
-```
+Las decisiones las tomó el equipo; la IA las dejó escritas en el repo.

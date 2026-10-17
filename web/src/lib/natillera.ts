@@ -1,0 +1,80 @@
+// Mismo comportamiento que design-system/components/bundle.js, en TypeScript para React.
+// Si cambias algo aquí, cámbialo también en bundle.js: natillera.test.ts compara los dos.
+
+function miles(entero: number): string {
+  return String(entero).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+/** formatoCOP(100000) → "$100.000"; formatoCOP(1250.5) → "$1.250,50". Decimales solo si no son cero. */
+export function formatoCOP(valor: number): string {
+  let n = Number(valor) || 0;
+  const negativo = n < 0;
+  n = Math.abs(n);
+  const centavos = Math.round(n * 100);
+  const entero = Math.floor(centavos / 100);
+  const dec = centavos % 100;
+  const texto = "$" + miles(entero) + (dec ? "," + (dec < 10 ? "0" : "") + dec : "");
+  return negativo ? "-" + texto : texto;
+}
+
+export type Variante = "neutro" | "info" | "exito" | "aviso" | "error" | "celebra";
+
+/** Trazos de los íconos (viewBox 0 0 24 24, sin relleno, trazo 2). */
+export const ICONOS = {
+  cuota: "<ellipse cx=\"12\" cy=\"6.5\" rx=\"7\" ry=\"3\"/><path d=\"M5 6.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5\"/><path d=\"M5 11.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5\"/>",
+  grupo: "<circle cx=\"12\" cy=\"8\" r=\"3\"/><path d=\"M6.5 19.5a5.5 5.5 0 0 1 11 0\"/><circle cx=\"5\" cy=\"10\" r=\"2\"/><circle cx=\"19\" cy=\"10\" r=\"2\"/><path d=\"M2 18a3.5 3.5 0 0 1 3.8-3.4\"/><path d=\"M22 18a3.5 3.5 0 0 0-3.8-3.4\"/>",
+  billetera: "<path d=\"M6 6V5.5A2.5 2.5 0 0 1 8.5 3H17\"/><rect x=\"3\" y=\"6\" width=\"18\" height=\"14\" rx=\"3\"/><path d=\"M21 11h-4.5a2 2 0 0 0 0 4H21\"/><path d=\"M16.5 13h.01\"/>",
+  candado: "<rect x=\"5\" y=\"10.5\" width=\"14\" height=\"10.5\" rx=\"2.5\"/><path d=\"M8 10.5V7.5a4 4 0 0 1 8 0v3\"/><path d=\"M12 14.5v2.5\"/>",
+  calendario: "<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15.5\" rx=\"2.5\"/><path d=\"M3.5 10h17\"/><path d=\"M8 3v4\"/><path d=\"M16 3v4\"/><path d=\"M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01\"/>",
+  premio: "<circle cx=\"12\" cy=\"9\" r=\"5.5\"/><path d=\"M8.6 13.3 7 21l5-2.5 5 2.5-1.6-7.7\"/><path d=\"m12 6.8.7 1.4 1.5.2-1.1 1 .3 1.5-1.4-.7-1.4.7.3-1.5-1.1-1 1.5-.2z\"/>",
+  alerta: "<path d=\"M10.3 4.3a2 2 0 0 1 3.4 0l7.6 13.2a2 2 0 0 1-1.7 3H4.4a2 2 0 0 1-1.7-3z\"/><path d=\"M12 9.5v4\"/><path d=\"M12 17h.01\"/>",
+  check: "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m8 12.3 2.8 2.8L16 9.6\"/>",
+  reloj: "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7.5V12l3 2\"/>",
+  punto: "<circle cx=\"12\" cy=\"12\" r=\"4\"/>",
+  credito: "<circle cx=\"15\" cy=\"6\" r=\"3.5\"/><path d=\"M2 13h3v8H2\"/><path d=\"M5 14h4l3 1.5h2.5a1.5 1.5 0 0 1 0 3H10\"/><path d=\"M14.5 18.5 19 16a1.6 1.6 0 0 1 2 2.4L16 21.5H9.5L5 20\"/>",
+} as const;
+
+export type NombreIcono = keyof typeof ICONOS;
+
+interface DefEstado {
+  variante: Variante;
+  icono: NombreIcono;
+  texto: string;
+}
+
+/** Cada estado del producto → variante de badge (.nt-badge--x), ícono y palabra. */
+export const ESTADOS = {
+  natillera: {
+    creada: { variante: "neutro", icono: "punto", texto: "Creada" },
+    iniciada: { variante: "info", icono: "calendario", texto: "Iniciada" },
+    activa: { variante: "exito", icono: "check", texto: "Activa" },
+    liquidando: { variante: "celebra", icono: "premio", texto: "Liquidando" },
+    cerrada: { variante: "neutro", icono: "candado", texto: "Cerrada" },
+  },
+  participante: {
+    por_validar: { variante: "neutro", icono: "reloj", texto: "Por validar" },
+    validado: { variante: "info", icono: "check", texto: "Validado" },
+    activo: { variante: "exito", icono: "cuota", texto: "Activo" },
+    en_mora: { variante: "aviso", icono: "reloj", texto: "En mora" },
+    liquidado: { variante: "celebra", icono: "premio", texto: "Liquidado" },
+  },
+  pago: {
+    pendiente: { variante: "neutro", icono: "reloj", texto: "Pendiente" },
+    autorizado: { variante: "info", icono: "candado", texto: "Autorizado" },
+    completado: { variante: "exito", icono: "check", texto: "Completado" },
+    fallido: { variante: "error", icono: "alerta", texto: "Fallido" },
+  },
+  credito: {
+    solicitado: { variante: "neutro", icono: "reloj", texto: "Solicitado" },
+    aprobado: { variante: "info", icono: "check", texto: "Aprobado" },
+    rechazado: { variante: "neutro", icono: "punto", texto: "No aprobado" },
+    por_desembolsar: { variante: "info", icono: "reloj", texto: "Por desembolsar" },
+    al_dia: { variante: "exito", icono: "check", texto: "Al día" },
+    en_mora: { variante: "aviso", icono: "reloj", texto: "En mora" },
+    pagado: { variante: "celebra", icono: "premio", texto: "Pagado" },
+    descontado: { variante: "neutro", icono: "cuota", texto: "Descontado al liquidar" },
+  },
+} as const satisfies Record<string, Record<string, DefEstado>>;
+
+export type TipoEstado = keyof typeof ESTADOS;
+export type EstadoDe<T extends TipoEstado> = keyof (typeof ESTADOS)[T];

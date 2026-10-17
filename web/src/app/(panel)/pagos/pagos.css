@@ -1,0 +1,75 @@
+/* Registro de pagos (US-007-RPT). Solo tokens. Móvil primero: base 360 px, luego 640 y 1024. */
+
+.registro__actualizado {
+  display: inline-flex; align-items: center; gap: var(--espacio-2); margin: 0;
+  font-size: 15px; line-height: 20px; color: var(--tinta-suave);
+}
+.registro__vivo {
+  width: var(--espacio-3); height: var(--espacio-3); flex: none; border-radius: var(--radio-pildora);
+  background: var(--primario); animation: registro-latido 2s ease-in-out infinite;
+}
+@keyframes registro-latido { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .registro__vivo { animation: none; } }
+
+/* Los avisos (estado de la API, pagos simulados, falla de refresco) van juntos, separados entre sí y de las cifras. */
+.registro__avisos { display: flex; flex-direction: column; gap: var(--espacio-3); margin-bottom: var(--espacio-5); }
+.registro__fallo {
+  display: flex; align-items: center; gap: var(--espacio-2); margin: 0;
+  padding: var(--espacio-3) var(--espacio-4); border-radius: var(--radio-md);
+  background: var(--superficie-hundida); color: var(--tinta); font-size: 15px; line-height: 20px;
+}
+.registro__fallo .nt-ico { color: var(--estado-aviso-texto); }
+
+.registro__dato--exito { color: var(--primario-texto); }
+.registro__dato--error { color: var(--estado-error-texto); }
+.registro__dato--info { color: var(--estado-info-texto); }
+
+/* Encabezado de la lista y filtros */
+.registro__cabeza-lista { display: flex; flex-direction: column; gap: var(--espacio-3); margin-bottom: var(--espacio-4); }
+.registro__cabeza-lista .seccion__titulo { margin: 0; }
+.registro__filtros { display: flex; flex-wrap: wrap; gap: var(--espacio-2); }
+.registro__filtros .nt-btn { min-height: var(--control-alto); }
+
+.registro__leyenda {
+  display: flex; flex-direction: column; gap: var(--espacio-2); margin-bottom: var(--espacio-4);
+  font-size: 14px; line-height: 20px; color: var(--tinta-suave);
+}
+.registro__leyenda-marcas { display: flex; flex-wrap: wrap; gap: var(--espacio-2) var(--espacio-4); }
+.registro__leyenda-item { display: inline-flex; align-items: center; gap: var(--espacio-2); }
+
+/* Tabla: en móvil cada pago es una tarjeta (tabla-apilable de app.css) */
+.registro__celda { display: flex; flex-direction: column; align-items: flex-end; gap: var(--espacio-1); }
+.registro__secundario { font-size: 14px; line-height: 20px; font-weight: 400; color: var(--tinta-suave); }
+.registro__motivo { font-size: 14px; line-height: 20px; font-weight: 700; color: var(--estado-error-texto); }
+
+.registro__elegir {
+  display: inline-flex; align-items: center; min-height: var(--control-alto); padding: 0; margin: 0;
+  border: 0; background: none; cursor: pointer; text-align: right;
+  font: inherit; font-weight: 700; color: var(--primario-texto);
+  text-decoration: underline; text-underline-offset: 0.2em; border-radius: var(--radio-sm);
+}
+.registro__elegir:hover { text-decoration-thickness: 2px; }
+.registro__elegir[aria-expanded="true"] { text-decoration: none; }
+
+.registro__fila--elegida { background: var(--primario-suave); }
+
+.nt-tabla .registro__th-etapas { white-space: normal; }
+.registro__orden { display: block; font-size: 13px; line-height: 18px; font-weight: 400; }
+
+/* Fila desplegada con la línea de tiempo */
+.registro__detalle { background: var(--superficie); }
+.nt-tabla.registro__tabla .registro__detalle td { display: block; padding: var(--espacio-3); text-align: left; }
+.registro__detalle .linea-pago { box-shadow: none; }
+
+@media (min-width: 640px) {
+  .registro__cabeza-lista { flex-direction: row; justify-content: space-between; align-items: center; }
+  .registro__leyenda { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--espacio-2) var(--espacio-4); }
+}
+
+@media (min-width: 1024px) {
+  .registro .nt-tabla-marco { overflow-x: auto; }
+  .registro__filtros .nt-btn { min-height: var(--control-alto-sm); }
+  .registro__celda { align-items: flex-start; }
+  .registro__elegir { min-height: var(--control-alto-sm); text-align: left; }
+  .nt-tabla.registro__tabla .registro__detalle td { display: table-cell; padding: var(--espacio-4); }
+}

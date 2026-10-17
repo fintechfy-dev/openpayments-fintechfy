@@ -1,4 +1,0 @@
-{
-  "displayName": "Natillera 2.0",
-  "description": "Ahorro en grupo sin riesgo de custodia, sobre Open Payments. Cada participante autoriza una vez el débito recurrente desde su billetera; la natillera cobra cada periodo, lleva la mora diaria de quien se atrasa, maneja rifas, bazares y compartires con castigo por mora y premio al ganador, y en diciembre liquida en dos rondas (parte igual menos deudas, y lo descontado a los morosos repartido entre todos) hasta dejar la cuenta en cero. Si no se completa el cupo, devuelve todo. Incluye el crédito de la financiera desde el ahorro, con descuento en la liquidación si está en mora. Cinco contratos y 26 reglas del motor; el dinero se mueve con llamadas a la API Open Payments del tenant y el grupo recibe avisos por Telegram."
-}

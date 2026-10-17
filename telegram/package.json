@@ -1,0 +1,19 @@
+{
+  "name": "natillera-2",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Natillera 2.0: ahorro en grupo sin riesgo de custodia, sobre Open Payments, con un bot de Telegram",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test \"test/**/*.test.js\"",
+    "registrar-avisos": "node src/registrar-avisos.js"
+  },
+  "dependencies": {
+    "grammy": "1.46.0"
+  }
+}

@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+# Copias generadas del design system (npm run ds)
+public/ds/
+src/styles/ds/
+# Capturas del verificador visual
+.capturas/
+# Secretos
+.env.local
+.env*.local
+# Índice local que alimenta el bot (datos de personas reales: nunca al repo)
+data/

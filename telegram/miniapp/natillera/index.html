@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mi natillera</title>
+  <!-- Se sirve desde la raíz del repositorio (GitHub Pages), igual que el formulario de crear. -->
+  <link rel="stylesheet" href="../../../design-system/tokens/tokens.css">
+  <link rel="stylesheet" href="../../../design-system/components/bundle.css">
+  <link rel="stylesheet" href="../miniapp.css">
+  <link rel="stylesheet" href="natillera.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="../../../design-system/components/bundle.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main class="ma">
+    <header class="ma-cabeza">
+      <span class="mn-avatar" id="avatar" aria-hidden="true"></span>
+      <div class="mn-cabeza__texto">
+        <h1 class="ma-titulo" id="saludo">Mi natillera</h1>
+        <p class="nt-muted ma-sub"><span id="nombre-natillera"></span> <span id="estado-natillera"></span></p>
+      </div>
+    </header>
+
+    <nav class="mn-pestanas" role="tablist" aria-label="Secciones">
+      <button type="button" role="tab" class="ma-segmento" id="tab-inicio" aria-controls="panel-inicio">Mi ahorro</button>
+      <button type="button" role="tab" class="ma-segmento" id="tab-reglas" aria-controls="panel-reglas">Reglas</button>
+      <button type="button" role="tab" class="ma-segmento" id="tab-cobros" aria-controls="panel-cobros">Mis cobros</button>
+    </nav>
+
+    <section class="mn-panel" id="panel-inicio" role="tabpanel" aria-labelledby="tab-inicio"></section>
+    <section class="mn-panel" id="panel-reglas" role="tabpanel" aria-labelledby="tab-reglas" hidden></section>
+    <section class="mn-panel" id="panel-cobros" role="tabpanel" aria-labelledby="tab-cobros" hidden></section>
+
+    <footer class="mn-demo">
+      <p class="nt-muted ma-ayuda" id="pie"></p>
+      <div class="ma-chips" id="casos" role="group" aria-label="Ver otra natillera"></div>
+    </footer>
+  </main>
+</body>
+</html>

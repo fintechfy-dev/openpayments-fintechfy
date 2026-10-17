@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tus natilleras</title>
+  <!-- Se sirve desde la raíz del repositorio (GitHub Pages), igual que las otras páginas de la Mini App. -->
+  <link rel="stylesheet" href="../../../design-system/tokens/tokens.css">
+  <link rel="stylesheet" href="../../../design-system/components/bundle.css">
+  <link rel="stylesheet" href="../miniapp.css">
+  <link rel="stylesheet" href="../natillera/natillera.css">
+  <link rel="stylesheet" href="admin.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="../../../design-system/components/bundle.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main class="ma">
+    <header class="ma-cabeza">
+      <div class="mn-cabeza__texto">
+        <h1 class="ma-titulo" id="titulo">Tus natilleras</h1>
+        <p class="nt-muted ma-sub" id="subtitulo"></p>
+      </div>
+    </header>
+
+    <div id="aviso-demo"></div>
+
+    <nav class="ad-selector" id="selector" aria-label="Escoge la natillera"></nav>
+
+    <section class="mn-panel" id="panel" aria-live="polite"></section>
+
+    <footer class="mn-demo">
+      <p class="nt-muted ma-ayuda" id="pie"></p>
+    </footer>
+  </main>
+</body>
+</html>

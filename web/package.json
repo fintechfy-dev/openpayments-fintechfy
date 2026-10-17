@@ -1,0 +1,35 @@
+{
+  "name": "natillera-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "ds": "node scripts/sync-ds.mjs",
+    "predev": "npm run ds",
+    "dev": "next dev",
+    "prebuild": "npm run ds",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "verificar": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "capturas": "node scripts/capturas.mjs"
+  },
+  "dependencies": {
+    "next": "16.3.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.8",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}

@@ -1,0 +1,24 @@
+<!-- @dsCard group="Piezas aplicadas" height=560 subtitle="Invitación con reglas en un vistazo" page -->
+<style>.pv{padding:24px;background:var(--superficie);color:var(--tinta);font-family:var(--font-body)}.pv h4{margin:0 0 8px;font:700 13px/18px var(--font-body);color:var(--tinta-suave)}</style>
+<div class="pv nt" style="display:flex;justify-content:center;background:var(--superficie-hundida)">
+<style>.tb{width:400px;background:var(--superficie-elevada);border-radius:var(--radio-lg);box-shadow:var(--sombra-3);overflow:hidden}
+.tb-h{background:var(--secundario-suave);padding:24px;display:flex;flex-direction:column;gap:8px}
+.tb-k{font:700 14px/20px var(--font-body);color:var(--tinta-suave);margin:0}.tb-t{font:900 28px/32px var(--font-display);margin:0}
+.tb-r{list-style:none;margin:0;padding:20px 24px;display:flex;flex-direction:column;gap:14px}.tb-r li{display:flex;gap:12px;align-items:flex-start}.tb-r .nt-ico{color:var(--primario-texto)}
+.tb-r b{display:block}.tb-r span{color:var(--tinta-suave);font-size:14px;line-height:20px}.tb-c{margin:0 24px;padding:14px 16px;border-radius:var(--radio-md);background:var(--primario-suave);display:flex;gap:12px}
+.tb-a{padding:20px 24px 24px;display:flex;flex-direction:column;gap:8px}</style>
+<div class="tb">
+<div class="tb-h"><img src="../../assets/logos/kit/01_simbolo/marranito_128px.png" width="64" alt=""><p class="tb-k">Andrés te invitó a</p><p class="tb-t">Natillera Los Primos</p></div>
+<ul class="tb-r">
+<li><i data-i="cuota"></i><div><b><span data-cop="50000"></span> cada mes</b><span>Se cobra solo el día 15</span></div></li>
+<li><i data-i="calendario"></i><div><b>Febrero a noviembre</b><span>12 cuotas · liquidación el 1 de diciembre</span></div></li>
+<li><i data-i="grupo"></i><div><b>12 personas</b><span>Todos ven su aporte y el total</span></div></li>
+</ul>
+<div class="tb-c"><i data-i="candado" style="color:var(--primario-texto)"></i><div><b>¿Quién guarda la plata?</b><div style="font-size:14px;line-height:20px">Financiera Aliada, en una billetera de la natillera. Nadie del grupo la puede sacar, ni Andrés.</div></div></div>
+<div class="tb-a"><a class="nt-btn nt-btn--primario nt-btn--bloque" href="#">Unirme a la natillera</a><span class="nt-muted" style="font-size:14px;text-align:center">Autorizas una sola vez y listo.</span></div>
+</div></div>
+<script>
+document.querySelectorAll('[data-i]').forEach(function(e){e.outerHTML=Natillera.icono(e.getAttribute('data-i'),e.className)});
+document.querySelectorAll('[data-b]').forEach(function(e){var p=e.getAttribute('data-b').split('.');e.outerHTML=Natillera.badge(p[0],p[1])});
+document.querySelectorAll('[data-cop]').forEach(function(e){e.textContent=Natillera.formatoCOP(+e.getAttribute('data-cop'))});
+</script>

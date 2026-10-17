@@ -1,0 +1,46 @@
+/* Pantallas de natilleras (#9). Solo tokens; móvil primero (360 px) y se agranda desde 640 y 1024 px. */
+
+.natilleras-indicadores .nt-dato__valor { font-size: 28px; line-height: 34px; }
+
+.natilleras-enlace {
+  color: var(--primario-texto); font-weight: 700; text-decoration: underline;
+  text-underline-offset: 3px; border-radius: var(--radio-sm);
+}
+.natilleras-enlace:hover { text-decoration-thickness: 2px; }
+
+.natilleras-sub { display: block; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--tinta-suave); }
+/* El NatilleraId lo genera el bot y es largo (nat-<uuid>): se parte en vez de ensanchar la tabla. En
+   escritorio la celda principal es nowrap (app.css) para que el nombre no se parta; el ID sí. */
+.natilleras-id { margin-top: var(--espacio-1); max-width: 24ch; white-space: normal; word-break: break-all; }
+.natilleras-pendiente { color: var(--estado-aviso-texto); font-weight: 700; }
+
+/* Detalle */
+.natillera-destacada { display: grid; gap: var(--espacio-5); }
+.natillera-destacada__titulo { margin: 0; }
+.natillera-avance { display: flex; flex-direction: column; gap: var(--espacio-4); }
+.natillera-resumen-participantes { margin: 0 0 var(--espacio-3); }
+/* Celdas vacías (fila de total) no ocupan espacio cuando la tabla se apila en móvil. */
+.natillera-participantes.tabla-apilable td:empty { display: none; }
+.natillera-destacada__custodia { display: flex; gap: var(--espacio-2); align-items: flex-start; margin: 0; }
+.natillera-destacada__custodia .nt-ico { flex: none; margin-top: 2px; }
+
+.natillera-nota { margin: 0; font-size: 14px; line-height: 20px; }
+
+.natillera-billetera {
+  font-size: 14px; line-height: 20px; font-weight: 400; color: var(--tinta-suave);
+  overflow-wrap: anywhere; word-break: break-word;
+}
+
+.natillera-volver {
+  display: inline-flex; align-items: center; gap: var(--espacio-2); min-height: var(--control-alto);
+  align-self: flex-start;
+}
+
+@media (min-width: 1024px) {
+  .natillera-participantes.tabla-apilable td:empty { display: table-cell; }
+}
+
+@media (min-width: 640px) {
+  .natilleras-indicadores .nt-dato__valor { font-size: 36px; line-height: 40px; }
+  .natillera-destacada { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); align-items: start; }
+}

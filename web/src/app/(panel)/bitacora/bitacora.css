@@ -1,0 +1,12 @@
+/* Bitácora (US-012-AUD). Solo tokens. Móvil primero. */
+
+.bitacora__nota { display: flex; gap: var(--espacio-3); align-items: flex-start; margin: 0 0 var(--espacio-6); }
+
+.bitacora__actor { display: inline-flex; flex-direction: column; align-items: flex-end; gap: var(--espacio-1); }
+.nt-tabla.bitacora__tabla td.nt-tabla__principal { text-align: right; }
+.bitacora__detalle { color: var(--tinta-suave); overflow-wrap: anywhere; }
+
+@media (min-width: 1024px) {
+  .bitacora__actor { align-items: flex-start; }
+  .nt-tabla.bitacora__tabla td.nt-tabla__principal { text-align: left; }
+}
