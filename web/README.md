@@ -38,18 +38,28 @@ npm run dev            # http://localhost:3000
 
 ### Datos
 
-Sin variables de entorno, la web usa **datos de prueba** (lo indica un aviso arriba de cada pantalla). Para conectarla al servicio externo, copia `.env.example` a `.env.local` y llena:
+La web no tiene datos de prueba: todo sale de los sistemas reales y, si falta configuración, cada pantalla dice qué falta. Copia `.env.example` a `.env.local` y llena (#53, [`INTEGRACION.md`](INTEGRACION.md)):
 
-- `SERVICIO_URL`: dirección del servicio externo de lógica financiera.
-- `SERVICIO_API_KEY`: su `X-Api-Key`. Solo la lee el servidor; nunca le pongas el prefijo `NEXT_PUBLIC_`.
+- `SERVICIO_EXTERNO_URL`: URL base de staging (`https://sandbox-staging.corebank.ai`).
+- `SERVICIO_EXTERNO_TOKEN`: el JWT de la organización con `org_role: "admin"`; va como `Authorization: Bearer`. Solo lo lee el servidor; nunca le pongas el prefijo `NEXT_PUBLIC_`.
+- `PAGOS_URL` y `PAGOS_API_KEY`: la API de pagos (`pagos/API.md`) y su `API_KEY_CLIENTES`. Sin ellas, `/pagos` dice que falta conectarla.
+- `CREDITO_TASA_MENSUAL`: la tasa mensual de la financiera, en porcentaje. Sin ella, los créditos se ven pero no se aprueban.
+- `WEB_INDICE_API_KEY`: la llave con la que el bot alimenta el índice (`X-Api-Key`). Compártela con Estiven por canal privado.
 
-Las rutas del cliente HTTP (`src/lib/servicio/http.ts`) son provisionales hasta que se defina el contrato en #5.
+De dónde sale cada pantalla:
+
+- `/natilleras` y su detalle: todas las natilleras y participaciones del motor (`GET /api/contracts/table`) con su estado (`currentStateRaw`), completadas con el **índice** (lo que el bot registra en `POST /api/indice/*`, guardado en `web/data/indice.json`, ignorado por git): administrador y nombres.
+- `/creditos`: las solicitudes que deja el bot en el índice y los contratos `natillera-credito-ahorro` del motor. Aprobar crea el contrato en staging con `CREDITO_TASA_MENSUAL` y el motor desembolsa desde la billetera de la financiera; la respuesta queda en el índice (sección `decisiones`). La financiera responde todas; el administrador, las de sus natilleras. Si staging no respondió al aprobar, la solicitud queda «Aprobado» para no desembolsar dos veces; si el crédito nunca aparece, borra esa solicitud de `decisiones` en `web/data/indice.json`.
+- `/pagos`: el registro de la API de pagos, con sus cuatro etapas de Open Payments.
+- `/bitacora`: los eventos de la natillera y de sus actividades en staging.
+
+El administrador ve las natilleras cuyo `administrador.telegramId` (lo manda el bot al índice) es su chat de Telegram (`DEMO_ADMIN_TELEGRAM_CHAT_ID`); una natillera que el bot no registró sale «Sin registrar» y solo la ve la financiera. El bot reintenta sin duplicar: reenviar un id con los mismos datos responde 200; con otros datos, 409 y no cambia nada.
 
 ### Inicio de sesión
 
 `/` es la página pública con el propósito del proyecto; `/ingresar`, el formulario. Todo el panel (`/natilleras`, `/creditos`, `/pagos`, `/bitacora` y `/api/pagos`) exige sesión.
 
-- Dos usuarios de demo: `financiera` (ve todo y responde créditos) y `andres` (administrador de Los Primos: solo ve sus natilleras, sus pagos y su bitácora).
+- Dos usuarios de demo: `financiera` (superadmin: ve todo y responde todas las solicitudes de crédito) y `andres` (administrador: solo ve sus natilleras, sus pagos, su bitácora y las solicitudes de crédito de sus natilleras, que también puede responder).
 - **No hay claves: se entra con un código de 6 dígitos que llega por Telegram** (vence en 5 minutos y sirve una sola vez).
 - En `.env.local`: `SESION_SECRETO` (al menos 32 caracteres al azar; el comando para generarlo está en `.env.example`), `TELEGRAM_BOT_TOKEN` (el mismo `BOT_TOKEN` del bot; la web solo envía mensajes) y el chat de cada usuario (`DEMO_FINANCIERA_TELEGRAM_CHAT_ID`, `DEMO_ADMIN_TELEGRAM_CHAT_ID`). Para saber el chat id, la persona le escribe `/start` al bot y el id queda en su log. Sin `SESION_SECRETO` nadie puede entrar y la página lo dice.
 - **En desarrollo sin `TELEGRAM_BOT_TOKEN`**, el código aparece en la terminal de `npm run dev` en vez de enviarse. En producción eso nunca pasa.
@@ -59,7 +69,7 @@ Las rutas del cliente HTTP (`src/lib/servicio/http.ts`) son provisionales hasta 
 
 ### Cómo está hecha
 
-- `src/lib/servicio/`: la única puerta al servicio externo (tipos, datos de prueba y cliente HTTP), solo de servidor.
+- `src/lib/servicio/`: la única puerta a los sistemas externos (staging y la API de pagos), solo de servidor.
 - `src/app/<pantalla>/`: una carpeta por pantalla. Las páginas son componentes de servidor; lo interactivo (aprobar créditos, refresco del registro de pagos) va en componentes de cliente pequeños.
 - Todo lo visual sale del [design system](../design-system/): `npm run ds` copia sus tokens, componentes, fuentes y logos.
 

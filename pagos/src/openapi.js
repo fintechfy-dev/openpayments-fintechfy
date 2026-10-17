@@ -20,7 +20,7 @@ const EJEMPLOS = {
 const ESQUEMAS_CAMPO = {
   texto: { type: "string", minLength: 1 },
   wallet: { type: "string", description: "Dirección https de la billetera o payment pointer ($ilp...)" },
-  monto: { type: "number", minimum: 0, exclusiveMinimum: true, description: "En pesos (COP, hasta 2 decimales)" },
+  monto: { type: "number", minimum: 0, exclusiveMinimum: true, description: "En pesos (la moneda de la billetera del grupo, hasta 2 decimales). Una billetera en otra moneda se convierte con la cotización de Open Payments" },
   entero: { type: "integer", minimum: 0 },
 };
 
@@ -30,7 +30,7 @@ const ERRORES = {
   402: "Sin fondos o tope del permiso superado (no se reintenta: el participante recarga)",
   403: "El permiso no existe, no está aprobado o no se pudo renovar su token",
   404: "Operación o permiso desconocido",
-  422: "Datos que no cuadran: otra billetera, otra llave, monedas distintas o una billetera que no existe",
+  422: "Datos que no cuadran: otra billetera, otra llave, una billetera que no existe o dos monedas sin tasa entre ellas",
   502: "Open Payments falló (staging reintenta)",
   503: "El pago sigue en curso (staging reintenta y recibe el resultado)",
 };

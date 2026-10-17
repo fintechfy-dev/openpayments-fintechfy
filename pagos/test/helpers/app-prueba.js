@@ -11,6 +11,8 @@ export const ANA = wallet("ana");
 export const BETO = wallet("beto");
 export const GRUPO = wallet("grupo");
 export const FINANCIERA = wallet("financiera");
+export const EVA = wallet("eva", { assetCode: "EUR" });
+export const UGO = wallet("ugo", { assetCode: "USD" });
 export const VUELTA_BOT = "https://t.me/natillera_bot?start=permiso_{permisoId}";
 
 // Las llaves de Open Payments de la app, como las mandarían el bot y staging en cada llamada.
@@ -24,7 +26,7 @@ export const CREDENCIALES = {
 
 export async function levantar({ simuladas = [], limiteRespuestaMs, esperar = async () => {} } = {}) {
   const reloj = { ahora: Date.parse("2026-10-16T20:00:00Z") };
-  const falso = crearOpFalso([ANA, BETO, GRUPO, FINANCIERA]);
+  const falso = crearOpFalso([ANA, BETO, GRUPO, FINANCIERA, EVA, UGO]);
   const almacen = crearAlmacenMemoria();
   const clientesArmados = [];
   const clientes = crearClientes({

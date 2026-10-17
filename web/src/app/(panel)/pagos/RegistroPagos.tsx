@@ -1,7 +1,9 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
+import { Aviso } from "@/components/Aviso";
 import { Badge } from "@/components/Badge";
+import { MarcaSimulado } from "@/components/MarcaSimulado";
 import { BloqueCustodia } from "@/components/BloqueCustodia";
 import { Dinero } from "@/components/Dinero";
 import { EncabezadoPagina } from "@/components/EncabezadoPagina";
@@ -26,6 +28,7 @@ import {
   type FiltroPagos,
 } from "@/lib/pagos";
 import type { EstadoEtapa, Pago } from "@/lib/servicio/tipos";
+import { avisoSinOpenPayments, type AvisoPagos } from "./presentacion";
 
 /** Cada cuánto se consulta /api/pagos mientras la pestaña está a la vista. */
 const INTERVALO_MS = 3000;
@@ -40,14 +43,20 @@ const VACIO_POR_FILTRO: Record<FiltroPagos, string> = {
 interface Props {
   inicial: Pago[];
   /** Cuándo leyó el servidor los datos iniciales (ISO). */
-  leidoEn: string;
+  /** null si nunca hubo una lectura buena (la primera falló): no se dice una hora que no existe. */
+  leidoEn: string | null;
+  /** La primera lectura en el servidor falló: se muestra el aviso de falla y el refresco lo reintenta. */
+  falloInicial?: boolean;
+  /** El estado de la API de pagos (presentacion.ts); null si la web no la tiene configurada. */
+  estadoApi?: AvisoPagos | null;
 }
 
 /** Registro de pagos para el jurado (US-007-RPT): se refresca solo cada 3 s y anuncia solo pagos que terminan. */
-export function RegistroPagos({ inicial, leidoEn: leidoInicial }: Props) {
+export function RegistroPagos({ inicial, leidoEn: leidoInicial, falloInicial = false, estadoApi = null }: Props) {
   const [pagos, setPagos] = useState<Pago[]>(() => ordenarRecientes(inicial));
+  const avisoOpenPayments = avisoSinOpenPayments(pagos);
   const [leidoEn, setLeidoEn] = useState(leidoInicial);
-  const [fallo, setFallo] = useState(false);
+  const [fallo, setFallo] = useState(falloInicial);
   const [anuncio, setAnuncio] = useState({ texto: "", vez: 0 });
   const [filtro, setFiltro] = useState<FiltroPagos>("todos");
   // null = el usuario cerró la línea de tiempo. Si el pago elegido ya no está, se muestra el más reciente.
@@ -117,17 +126,40 @@ export function RegistroPagos({ inicial, leidoEn: leidoInicial }: Props) {
         titulo="Registro de pagos"
         descripcion="Cada pago con sus cuatro etapas de Open Payments: Solicitud, Autorización, Ejecución y Finalización. Se actualiza solo cada pocos segundos; lo más reciente va primero."
       >
-        <p className="registro__actualizado">
-          <span className="registro__vivo" aria-hidden="true" />
-          Actualizado a las <time dateTime={leidoEn}>{formatoHora(leidoEn)}</time>
-        </p>
+        {leidoEn ? (
+          <p className="registro__actualizado">
+            <span className="registro__vivo" aria-hidden="true" />
+            Actualizado a las <time dateTime={leidoEn}>{formatoHora(leidoEn)}</time>
+          </p>
+        ) : null}
       </EncabezadoPagina>
 
-      {fallo ? (
-        <p className="registro__fallo" role="status">
-          <Icono nombre="alerta" tamano="sm" />
-          <span>No pudimos actualizar el registro. Lo seguimos intentando solo; lo que ves es de las {formatoHora(leidoEn)}.</span>
-        </p>
+      {estadoApi || avisoOpenPayments || fallo ? (
+        <div className="registro__avisos">
+        {estadoApi ? (
+          <Aviso tipo={estadoApi.tipo} titulo={estadoApi.titulo} anunciar={false}>
+            {estadoApi.texto}
+          </Aviso>
+        ) : null}
+
+        {/* Con los pagos de cada refresco: si llega uno simulado, el aviso aparece sin recargar. */}
+        {avisoOpenPayments ? (
+          <Aviso tipo={avisoOpenPayments.tipo} titulo={avisoOpenPayments.titulo} anunciar={false}>
+            {avisoOpenPayments.texto}
+          </Aviso>
+        ) : null}
+
+        {fallo ? (
+          <p className="registro__fallo" role="status">
+            <Icono nombre="alerta" tamano="sm" />
+            <span>
+              {leidoEn
+                ? `No pudimos actualizar el registro. Lo seguimos intentando solo; lo que ves es de las ${formatoHora(leidoEn)}`
+                : "No pudimos leer el registro de pagos. Lo seguimos intentando solo."}
+            </span>
+          </p>
+        ) : null}
+        </div>
       ) : null}
 
       {/* Solo anuncia pagos que acaban de completarse o fallar, no cada refresco. */}
@@ -173,7 +205,12 @@ export function RegistroPagos({ inicial, leidoEn: leidoInicial }: Props) {
 
           <Leyenda />
 
-          {visibles.length === 0 ? (
+          {/* Sin ninguna lectura buena, "no hay pagos" sería falso: no lo sabemos. */}
+          {leidoEn === null && pagos.length === 0 ? (
+            <EstadoVacio icono="billetera" titulo="Todavía no pudimos traer los pagos">
+              Apenas el registro responda, aparecen aquí con sus cuatro etapas.
+            </EstadoVacio>
+          ) : visibles.length === 0 ? (
             <EstadoVacio icono="billetera" titulo={VACIO_POR_FILTRO[filtro]}>
               {filtro === "todos" ? "Cuando se cobre la primera cuota o se haga un pago, aparece aquí con sus cuatro etapas." : "Prueba con otro filtro."}
             </EstadoVacio>
@@ -237,6 +274,7 @@ export function RegistroPagos({ inicial, leidoEn: leidoInicial }: Props) {
                           <td data-etiqueta="Estado">
                             <div className="registro__celda">
                               <Badge tipo="pago" estado={pago.estado} />
+                              {pago.simulado ? <MarcaSimulado /> : null}
                               {pago.estado === "fallido" ? (
                                 <span className="registro__motivo">
                                   {fallida ? `Falló en ${NOMBRE_ETAPA[fallida.nombre]}: ` : ""}

@@ -31,6 +31,8 @@ export function agruparSolicitudes(solicitudes: SolicitudCredito[]) {
 
 /** "10 de 12 cuotas al día" o "9 de 12 cuotas al día · 1 pendiente". En palabras, sin rojo. */
 export function textoAhorro(s: Pick<SolicitudCredito, "cuotasAlDia" | "cuotasTotales" | "cuotasPendientes">): string {
+  // Sin participación ubicada en staging no hay avance que mostrar: no se inventa un "0 de 0".
+  if (s.cuotasTotales === 0) return "Ahorro sin dato";
   const base = `${s.cuotasAlDia} de ${s.cuotasTotales} cuotas al día`;
   if (s.cuotasPendientes <= 0) return base;
   return `${base} · ${s.cuotasPendientes} ${s.cuotasPendientes === 1 ? "pendiente" : "pendientes"}`;
@@ -38,10 +40,10 @@ export function textoAhorro(s: Pick<SolicitudCredito, "cuotasAlDia" | "cuotasTot
 
 const fmtTasa = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
 
-/** "6 meses · 2% mensual". */
+/** "6 meses · 2% mensual"; sin tasa todavía, solo el plazo. */
 export function textoCondiciones(s: Pick<SolicitudCredito, "plazoMeses" | "tasaMensualPct">): string {
   const plazo = `${s.plazoMeses} ${s.plazoMeses === 1 ? "mes" : "meses"}`;
-  return `${plazo} · ${fmtTasa.format(s.tasaMensualPct)}% mensual`;
+  return s.tasaMensualPct === null ? plazo : `${plazo} · ${fmtTasa.format(s.tasaMensualPct)}% mensual`;
 }
 
 /** "2 solicitudes esperan tu respuesta." */
@@ -51,20 +53,20 @@ export function textoPendientes(n: number): string {
   return `${n} solicitudes esperan tu respuesta.`;
 }
 
-/** Aviso tras responder, en la voz del design system: se le avisa al participante por el bot. */
+/** Aviso tras responder, en la voz del design system. No promete un aviso por el bot: hoy nada lo envía. */
 export function mensajeRespuesta(s: Pick<SolicitudCredito, "participanteNombre" | "montoSolicitado">, decision: DecisionCredito): ResultadoRespuesta {
   const monto = formatoCOP(s.montoSolicitado);
   if (decision === "aprobar") {
     return {
       ok: true,
       titulo: `Aprobaste el préstamo de ${s.participanteNombre}`,
-      mensaje: `Le avisamos por el bot. Los ${monto} quedan por desembolsar a su billetera.`,
+      mensaje: `Los ${monto} quedan por desembolsar a su billetera desde la billetera de la financiera.`,
     };
   }
   return {
     ok: true,
     titulo: `No aprobaste el préstamo de ${s.participanteNombre}`,
-    mensaje: "Le avisamos por el bot que su ahorro en la natillera sigue igual y que puede volver a pedirlo más adelante.",
+    mensaje: "Su ahorro en la natillera sigue igual y puede volver a pedirlo más adelante.",
   };
 }
 
@@ -78,6 +80,12 @@ export const ERROR_YA_RESPONDIDA: ResultadoRespuesta = {
   ok: false,
   titulo: "Esta solicitud ya tiene respuesta",
   mensaje: "Recarga la página para ver cómo quedó.",
+};
+
+export const ERROR_CREDITO_INCIERTO: ResultadoRespuesta = {
+  ok: false,
+  titulo: "No sabemos si el crédito quedó creado",
+  mensaje: "Se pidió al servicio de lógica financiera y no respondió. Queda como Aprobado hasta que el crédito aparezca con su estado; no lo vuelvas a aprobar.",
 };
 
 export const ERROR_SERVICIO: ResultadoRespuesta = {

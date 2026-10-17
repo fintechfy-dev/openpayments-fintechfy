@@ -12,19 +12,19 @@
 
 ## Antes de empezar
 
-| Variable | Qué es | Quién la da |
-|---|---|---|
-| `SERVICIO_URL` | Dirección de staging | Willy |
-| `SERVICIO_API_KEY` | El **token de staging**. Se manda como `Authorization: Bearer <token>`, no como `X-Api-Key`. Vence: Willy dice cuánto dura | Willy |
-| `WEB_API_KEY` | Llave con la que llama el bot (`X-Api-Key`). En el bot se llama `WEB_INDICE_API_KEY`. Compártela con Estiven por canal privado | Johan |
-| `AVISOS_SECRETO` | Secreto de firma de los avisos de staging | Willy |
-| `PAGOS_URL` | Dirección de la API de pagos: `https://natillera-pagos.azurewebsites.net` | Willy |
-| `PAGOS_API_KEY` | La `API_KEY_CLIENTES` de la API de pagos, para leer `/api/registro` (`X-Api-Key`). Por canal privado | Willy |
-| `TASA_MENSUAL` | Tasa mensual de los préstamos de la financiera, como fracción (por ejemplo 0.02). Nadie más la entrega: ni la solicitud del bot ni staging | La financiera (el equipo la define) |
+| Variable en el código (`web/.env.example`) | Nombre en la primera versión de este mapa | Qué es | Quién la da |
+|---|---|---|---|
+| `SERVICIO_EXTERNO_URL` | `SERVICIO_URL` | Dirección de staging: `https://sandbox-staging.corebank.ai` | Willy |
+| `SERVICIO_EXTERNO_TOKEN` | `SERVICIO_API_KEY` | El **token de staging** (con `org_role: "admin"` para crear contratos). Se manda como `Authorization: Bearer <token>`. Vence: Willy dice cuánto dura | Willy |
+| `WEB_INDICE_API_KEY` | `WEB_API_KEY` | Llave con la que llama el bot (`X-Api-Key`); en el bot se llama igual. Compártela con Estiven por canal privado | Johan |
+| — (pendiente) | `AVISOS_SECRETO` | Secreto de firma de los avisos de staging (sección 2, aún no construida) | Willy |
+| `PAGOS_URL` | `PAGOS_URL` | Dirección de la API de pagos: `https://natillera-pagos.azurewebsites.net` | Willy |
+| `PAGOS_API_KEY` | `PAGOS_API_KEY` | La `API_KEY_CLIENTES` de la API de pagos, para leer `/api/registro` (`X-Api-Key`). Por canal privado | Willy |
+| `CREDITO_TASA_MENSUAL` | `TASA_MENSUAL` | Tasa mensual de los préstamos de la financiera, **en porcentaje** (`2` = 2 %; la web la pasa a fracción al crear el contrato). Nadie más la entrega: ni la solicitud del bot ni staging | La financiera (el equipo la define) |
 
-Todas van en `web/.env.example`, sin valores. Los nombres `PAGOS_URL` y `PAGOS_API_KEY` son una sugerencia: si ya usas otros, basta con avisarle al equipo.
+Todas van en `web/.env.example`, sin valores. El código ya usa los nombres de la primera columna (#53); si el equipo prefiere los de la segunda, se cambian en `web/src/lib/servicio/index.ts`, `web/src/lib/indice/index.ts` y `web/.env.example`.
 
-- **La capa `src/lib/servicio/` todavía habla con rutas provisionales y `X-Api-Key`.** Hay que cambiar `http.ts` para que mande `Authorization: Bearer <SERVICIO_API_KEY>` y use las rutas de staging (`/api/contracts/...`). Todo sigue en el servidor: el token nunca llega al navegador.
+- **Hecho en #53:** `src/lib/servicio/` ya habla con staging (`staging.ts`, `Authorization: Bearer`, `/api/contracts/...` y `/api/contracts/table`) y con la API de pagos (`pagos-api.ts`); el cliente provisional y los datos de prueba se quitaron.
 - **Base persistente:** el índice y los avisos tienen que sobrevivir un reinicio durante la demo. Una base SQLite en un volumen persistente de Azure, con una sola copia de la app corriendo (#68).
 - **Despliegue en Azure** con dirección pública HTTPS fija (#68). La necesitan staging (para entregar los avisos) y el bot (para el índice y los avisos).
 - **`src/proxy.ts`:** hoy exige sesión en todo `/api/*`. Hay que excluir las rutas de máquina, que se protegen con su propia llave o firma: `/api/indice/*` y `/api/avisos` **con y sin subruta** (`GET /api/avisos` no lleva nada después; `POST /api/avisos/staging` sí). Si no se excluyen, staging y el bot reciben 401.
@@ -36,7 +36,23 @@ Todas van en `web/.env.example`, sin valores. Los nombres `PAGOS_URL` y `PAGOS_A
 
 **Límites de staging:** 20 lecturas y 5 escrituras por segundo desde la dirección IP del servidor de la web. Una pantalla que hace un `GET` por natillera y otro por participación se pasa rápido: guarda las lecturas unos segundos o trae varias de una vez con `POST /api/contracts/search` y su lista de `concepts`.
 
-**Crear el contrato de crédito no tiene llave de idempotencia** (solo las acciones la tienen). Si la llamada se cae por tiempo, busca primero por `CreditoId` con `POST /api/contracts/search` antes de reintentar, para no crear dos créditos.
+**El `CreditoId` del contrato es el `solicitudId` que mandó el bot** (así el bot reconoce los avisos del crédito, `telegram/src/avisos/despachar.js`). La web reserva la solicitud en el índice antes del `POST`, para no crear dos créditos. **Crear el contrato de crédito no tiene llave de idempotencia** (solo las acciones la tienen). Si la llamada se cae por tiempo, busca primero por `CreditoId` con `POST /api/contracts/search` antes de reintentar, para no crear dos créditos.
+
+### Lo que confirma la especificación (16 oct, 17:00)
+
+La especificación OpenAPI del ecosistema está en [`../integracion/FND-20261015-natillera-2.openapi.json`](../integracion/FND-20261015-natillera-2.openapi.json). Se contrastó contra staging con el JWT del equipo:
+
+- **URL base:** `https://sandbox-staging.corebank.ai`, sin prefijo. `GET /api/contracts/{id}` responde; un id que no existe da 404 `application/problem+json` (`title`, `status`, `detail`, `instance`).
+- **`currentStateRaw`** trae cada concepto como `{ type, value, assigned }`. Una fecha sin valor llega como `value: null`; **una fecha con valor llega como `"2026-11-01T00:00:00"`** (medianoche sin zona), no como `AAAA-MM-DD`. `fechaStaging` la pasa a mediodía de Bogotá.
+- **Crear contratos exige un JWT con `org_role: "admin"`**; con uno sin rol, `POST /api/contracts` da 403 sin cuerpo. `GET` funciona con los dos.
+- **Verificado con un contrato vivo** (`natillera-cuenta` `0650899a-5af5-46ee-bc3b-0f21da6fce9e` y `natillera-participacion` `30acc57f-279e-4024-9e38-d4e01fe9e429`, nombre «Prueba web #53», datos de prueba): existen todos los conceptos que lee la web, incluido `NumeroCuotas` en la cuenta (lo calcula el motor: 6 de nov. a abr.). `currentStateLabels` trae `EstadoNatillera: "CREADA"` y `EstadoParticipacion: "PENDIENTE_VALIDACION"`. `crearServicioStaging` contra esos dos contratos devuelve la natillera y su participante bien mapeados.
+- **Eventos:** `GET /api/contracts/{id}/events` → `{ contractId, templateName, totalEvents, events: [{ sequenceNumber, occurredAt, type, functionName, trigger, changes: [{ concept, previousValue, newValue }], parameters, correlationId, actorId }] }`. Los `changes` vienen en formato para mostrar (`"$50.000,00"`): para montos, leer el estado. `parameters` llega como texto JSON (`'{"type": "Integer", "value": 1}'`). `actorId` es el usuario del JWT que pidió la acción, o `null` si la disparó el motor (cascada o respuesta de un pago); con el JWT compartido del equipo, toda acción pedida sale a nombre del administrador. La cascada (`GET /api/contracts/correlation/{id}`) trae los mismos eventos agrupados en `contracts[].events[]`.
+- **Cada acción deja un evento `StateChanged`** con `functionName` y sus cambios; **los eventos de negocio** (`ParticipanteValidado`, `CobroCuotaSolicitado`…) **no salen en `/events`**, solo en la respuesta del trigger y en los webhooks. Por eso `/pagos` y `/bitacora` se arman por función y cambios. Visto en la participación de prueba: `ConfirmarAutorizacion` (con `GrantId` de prueba) disparó solo `RegistrarValidado` en la cuenta; `CobrarCuota` (periodo 1) y, 3 s después y sin actor, `PrimeraCuotaCobrada` (disparador `CuotaCobrada`, `MontoCobrado` 50000).
+- **Por verificar:** esa cuota quedó cobrada sin que exista `pagos/`. O el sandbox simula la respuesta del cobro o hay otra URL de pagos configurada: no es un pago de Open Payments y no sirve de evidencia para el jurado.
+- `GET /api/correlations/recent` da 404 en ese host, aunque la especificación lo declara.
+- **API de pagos** (`pagos/API.md`, contrato en `https://natillera-pagos.azurewebsites.net/api/openapi.json`): con `PAGOS_URL` y `PAGOS_API_KEY` (= `API_KEY_CLIENTES`) en `web/.env.local`, `/pagos` sale de `GET /api/registro` (las 4 etapas con el permiso, la cotización y el pago saliente) y muestra el estado de `GET /api/salud`; los pagos simulados llevan la marca «Simulado». Sin ellas, `/pagos` se arma con los eventos de staging como antes (`lib/servicio/pagos-api.ts`, `registro-pagos.ts`). El 16 oct a las 19:00, `/api/salud` respondía que faltan `OP_WALLET_GRUPO` y `OP_WALLET_FINANCIERA` (#67).
+- **Listado de contratos (no está en la especificación):** `GET /api/contracts/table?templateName=<plantilla>&concepts=<A,B,…>&skip=0&take=100` → `{ items: [{ contractId, createdAt, concepts: { A: "texto" }, conceptLabels, eventCount }], totalCount, hasMore }`. Responde con el JWT admin para `natillera-cuenta`, `natillera-participacion`, `natillera-actividad` y `natillera-credito-ahorro`. Con ella el **superadmin (la financiera)** ve todas las natilleras del motor aunque el bot no las haya avisado. El índice sigue poniendo lo que el motor no guarda: el administrador de cada natillera (sin él sale «Sin registrar» y ningún administrador la ve), el nombre de cada persona (sin él sale «Telegram <id>») y la billetera del grupo. Si la tabla falla, la web sigue solo con el índice (`lib/servicio/tabla-staging.ts`).
+- **Triggers:** 51 de 71 son privados («requiere rol admin»). La web no ejecuta triggers; los públicos son los del participante (`ConfirmarAutorizacion`, `PagarDeuda`, `PagoRecibido`, `AutorizarPago`…).
 
 ## 1. Las rutas que recibe la web
 

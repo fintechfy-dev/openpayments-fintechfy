@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { destinoSeguro, puedeResponderCreditos, puedeVerNatillera } from "./acceso";
+import { destinoSeguro, puedeVerNatillera, quedanVisibles } from "./acceso";
 import { firmarSesion, leerSesion, type DatosSesion } from "./firma";
 import { LimitadorIntentos, MAX_INTENTOS, VENTANA_MS } from "./intentos";
 import { codigoCorrecto, crearReto, generarCodigo, leerReto, limpiarCodigo, mensajeCodigo, VIGENCIA_CODIGO_MS } from "./otp";
@@ -13,6 +13,11 @@ const admin: DatosSesion = { usuario: "andres", nombre: "Andrés Restrepo", rol:
 describe("firma de la sesión", () => {
   it("lee lo que firmó", () => {
     expect(leerSesion(firmarSesion(financiera, SECRETO), SECRETO, AHORA)).toEqual(financiera);
+    const conChat = { ...admin, telegramId: "555" };
+    expect(leerSesion(firmarSesion(conChat, SECRETO), SECRETO, AHORA)).toEqual(conChat);
+    // Bien firmada pero con un telegramId que no es texto: no es una sesión válida.
+    const raro = { ...admin, telegramId: 555 } as unknown as DatosSesion;
+    expect(leerSesion(firmarSesion(raro, SECRETO), SECRETO, AHORA)).toBeNull();
   });
 
   it("rechaza una cookie alterada (por ejemplo, alguien que se sube a financiera)", () => {
@@ -106,10 +111,20 @@ describe("acceso", () => {
     expect(puedeVerNatillera(admin, { administrador: "Gloria Patiño" })).toBe(false);
   });
 
-  it("solo la financiera responde créditos", () => {
-    expect(puedeResponderCreditos(financiera)).toBe(true);
-    expect(puedeResponderCreditos(admin)).toBe(false);
+  it("con el id de Telegram del administrador, compara el id y no el nombre", () => {
+    const conChat: DatosSesion = { ...admin, telegramId: "555" };
+    expect(puedeVerNatillera(conChat, { administrador: "Andrés", administradorTelegramId: "555" })).toBe(true);
+    // Un nombre copiado no basta.
+    expect(puedeVerNatillera(conChat, { administrador: "Andrés Restrepo", administradorTelegramId: "999" })).toBe(false);
+    // Sin chat configurado en la sesión, no ve natilleras que sí traen id.
+    expect(puedeVerNatillera(admin, { administrador: "Andrés Restrepo", administradorTelegramId: "555" })).toBe(false);
+    expect(puedeVerNatillera(financiera, { administrador: "x", administradorTelegramId: "999" })).toBe(true);
   });
+
+  it("sin id compara el nombre normalizado (tilde compuesta o descompuesta, espacios)", () => {
+    expect(puedeVerNatillera(admin, { administrador: " Andre\u0301s Restrepo " })).toBe(true);
+  });
+
 
   it("solo vuelve a rutas internas después de iniciar sesión", () => {
     expect(destinoSeguro("/pagos")).toBe("/pagos");
@@ -119,5 +134,15 @@ describe("acceso", () => {
     expect(destinoSeguro("https://malo.com")).toBe("/natilleras");
     expect(destinoSeguro("/ingresar")).toBe("/natilleras");
     expect(destinoSeguro(undefined)).toBe("/natilleras");
+  });
+});
+
+describe("quedanVisibles", () => {
+  const pagos = [{ natilleraId: "nat-1" }, { natilleraId: "nat-2" }, { natilleraId: "" }];
+  it("la financiera ve todo, también lo que no se ubicó en ninguna natillera", () => {
+    expect(quedanVisibles(financiera, pagos, new Set())).toEqual(pagos);
+  });
+  it("un administrador solo ve lo de sus natilleras, y nunca lo que no tiene natillera", () => {
+    expect(quedanVisibles(admin, pagos, new Set(["nat-1"]))).toEqual([{ natilleraId: "nat-1" }]);
   });
 });

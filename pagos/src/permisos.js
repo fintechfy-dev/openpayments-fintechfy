@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { isFinalizedGrantWithAccessToken, isPendingGrant } from "@interledger/open-payments";
 import { verificarHash } from "./aprobacion.js";
 import { mismaWallet, normalizarWallet } from "./billeteras.js";
+import { topeEnMonedaDe } from "./cotizaciones.js";
 import { ErrorHttp } from "./errores.js";
 import { aUnidades, esMontoValido, MontoInvalido } from "./montos.js";
 
@@ -70,19 +71,24 @@ export function crearPermisos({ config, almacen, wallets, conCandado, ahora = ()
       const url = tipo === "grupo" ? config.walletGrupo : tipo === "financiera" ? config.walletFinanciera : normalizarWallet(wallet);
       if (!url) throw new ErrorHttp(400, "wallet debe ser una dirección https o un payment pointer");
 
-      const billetera = await wallets.obtener(url);
-      let valor;
+      const [billetera, grupo] = await Promise.all([wallets.obtener(url), wallets.obtener(config.walletGrupo)]);
+      // El monto viene en la moneda del grupo (pesos) y el tope va en la de quien paga.
+      let valorEnGrupo;
       try {
-        valor = aUnidades(monto, billetera.assetScale);
+        valorEnGrupo = aUnidades(monto, grupo.assetScale);
       } catch (error) {
         if (error instanceof MontoInvalido) throw new ErrorHttp(400, error.message);
         throw error;
       }
+      const tope =
+        billetera.assetCode === grupo.assetCode
+          ? { value: valorEnGrupo, assetCode: billetera.assetCode, assetScale: billetera.assetScale }
+          : await topeEnMonedaDe({ op: cuenta.op, billetera, grupo, valorEnGrupo, ahora });
       const id = `p${randomBytes(8).toString("hex")}`;
       const nonceCliente = randomBytes(16).toString("hex");
       // Sin intervalo: el intervalo corre en tiempo real mientras la demo adelanta las fechas, y con
       // intervalo el tope es por periodo, así que una deuda con mora más cara que la cuota fallaría.
-      const limites = { debitAmount: { value: valor, assetCode: billetera.assetCode, assetScale: billetera.assetScale } };
+      const limites = { debitAmount: tope };
       let pendiente;
       try {
         pendiente = await cuenta.op.grant.request(
@@ -107,6 +113,7 @@ export function crearPermisos({ config, almacen, wallets, conCandado, ahora = ()
         tipo,
         wallet: billetera.id,
         monto,
+        tope,
         referencia: referencia ?? null,
         vuelta: urlVuelta,
         huella: cuenta.huella,

@@ -87,10 +87,10 @@ describe("textos", () => {
     const aprobado = mensajeRespuesta(s, "aprobar");
     expect(aprobado.ok).toBe(true);
     expect(aprobado.titulo).toBe("Aprobaste el préstamo de Marta Restrepo");
-    expect(aprobado.mensaje).toContain("bot");
+    expect(aprobado.mensaje).not.toContain("bot");
     expect(aprobado.mensaje).toContain("$200.000");
     const noAprobado = mensajeRespuesta(s, "no_aprobar");
-    expect(noAprobado.mensaje).toContain("bot");
+    expect(noAprobado.mensaje).not.toContain("bot");
     expect(noAprobado.titulo).not.toMatch(/rechaz/i);
   });
 });

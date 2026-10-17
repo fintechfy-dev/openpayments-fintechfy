@@ -8,13 +8,15 @@ import type { ResultadoRespuesta } from "./logica";
 interface Props {
   id: string;
   participante: string;
+  /** false sin CREDITO_TASA_MENSUAL: no se ofrece un botón que no puede funcionar (el aviso de la página dice por qué). */
+  puedeAprobar?: boolean;
 }
 
 /**
  * Botones "No aprobar" y "Aprobar" de una solicitud.
  * "No aprobar" pide un segundo clic: es una decisión sobre una persona.
  */
-export function RespuestaSolicitud({ id, participante }: Props) {
+export function RespuestaSolicitud({ id, participante, puedeAprobar = true }: Props) {
   const publicar = usePublicarRespuesta();
   const [confirmando, setConfirmando] = useState(false);
   const confirmar = useRef<HTMLButtonElement>(null);
@@ -82,16 +84,18 @@ export function RespuestaSolicitud({ id, participante }: Props) {
           >
             No aprobar
           </button>
-          <button
-            type="submit"
-            name="decision"
-            value="aprobar"
-            className="nt-btn nt-btn--primario nt-btn--sm"
-            disabled={enviando}
-            aria-label={enviando ? undefined : `Aprobar el préstamo de ${participante}`}
-          >
-            {enviando ? "Guardando…" : "Aprobar"}
-          </button>
+          {puedeAprobar ? (
+            <button
+              type="submit"
+              name="decision"
+              value="aprobar"
+              className="nt-btn nt-btn--primario nt-btn--sm"
+              disabled={enviando}
+              aria-label={enviando ? undefined : `Aprobar el préstamo de ${participante}`}
+            >
+              {enviando ? "Guardando…" : "Aprobar"}
+            </button>
+          ) : null}
         </div>
       )}
     </form>

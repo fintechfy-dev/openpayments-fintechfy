@@ -8,6 +8,9 @@ export interface DatosSesion {
   usuario: string;
   nombre: string;
   rol: Rol;
+  /** Su id de Telegram (el chat privado con el bot), si está configurado. Con él se reconoce al
+   *  administrador de una natillera de staging, en vez de comparar nombres visibles. */
+  telegramId?: string;
   /** Vencimiento en milisegundos desde 1970. */
   exp: number;
 }
@@ -54,6 +57,7 @@ function esDatosSesion(v: unknown): v is DatosSesion {
     typeof d.usuario === "string" &&
     typeof d.nombre === "string" &&
     (d.rol === "financiera" || d.rol === "administrador") &&
+    (d.telegramId === undefined || typeof d.telegramId === "string") &&
     typeof d.exp === "number"
   );
 }
