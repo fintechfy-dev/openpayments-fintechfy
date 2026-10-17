@@ -1,6 +1,7 @@
 import { Composer } from 'grammy';
 import { estadoDe, AccionRechazadaError } from '../../externo/cliente.js';
 import { sumarDias, sumarMeses } from '../../natillera/reglas.js';
+import { textoCobros } from '../../externo/cobros.js';
 
 // /reloj: mueve el tiempo de una natillera en staging para probarla (solo en el chat del equipo, como
 // /diag; no se anuncia). Las acciones del reloj (Iniciar, AbrirPeriodo, VerificarCupo,
@@ -22,6 +23,7 @@ export const AYUDA = [
   '/reloj mora <natillera> [fecha]  · causa un día de mora a quien deba',
   '/reloj liquidar <natillera> [fecha]  · por defecto, la fecha final',
   `/reloj auto <natillera> [segundos]  · un paso cada ${INTERVALO_AUTO_S} s hasta liquidar`,
+  '/reloj cobrar <natillera>  · cobra en la API de pagos las cuotas que staging ya registró',
   '/reloj parar',
 ].join('\n');
 
@@ -77,10 +79,28 @@ export function textoResultado(trigger, fecha, respuesta, maximo = 8) {
   return [cabeza, ...cambios.slice(0, maximo), ...extra].join('\n');
 }
 
-export function reloj({ config, registro, servicio, log, programar = setInterval, cancelar = clearInterval }) {
+// Los pasos después de los cuales staging registra cuotas: ahí el bot las cobra de verdad.
+export const PASOS_CON_COBRO = ['Iniciar', 'AbrirPeriodo'];
+
+// `cobrador` (externo/cobros.js): con la API de pagos, después de cada paso con cobro el bot saca la
+// cuota de cada billetera y la deja en la cuenta madre. Sin él, las cuotas solo quedan en staging.
+export function reloj({ config, registro, servicio, log, cobrador, programar = setInterval, cancelar = clearInterval }) {
   const comandos = new Composer();
   const leer = async (contractId) => estadoDe(await servicio.leerContrato(contractId));
   const autos = new Map();
+
+  // El texto de los cobros para el chat del equipo, o null si no aplica. Un fallo aquí no tumba el reloj.
+  async function cobrar(natillera, { trigger = null, esperar = true } = {}) {
+    if (!cobrador) return trigger ? null : 'Sin PAGOS_URL: el bot no cobra con la API de pagos.';
+    if (trigger && !PASOS_CON_COBRO.includes(trigger)) return null;
+    try {
+      const resultados = esperar ? await cobrador.cobrarDespuesDe(natillera) : await cobrador.cobrarPendientes(natillera);
+      return textoCobros(natillera.nombre, resultados);
+    } catch (error) {
+      log.error(`No se pudieron cobrar las cuotas de ${natillera.natillera_id}:`, error);
+      return `✗ No pude cobrar las cuotas de ${natillera.nombre}: ${error.message}`;
+    }
+  }
 
   async function disparar(contractId, trigger, fecha) {
     try {
@@ -129,6 +149,8 @@ export function reloj({ config, registro, servicio, log, programar = setInterval
         }
         const { ok, texto } = await disparar(natillera.contract_id, siguiente.trigger, siguiente.fecha);
         await avisar(texto);
+        const cobrado = ok && (await cobrar(natillera, { trigger: siguiente.trigger }));
+        if (cobrado) await avisar(cobrado);
         if (!ok) {
           parar(natillera.natillera_id);
           await avisar('Paré el reloj automático. Revisa con /reloj estado y sigue a mano.');
@@ -157,7 +179,7 @@ export function reloj({ config, registro, servicio, log, programar = setInterval
         await ctx.reply(cuantos ? `Paré ${cuantos} reloj(es) automático(s).` : 'No había relojes automáticos andando.');
         return;
       }
-      if (!['estado', 'iniciar', 'periodo', 'cupo', 'mora', 'liquidar', 'auto'].includes(accion) || !nombre) {
+      if (!['estado', 'iniciar', 'periodo', 'cupo', 'mora', 'liquidar', 'auto', 'cobrar'].includes(accion) || !nombre) {
         await ctx.reply(AYUDA);
         return;
       }
@@ -179,6 +201,7 @@ export function reloj({ config, registro, servicio, log, programar = setInterval
       }
 
       if (accion === 'estado') return ctx.reply(textoEstado(natillera.nombre, n));
+      if (accion === 'cobrar') return ctx.reply(await cobrar(natillera, { esperar: false }));
       if (accion === 'auto') return auto(ctx, natillera, segundos && segundos >= 5 ? segundos : INTERVALO_AUTO_S);
       if (accion === 'mora') return ctx.reply(await mora(natillera, fecha ?? diaDeMora(n)));
 
@@ -188,8 +211,10 @@ export function reloj({ config, registro, servicio, log, programar = setInterval
         cupo: ['VerificarCupo', limiteCupo(n)],
         liquidar: ['IniciarLiquidacion', n.FechaFinal],
       }[accion];
-      const { texto } = await disparar(natillera.contract_id, trigger, fecha ?? porDefecto);
+      const { ok, texto } = await disparar(natillera.contract_id, trigger, fecha ?? porDefecto);
       await ctx.reply(texto);
+      const cobrado = ok && (await cobrar(natillera, { trigger }));
+      if (cobrado) await ctx.reply(cobrado);
     });
 
   return comandos;

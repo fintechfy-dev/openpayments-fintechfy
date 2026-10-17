@@ -76,6 +76,12 @@ export const textoAbrirBilletera = (tope) =>
   `Abre tu billetera y aprueba el cobro, con tope de ${formatoCOP(tope)}. Al terminar, la billetera te trae de vuelta aquí.\nSi no te trae, vuelve tú y toca «${BOTON_YA_APROBE}».`;
 export const TEXTO_PERMISO_PENDIENTE = `Todavía no veo la aprobación en tu billetera. Cuando la apruebes, toca «${BOTON_YA_APROBE}».`;
 export const TEXTO_PERMISO_DESCONOCIDO = 'No encuentro esa autorización. Abre el enlace de invitación otra vez para autorizar el cobro.';
+// La billetera devuelve `grant_rejected` cuando la persona dice que no. Otro motivo, como
+// `invalid_interaction`, es que el enlace ya se había abierto o se venció: ese enlace no sirve más.
+export const RECHAZO_DE_LA_PERSONA = 'grant_rejected';
+export const BOTON_ENLACE_NUEVO = 'Pedir un enlace nuevo';
+export const TEXTO_ENLACE_GASTADO =
+  'Tu billetera no recibió la aprobación: ese enlace ya se había abierto o se venció, y sirve una sola vez.\nPide uno nuevo y ábrelo con tu sesión de la billetera ya iniciada.';
 
 export function textoAvisoAdmin(persona, nombreNatillera, inscritos, cupo) {
   return `🐷 ${escaparHTML(persona ?? 'Alguien')} se unió a ${nombreHTML(nombreNatillera)}. Van ${inscritos} de ${cupo} para arrancar.`;
@@ -276,7 +282,10 @@ export function crearUnirseBot({ registro, unirse, motor, log }) {
       await ctx.reply(TEXTO_PERMISO_PENDIENTE, { reply_markup: new InlineKeyboard().text(BOTON_YA_APROBE, datoYaAprobe(permisoId)) });
     } else {
       log.info(`El permiso ${permisoId} quedó ${resultado.estado}: ${resultado.motivo ?? 'sin motivo'}`);
-      await ctx.reply(TEXTO_NO_AUTORIZO);
+      // La participación sigue pendiente: con el botón se pide un permiso nuevo, con otro enlace.
+      const otraVez = new InlineKeyboard().text(BOTON_ENLACE_NUEVO, datoAutorizar(participacion.participacion_id));
+      const dijoQueNo = resultado.motivo === RECHAZO_DE_LA_PERSONA;
+      await ctx.reply(dijoQueNo ? TEXTO_NO_AUTORIZO : TEXTO_ENLACE_GASTADO, { reply_markup: otraVez });
     }
   }
 

@@ -38,6 +38,11 @@ export function crearRegistro(db) {
     permiso: db.prepare('SELECT * FROM permisos WHERE permiso_id = ?'),
     permisoDe: db.prepare('SELECT * FROM permisos WHERE participacion_id = ? ORDER BY creado_en DESC, rowid DESC LIMIT 1'),
     participacionesEn: db.prepare('SELECT * FROM participaciones WHERE natillera_id = ? ORDER BY rowid'),
+    guardarCobro: db.prepare(
+      `INSERT INTO cobros (participacion_id, periodo, monto, estado, motivo, intentado_en) VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT (participacion_id, periodo) DO UPDATE SET monto = excluded.monto, estado = excluded.estado, motivo = excluded.motivo, intentado_en = excluded.intentado_en`,
+    ),
+    cobro: db.prepare('SELECT * FROM cobros WHERE participacion_id = ? AND periodo = ?'),
     guardarNombre: db.prepare('UPDATE participaciones SET nombre = ? WHERE participacion_id = ? AND nombre IS NULL'),
     participacionesDe: db.prepare('SELECT * FROM participaciones WHERE telegram_id = ? ORDER BY rowid DESC'),
     natillerasPorNombre: db.prepare('SELECT * FROM natilleras WHERE lower(nombre) = lower(?) OR natillera_id = ? ORDER BY creada_en DESC'),
@@ -93,6 +98,11 @@ export function crearRegistro(db) {
     permiso: (id) => sql.permiso.get(id),
     // El último permiso pedido por una participación: su tope se muestra en «Mi natillera».
     permisoDe: (participacionId) => sql.permisoDe.get(participacionId),
+    // Cobros de cuota hechos por el bot (externo/cobros.js): el último intento de cada periodo.
+    guardarCobro({ participacionId, periodo, monto, estado, motivo = null, intentadoEn }) {
+      sql.guardarCobro.run(participacionId, periodo, monto, estado, motivo, intentadoEn);
+    },
+    cobro: (participacionId, periodo) => sql.cobro.get(participacionId, periodo),
     // Para «Mi natillera»: todas las de una persona, la más reciente primero.
     participacionesDe: (telegramId) => sql.participacionesDe.all(telegramId),
     natillerasDelAdmin: (telegramId) => sql.natillerasDelAdmin.all(telegramId),

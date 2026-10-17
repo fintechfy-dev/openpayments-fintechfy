@@ -57,7 +57,7 @@ const pagos = config.pagos.url ? crearClientePagos(config.pagos) : undefined;
 if (servicio && !pagos) log.warn('Sin PAGOS_URL: el permiso de cobro es de prueba y no se abre ninguna billetera.');
 const unirse = servicio ? crearUnirse({ servicio, registro, web, pagos, log }) : undefined;
 
-const bot = crearBot(config, { log, db, crearNatillera, servicio, registro, unirse, web });
+const bot = crearBot(config, { log, db, crearNatillera, servicio, registro, unirse, web, pagos });
 
 // Avisos de staging (#6): por webhook si hay puerto, si no, por el flujo en vivo.
 const avisos = new AbortController();

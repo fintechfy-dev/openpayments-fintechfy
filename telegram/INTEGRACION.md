@@ -110,6 +110,8 @@ Antes de construirlas, la natillera tiene que haberse creado **después** de que
 
 **Lo que el bot no dispara por su cuenta:** arrancar, abrir periodos, causar mora, liquidar ni vencer plazos. Son acciones del reloj, privadas en staging (rol admin). Para probar y para la demo, el equipo las dispara desde su chat con `/reloj` (`bot/comandos/reloj.js`), con la fecha simulada en `CurrentDate`; `/reloj auto` da un paso por minuto. Si el token del bot no tiene rol admin, las dispara Willy (#57).
 
+**El bot orquesta el cobro de las cuotas** (`externo/cobros.js`): staging registra cada cuota (`CuotasPagadas`, con su cascada de aporte y saldo), pero su integración de pagos está en modo de prueba y no mueve plata. Después de `/reloj iniciar` y `/reloj periodo` (y en cada paso de `/reloj auto`), el bot lee cada participación y cobra con `POST /api/open-payments/cobrar-cuota` de la API de pagos cada cuota registrada que todavía no cobró, con el `GrantId` del participante: sale de su billetera y llega a la cuenta madre. Guarda cada intento en la tabla `cobros` (uno por participación y periodo, para no cobrar dos veces), le avisa a cada persona y deja el resumen en el chat del equipo. `/reloj cobrar <natillera>` reintenta los que fallaron (por ejemplo sin saldo). Si staging pasa a modo real, hay que apagar uno de los dos cobros: si no, la cuota se cobra dos veces.
+
 ### Ejemplo listo para probar: crear una natillera
 
 ```json
