@@ -481,3 +481,5 @@ Claude Code agrupó los avisos de `/pagos` en `.registro__avisos` con espaciado 
 ```text
 commit push y PR
 ```
+
+El hook bloqueó el commit del merge de develop (mezcla `.claude/` con código de otros PRs). Claude Code preguntó y la persona respondió: «Cerrar el merge igual (Recomendado)».
