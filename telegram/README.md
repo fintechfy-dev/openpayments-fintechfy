@@ -11,10 +11,10 @@ Los textos del bot siguen la [voz y tono](../design-system/docs/voz-y-tono.md) d
 ## Contratos
 
 - **Con el servicio externo de lógica financiera:** crea los contratos y ejecuta las acciones. Cada llamada está en [`INTEGRACION.md`](INTEGRACION.md).
-- **Con la web, donde viven los pagos:** pide el permiso de cada participante y lo recibe cuando vuelve al chat después de aprobarlo en su billetera (US-005, US-005-INT). Ver [`INTEGRACION.md`](INTEGRACION.md) y [`../pagos/README.md`](../pagos/README.md) (#4).
-- **Avisos:** mora, préstamo, ventas y liquidación vienen de staging; el cobro hecho o fallido lo agrega la web al terminar cada pago (#6). Todos llegan a la web y el bot se los pide cada pocos segundos: el bot no necesita dirección pública.
+- **Con la API de pagos (`pagos/`):** pide el permiso de cada participante y lo termina cuando vuelve al chat después de aprobarlo en su billetera (US-005, US-005-INT). Ver [`INTEGRACION.md`](INTEGRACION.md) y [`../pagos/API.md`](../pagos/API.md) (#4).
+- **Avisos:** mora, préstamo, ventas y liquidación vienen de staging, que se los entrega a la web; el cobro hecho o fallido lo avisa la API de pagos (#6). El bot le pide los suyos a cada una cada pocos segundos: no necesita dirección pública.
 
-El bot no mueve dinero: eso pasa en los pagos de Open Payments, que viven en el backend de la web.
+El bot no mueve dinero: eso pasa en la API de pagos (`pagos/`), lo único que habla con Open Payments.
 
 ## Cómo correrlo
 

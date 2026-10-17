@@ -1,11 +1,12 @@
 # Integración con el servicio externo (staging)
 
-Referencia del **servicio externo de lógica financiera** (como un n8n que contiene la lógica financiera) que está en staging, y de cómo se conecta con el bot, la web y los pagos. Actualizada el viernes 16 de octubre a las 17:30, contrastada con el OpenAPI de staging, con la configuración de su puerta de entrada y con la versión 0.2.0 del ecosistema `FND-20261015-natillera-2`: 7 contratos y 50 reglas, con ventas entre participantes.
+Referencia del **servicio externo de lógica financiera** (como un n8n que contiene la lógica financiera) que está en staging, y de cómo se conecta con el bot, la web y los pagos. Actualizada el viernes 16 de octubre a las 19:30, contrastada con el OpenAPI de staging, con la configuración de su puerta de entrada y con la versión 0.2.0 del ecosistema `FND-20261015-natillera-2`: 7 contratos y 50 reglas, con ventas entre participantes.
 
 **Mapas por frente, con cada llamada:**
 
 - **Bot (Estiven):** [`../telegram/INTEGRACION.md`](../telegram/INTEGRACION.md)
-- **Web y pagos (Johan):** [`../web/INTEGRACION.md`](../web/INTEGRACION.md) y [`../pagos/README.md`](../pagos/README.md)
+- **Web (Johan):** [`../web/INTEGRACION.md`](../web/INTEGRACION.md)
+- **API de pagos:** [`../pagos/API.md`](../pagos/API.md) (cómo usarla) y [`../pagos/README.md`](../pagos/README.md) (el contrato con staging)
 
 ## Cómo se conecta todo
 
@@ -14,17 +15,19 @@ flowchart LR
   BOT["telegram/<br/>Bot"] -->|contratos y acciones · Bearer| EXT[("Servicio externo<br/>staging")]
   WEB["web/<br/>Página + backend<br/>(Azure)"] -->|estado, búsqueda, créditos · Bearer| EXT
   EXT -->|avisos firmados| WEB
-  BOT -->|índice · pide avisos · pide permisos| WEB
-  EXT -->|cobrar-cuota · cobrar · pagar · desembolsar ·<br/>pagar-con-permiso · aportar-con-permiso| WEB
-  WEB -->|firma y paga| OP["Open Payments<br/>Test Wallet"]
+  BOT -->|índice · pide avisos| WEB
+  EXT -->|cobrar-cuota · cobrar · pagar · desembolsar ·<br/>pagar-con-permiso · aportar-con-permiso| PAG["pagos/<br/>API de pagos<br/>(Azure)"]
+  BOT -->|pide permisos · avisos de pago| PAG
+  WEB -->|registro de pagos| PAG
+  PAG -->|firma y paga| OP["Open Payments<br/>Test Wallet"]
   P["Participante"] -->|aprueba el permiso en su billetera| OP
 ```
 
 **Decisiones del 16 de octubre:**
 
 1. El bot y la web llaman directo a staging desde su servidor, con el token de staging.
-2. **Los pagos de Open Payments viven en el backend de la web** (Johan). Staging los llama en `/api/open-payments/*` de la web. El código de Open Payments va en su propio módulo, escrito con poca IA ([`../pagos/README.md`](../pagos/README.md)).
-3. **La web se despliega en Azure** con una dirección pública HTTPS fija. La necesitan staging, para pedir pagos y mandar avisos, y el celular de cada participante, para volver después de aprobar el permiso.
+2. **Los pagos de Open Payments viven en una API aparte, en `pagos/`**, publicada en `https://natillera-pagos.azurewebsites.net` (PR #71). La escribió Claude Code y así se declara. Staging la llama en `/api/open-payments/*`, el bot le pide los permisos y los avisos de pago, y la web lee su registro ([`../pagos/API.md`](../pagos/API.md)).
+3. **La web se despliega en Azure** con una dirección pública HTTPS fija (#68). La necesitan staging, para mandar los avisos, y el bot, para el índice y los avisos.
 4. **Los avisos de staging llegan a la web y el bot se los pide** cada pocos segundos. El bot no necesita dirección pública.
 5. La web guarda lo que staging no tiene: nombres, ids de Telegram y la cola de solicitudes de crédito. Para listar y buscar contratos se puede usar la búsqueda de staging.
 6. **Ventas:** documentadas aquí; a las 20:00 se decide si entran a la demo. **Devoluciones:** documentadas; se recomienda dejarlas fuera de la demo.
@@ -46,7 +49,7 @@ Todo pasa por la puerta de entrada de staging, con `Authorization: Bearer <token
 | Cascadas recientes | `GET /api/contracts/correlations/recent` | Para depurar |
 | ¿Está instalada la 0.2.0? | `GET /api/templates/natillera-venta/schema` (404 = no) | Willy |
 
-**Solo para administrador (Willy):** el destino de avisos (`POST /api/webhooks/destinos`), la dirección y la llave de la API de pagos (`PATCH /api/integraciones/apis/open-payments` y `PUT /api/integraciones/apis/open-payments/credencial`), las acciones del reloj y la limpieza de contratos de prueba (`DELETE /api/contracts/all`).
+**Solo para administrador (Willy):** el destino de avisos (`POST /api/webhooks/destinos`), la dirección, los encabezados fijos y la llave de la API de pagos (`PATCH /api/integraciones/apis/open-payments` y `PUT /api/integraciones/apis/open-payments/credencial`), las acciones del reloj y la limpieza de contratos de prueba (`DELETE /api/contracts/all`).
 
 **`POST /api/webhooks` no existe en la puerta** (responde 404). **El flujo en vivo `GET /api/events/stream` sí existe**, por una entrada directa y con el mismo token, pero no sirve para los avisos: solo publica las cascadas entre contratos (`sourceEvent`, `sourceContractId`, `targetContractId`, `targetTrigger`), sin los datos del evento, y lo que no dispara otro contrato no pasa por ahí. Los avisos llegan solo por el destino `bot-natillera`.
 
@@ -107,14 +110,14 @@ Las llaves de negocio (`NatilleraId`, `ParticipacionId`, `ActividadId`, `VentaId
 
 1. **Crear la natillera:** el bot crea `natillera-cuenta` y guarda el `contractId`.
 2. **Unirse:** el bot crea `natillera-participacion`.
-3. **Permiso recurrente:** el bot le pide a la web un permiso. El participante lo aprueba en su billetera y vuelve al chat. Con el `GrantId`, el bot llama `ConfirmarAutorizacion`.
-4. **Arranque:** `Iniciar` en la fecha de inicio. Staging pide a la web `/cobrar-cuota` por cada participante; cuando paga el cupo, la natillera queda activa.
+3. **Permiso recurrente:** el bot le pide un permiso a la API de pagos. El participante lo aprueba en su billetera y vuelve al chat. Con el `GrantId`, el bot llama `ConfirmarAutorizacion`.
+4. **Arranque:** `Iniciar` en la fecha de inicio. Staging pide a la API de pagos `/cobrar-cuota` por cada participante; cuando paga el cupo, la natillera queda activa.
 5. **Cada periodo:** `AbrirPeriodo` y otra vez `/cobrar-cuota`.
 6. **Mora:** `CausarMoraDiaria` manda el recordatorio. El participante responde, el bot llama `PagarDeuda` y staging pide `/cobrar`.
 7. **Actividad:** el bot crea `natillera-actividad`. Cada participante paga con `AutorizarPago` y `IndicarGanador` paga el premio con `/pagar`.
 8. **Crédito:** llega el aviso `ElegibleParaPrestamo`, el bot ofrece el préstamo y registra la solicitud en la web. Cuando la financiera la aprueba, la web crea `natillera-credito-ahorro` y staging pide `/desembolsar`.
 9. **Liquidación:** `IniciarLiquidacion` reparte con `/pagar` y la natillera cierra en 0. No corre mientras haya ventas con pagos en curso. Si hay devoluciones en deuda, la primera vez deja la natillera en el estado 7, `PREPARANDO_LIQUIDACION`, y el reparto ocurre con la del día siguiente: el reloj se dispara dos veces.
-10. **Venta** (si entra a la demo): el bot dispara `SolicitarCompra`. Llega `AutorizacionCompraPendiente` con el `contractId` de la venta, y el bot pide a la web un permiso de un solo uso del comprador por el valor completo. Con el permiso aprobado, el bot llama `ConfirmarAutorizacionCompra`. Staging pide a la web `/pagar-con-permiso` (el valor menos la comisión, al vendedor) y `/aportar-con-permiso` (la comisión, a la natillera), y llega `VentaConfirmada`. Si el comprador no aprueba en 15 minutos, el bot llama `CancelarCompra`.
+10. **Venta** (si entra a la demo): el bot dispara `SolicitarCompra`. Llega `AutorizacionCompraPendiente` con el `contractId` de la venta, y el bot pide a la API de pagos un permiso de un solo uso del comprador por el valor completo. Con el permiso aprobado, el bot llama `ConfirmarAutorizacionCompra`. Staging pide a la API de pagos `/pagar-con-permiso` (el valor menos la comisión, al vendedor) y `/aportar-con-permiso` (la comisión, a la natillera), y llega `VentaConfirmada`. Si el comprador no aprueba en 15 minutos, el bot llama `CancelarCompra`.
 11. **Devolución** (se recomienda dejarla fuera de la demo): `SolicitarDevolucion` → votos → `DevolucionAprobada`. La comisión vuelve sola al comprador por `/pagar`. El vendedor aprueba un permiso de un solo uso y el bot llama `AutorizarPagoDevolucion`, con lo que staging pide `/pagar-con-permiso`. Si el vendedor no aprueba en 15 minutos, el bot **tiene que** llamar `RegistrarNoPagoVendedor`; si no, la natillera nunca liquida.
 
 ## Avisos
@@ -130,7 +133,7 @@ Cada aviso llega firmado en el encabezado `X-Motor-Signature: t=<unix>,v1=<hmac>
 
 La web verifica la firma, guarda el aviso y responde 2xx. El bot los pide con `GET /api/avisos?desde=<cursor>`. La lista completa de avisos, con a quién va cada uno, está en [`../telegram/INTEGRACION.md`](../telegram/INTEGRACION.md).
 
-**Ojo: «cobro hecho» no es un aviso de staging.** `CuotaPagada`, `DeudaPagada` y `ObligacionPagada` existen como eventos del contrato, pero no se mandan al destino `bot-natillera`. Como la web es la que ejecuta cada cobro en Open Payments, ella misma agrega a la lista del bot sus propios avisos de pago (`PagoCompletado` y `PagoFallido`).
+**Ojo: «cobro hecho» no es un aviso de staging.** `CuotaPagada`, `DeudaPagada` y `ObligacionPagada` existen como eventos del contrato, pero no se mandan al destino `bot-natillera`. Los avisos de pago (`PagoCompletado` y `PagoFallido`) los genera la API de pagos al terminar cada pago, y el bot se los pide a ella (`GET /api/avisos`), aparte de los de staging.
 
 ## Diferencias y cuidados
 
@@ -140,7 +143,7 @@ La web verifica la firma, guarda el aviso y responde 2xx. El bot los pide con `G
 | 2 | Staging no guarda nombres, ids de Telegram ni la cola de créditos | Los guarda la web; el bot se los manda. Para listar contratos se puede usar la búsqueda |
 | 3 | Staging cuenta la periodicidad en meses enteros | Para la demo, solo mensual (#58) |
 | 4 | El OpenAPI sugiere crear también los contratos de reglas | En la prueba local corrieron sin crearlos. Confirmar con la primera natillera (#56) |
-| 5 | En staging, la dirección de la API de pagos es un ejemplo (`natillera-bff.example`) y puede estar en modo de prueba | Willy pone `https://<web>/api/open-payments`, la llave y el modo real (#55). El modo es de toda la API: las 6 rutas tienen que responder, aunque alguna sea simulada |
+| 5 | En staging, la dirección de la API de pagos es un ejemplo (`natillera-bff.example`) y puede estar en modo de prueba | Willy pone `https://natillera-pagos.azurewebsites.net/api/open-payments`, la credencial (`API_KEY_STAGING`, en el encabezado `X-Api-Key`), los tres encabezados `X-OP-*` con **la misma** llave del bot (como encabezados fijos: `PATCH` con `Headers`) y el modo real (#55). El modo es de toda la API: las 6 rutas tienen que responder, aunque alguna sea simulada (`OPERACIONES_SIMULADAS`). Ojo: a diferencia de la credencial, un encabezado fijo se lee con `GET /api/integraciones/apis/{id}` y cualquier token de la organización. La llave es de una billetera de prueba, pero hay que rotarla después del evento |
 | 6 | Las acciones del reloj requieren rol de administrador | Las dispara Willy (#57) |
 | 7 | La 0.2.0 está en el servicio externo, pero no se ha confirmado en el tenant | Comprobar con `GET /api/templates/natillera-venta/schema` (#66). Cada contrato queda sellado en la versión con la que nació: a una natillera creada antes, `SolicitarCompra` le responde 400 «Unknown Trigger». Crear las de la demo después de la actualización |
 | 8 | El token de staging vence y exige la plantilla `motorcredito` con rol `writer` | Willy emite los tokens y define cuánto duran y quién los renueva (#65) |

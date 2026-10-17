@@ -1,4 +1,4 @@
-# Integración con staging y pagos de Open Payments en la web
+# Integración con staging y pagos de Open Payments
 
 ## 2026-10-16 16:36 (hora de Bogotá) · Claude Code (Claude Opus 5.5)
 
@@ -29,3 +29,11 @@ Respuestas del equipo a las preguntas de Claude Code:
 Con esas decisiones, Claude Code reescribió los mapas de integración (`integracion/README.md`, `telegram/INTEGRACION.md`, `web/INTEGRACION.md`), la especificación de los pagos (`pagos/README.md`), el plan de trabajo y la especificación funcional 0.2.0 en `docs/discovery/4-logica-financiera/`. Una revisión adversarial con tres subagentes (código del repo, Open Payments y servicio externo) encontró errores en los mapas, que se corrigieron contra el código del servicio externo y la documentación de Open Payments. Como el código de Open Payments pasa al backend de la web, Claude Code amplió la guardia de edición (`.claude/hooks/guardia-edicion.mjs`) y la checklist (`scripts/revisar-entrega.mjs`) a sus nuevas carpetas, ajustó las reglas, skills y agentes que decían `pagos/`, y creó los issues #65 a #68. El código de Open Payments no lo escribió: lo escribe el equipo.
 
 Al traer `develop` con el PR #64 del bot, Claude Code comprobó contra la puerta de staging y el código del servicio externo que el flujo en vivo (`/api/events/stream`) existe pero solo trae cascadas entre contratos, sin los datos de los avisos, y que `POST /api/webhooks` no existe (404). Lo dejó anotado en los mapas, que ahora usan los nombres de variables del código del bot y dicen qué le falta.
+
+## 2026-10-16 18:52 (hora de Bogotá) · Claude Code (Claude Opus 5.5)
+
+```text
+hazlo
+```
+
+Era la respuesta a la pregunta de Claude Code de si hacía el commit, abría el PR a `develop` y lo fusionaba. Al traer `develop` llegaron los PR #69 y #70 del bot y el PR #71: la API de pagos aparte en `pagos/`, publicada en Azure, escrita por Claude y declarada, que reemplaza el plan de los pagos en el backend de la web. Claude Code alineó con esa decisión la configuración de Claude, los mapas, el contrato de los pagos con staging (`pagos/README.md`; el uso de la API lo dice `pagos/API.md`), el plan de trabajo y la checklist. Verificó en el código del servicio externo que staging puede mandar los encabezados `X-OP-*` como encabezados fijos y que cualquier token de la organización puede leerlos. La Mini App «Mi natillera» quedó con el mismo camino del panel del administrador (los datos en el enlace), sin ruta en la web.

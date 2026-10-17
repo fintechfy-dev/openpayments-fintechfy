@@ -17,7 +17,7 @@ Sale con código 1 solo si encuentra un secreto o un `.env` versionado. El resto
 
 ## Lo que falta, por urgencia
 
-1. ❌ **Nada usa todavía la API de Open Payments** (`b-op`, `c-op`). `pagos/` solo tiene su README y ningún `package.json` depende de `@interledger/open-payments`. Sin esto el proyecto no entra a evaluación ni a premios. #3 (cobro recurrente con un permiso) y #4 (servicio de pagos) **no tienen responsable**, y ya pasó el checkpoint de las 15:00. Además, según `integracion/README.md` (diferencia 6), en staging la API de pagos del servicio externo apunta a `https://natillera-bff.example`, que no existe, y puede estar en modo de prueba: hay que configurarla en modo real con la URL pública del servicio de pagos, o no se mueve dinero real.
+1. ⚠️ **La API de pagos existe, pero todavía no ha movido dinero real** (`b-op`, `c-op`). `pagos/` usa el SDK `@interledger/open-payments` 7.4.0 y está publicada en `https://natillera-pagos.azurewebsites.net` (PR #71), con 32 pruebas contra un Open Payments falso. Falta cargarle en Azure `BOT_USUARIO`, `OP_WALLET_GRUPO` y `OP_WALLET_FINANCIERA`, hacer el #3 en la Test Wallet y que staging deje de apuntar a `https://natillera-bff.example`: Willy configura ahí la dirección de la API de pagos, su llave y los encabezados `X-OP-*`, y la pasa a modo real (#55, `integracion/README.md`).
 2. ❌ **Sin evidencia de un pago de punta a punta** (`b-primer-pago`, `b-evidencia`, `s-video`). El video debe mostrar la solicitud, la autorización en la billetera, la ejecución y la finalización exitosa.
 3. ⚠️ **Ningún issue del frente Pagos tiene responsable**: #3, #4, #12, #15, #20 a #23, #25, #28, #30 y #31. Tampoco #11 (release de entrega), #14 (secretos), #37 (guion con 4 billeteras) ni #38 (entregables del repositorio).
 4. ⚠️ **El checkpoint de las 15:00 no dejó registro** (`b-checkpoint`). Si se recortó algo, hay que anotarlo en `docs/plan-de-trabajo.md` y en los issues `recorte *`.
@@ -35,12 +35,12 @@ Sale con código 1 solo si encuentra un secreto o un `.env` versionado. El resto
 | `hoy-slack` | Exigido | Los 4 están en el Slack de Interledger | 👥 |
 | `hoy-roles` | Plan | Repartir los roles | ⚠️ Telegram (Estiven) y Web (Johan) tienen issues asignados. Pagos, el video, la presentación y quién lleva `AI_USAGE.md` no tienen responsable en GitHub |
 | `hoy-repo` | Plan | Repositorio de la hackathon vacío hasta el viernes 10:30 | ✅ Primer commit: viernes 16, 11:32 (`16fcc32`) |
-| `hoy-gitignore` | Recomendado | Proteger los secretos desde el primer commit | ✅ `.gitignore` excluye `.env*`, `*.pem` y `*.key`. Hay `.env.example` en `web/` y en `telegram/`. Falta en `pagos/` cuando tenga código |
+| `hoy-gitignore` | Recomendado | Proteger los secretos desde el primer commit | ✅ `.gitignore` excluye `.env*`, `*.pem` y `*.key`. Hay `.env.example` en `web/`, `telegram/` y `pagos/` |
 | `hoy-wallets` | Recomendado | Cuentas de prueba en la Test Wallet: administrador, Ana, Beto y Carla (sin fondos) | 👥 Las direcciones no están anotadas en el repo; el guion es #37 |
 | `hoy-wallet-grupo` | Recomendado | Billetera del grupo a nombre de la financiera | ❌ #15 abierto, sin responsable |
 | `hoy-moneda` | Plan | Anotar la moneda de la Test Wallet (riesgo R-02) | ❌ Sigue como supuesto en `docs/discovery/3-bdd/risk-analysis.md:8` |
 | `hoy-claves` | Recomendado | Claves de desarrollador de la billetera, fuera del repo | 👥 No hay claves en el repo ni en el historial (ver `s-secretos`) |
-| `hoy-recurrente` | Recomendado | Leer cómo se pide un permiso de pago saliente con tope e intervalo | ⚠️ Está explicado en la skill `natillera-open-payments`, pero la prueba (#3) no se ha hecho |
+| `hoy-recurrente` | Recomendado | Leer cómo se pide un permiso de pago saliente con tope e intervalo | ⚠️ Está explicado en la skill `natillera-open-payments` y en `pagos/README.md` (sin intervalo, con tope total), pero la prueba (#3) no se ha hecho |
 | `hoy-laptops` | Recomendado | Node, Git y la extensión de snippets de Open Payments | 👥 |
 | `hoy-bot` | Recomendado | Crear el bot con BotFather | ✅ Lo creó Estiven (`AI_USAGE.md`, "Lo que hizo el equipo"); el token no está en el repo |
 | `hoy-plantilla` | Recomendado | Copiar la plantilla oficial y llenar portada y equipo | 👥 |
@@ -56,14 +56,14 @@ Sale con código 1 solo si encuentra un secreto o un `.env` versionado. El resto
 | `vie-bienvenida` | Dato | Mesa de mentores y canal de Slack | ℹ️ |
 | `ask-hora` | Por confirmar | ¿Video y presentación cierran a las 11:00 o a las 12:00? | ❓ Sin respuesta anotada. Plan seguro: antes de las 11:00 |
 | `ask-donde` | Por confirmar | ¿Drive, repositorio o ambos? | ❓ Plan seguro: los dos |
-| `ask-demo` | Por confirmar | ¿La demo puede correr desde nuestro equipo? | ❓ Sin respuesta de la organización. Lo nuestro ya está decidido: el servicio externo corre en staging (`integracion/README.md`); la web, con los pagos de Open Payments y la recepción de avisos, se despliega en Azure con dirección pública HTTPS (#68); el bot le pide los avisos a la web, así que corre en cualquier laptop sin dirección pública. El flujo en vivo de staging no sirve para los avisos: solo trae cascadas entre contratos, sin los datos del evento |
+| `ask-demo` | Por confirmar | ¿La demo puede correr desde nuestro equipo? | ❓ Sin respuesta de la organización. Lo nuestro ya está decidido: el servicio externo corre en staging (`integracion/README.md`); la API de pagos ya está publicada en Azure (`https://natillera-pagos.azurewebsites.net`); la web, con la recepción de los avisos de staging, se despliega en Azure con dirección pública HTTPS (#68). El bot le pide los avisos a la web y a la API de pagos, así que corre en cualquier laptop sin dirección pública. El flujo en vivo de staging no sirve para los avisos: solo trae cascadas entre contratos, sin los datos del evento |
 | `ask-docs` | Por confirmar | ¿Se puede subir el discovery hecho antes? | ❓ Ya está subido; si dicen que no, se retira antes de las 11:00 del sábado |
 | `ask-ronda1` | Por confirmar | ¿Presentan todos en la Ronda 1? | ❓ Plan seguro: estar listos |
 | `b-primer-commit` | Exigido | Primer código y primer commit después de las 10:30 | ✅ 11:32 del viernes |
 | `b-op` | Exigido | El proyecto usa la API de Open Payments | ❌ Ver "Lo que falta", punto 1 |
 | `b-primer-pago` | Recomendado | Lo primero: un pago de punta a punta | ❌ #3 abierto |
 | `b-prompts` | Exigido | Prompts reales desde el primer minuto | ✅ 10 archivos en `prompts/` con el texto literal; cada PR agrega los suyos |
-| `b-servicio` | Recomendado | El servicio de Open Payments con poca IA | ⚠️ Aún no existe. La regla `ia-y-prompts.md` dice que lo escribe el equipo y Claude solo explica y revisa; el hook `.claude/hooks/guardia-edicion.mjs` le impide a Claude escribir código en `pagos/` |
+| `b-servicio` | Recomendado | El servicio de Open Payments con poca IA | ⚠️ Decisión del equipo del 16 de octubre en la tarde: la API de pagos la escribió Claude Code y se declara en `AI_USAGE.md` y en `prompts/pagos-api-open-payments.md` (regla `ia-y-prompts.md`; la guardia ya no la bloquea). El riesgo frente a la política: el equipo tiene que poder explicar cada paso ante los mentores |
 | `b-revisar-ia` | Recomendado | Revisar y probar lo que genera la IA | ✅ La web y el bot tienen pruebas (`npm run verificar` en `web/`, `npm test` en `telegram/`) y revisiones con hallazgos corregidos (PR #49). GitHub las corre en cada PR (`.github/workflows/calidad.yml`) y Claude no puede cerrar un turno con pruebas en rojo (`.claude/hooks/verificar-al-parar.mjs`) |
 | `b-push` | Plan | Subir cambios seguido | ✅ Del #1 al #51, todo entra por PR a `develop` |
 | `b-evidencia` | Plan | Evidencia de cada pago real de prueba | ❌ No hay pagos todavía |
@@ -102,7 +102,7 @@ Lo que el repo ya permite mostrar de cada criterio, para armar la presentación.
 | `c-problema` | Definición del problema | ✅ README, "El problema" |
 | `c-op` | Uso de Open Payments | ❌ Ver "Lo que falta", punto 1 |
 | `c-ux` | Experiencia de usuario | ⚠️ El bot ya crea la natillera con botones o con la Mini App (US-001) y la web muestra natilleras, créditos, pagos y bitácora con datos de prueba. Falta unirse, autorizar y ver aportes reales |
-| `c-tecnica` | Calidad técnica | ⚠️ Pruebas en la web y el bot. "Sin doble cobro" (#21) y "token vigente antes de cada cobro" (#22) no existen porque no hay cobros |
+| `c-tecnica` | Calidad técnica | ⚠️ Pruebas en la web y el bot. La API de pagos ya tiene idempotencia por ruta y cuerpo ("sin doble cobro", #21) y rotación del token con candado ("token vigente antes de cada cobro", #22), con 32 pruebas; falta probarlas con un pago real |
 | `c-presentacion` | Presentación | ❌ No hay presentación |
 | `c-inclusion` | Inclusión (Premio Puntored) | ⚠️ El README lo plantea (nadie del grupo custodia el dinero), pero falta escribirlo para la presentación |
 | `c-innovacion` | Innovación | 👥 |
