@@ -459,3 +459,25 @@ Además se quitó `contractId` de RegistroDecision (ya no se conoce al reservar;
 ```
 
 Resultado (20:13): `web-revisor` dio CAMBIOS-NECESARIOS (1 🔴: dos aprobaciones a la vez creaban dos contratos y dos desembolsos) y, tras corregirlo con una reserva en el índice antes del POST, CAMBIOS-MENORES; Claude Code corrigió también sus 🟡 (solo un 4xx o una petición que no salió sueltan la reserva; sin la promesa de «Le avisamos por el bot»). `npm --prefix web run verificar`: 19 archivos, 188 pruebas, build compilado.
+
+Claude Code actualizó la skill `natillera-web` (`SKILL.md` y `references/checklist.md`) para que no describa los datos de prueba ni `puedeResponderCreditos`, en un commit aparte (regla de `.claude/`).
+
+```text
+listo ya tienes las claves pago url y api key
+```
+
+```text
+listo
+```
+
+```text
+revisa los espaciados entre alertas
+```
+
+Claude Code agrupó los avisos de `/pagos` en `.registro__avisos` con espaciado (`RegistroPagos.tsx`, `pagos.css`).
+
+## 2026-10-16 · 21:00 (hora de Bogotá) · Claude Code (Claude Opus 5.5)
+
+```text
+commit push y PR
+```

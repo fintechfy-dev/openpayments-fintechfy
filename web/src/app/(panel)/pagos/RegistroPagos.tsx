@@ -134,28 +134,32 @@ export function RegistroPagos({ inicial, leidoEn: leidoInicial, falloInicial = f
         ) : null}
       </EncabezadoPagina>
 
-      {estadoApi ? (
-        <Aviso tipo={estadoApi.tipo} titulo={estadoApi.titulo} anunciar={false}>
-          {estadoApi.texto}
-        </Aviso>
-      ) : null}
+      {estadoApi || avisoOpenPayments || fallo ? (
+        <div className="registro__avisos">
+        {estadoApi ? (
+          <Aviso tipo={estadoApi.tipo} titulo={estadoApi.titulo} anunciar={false}>
+            {estadoApi.texto}
+          </Aviso>
+        ) : null}
 
-      {/* Con los pagos de cada refresco: si llega uno simulado, el aviso aparece sin recargar. */}
-      {avisoOpenPayments ? (
-        <Aviso tipo={avisoOpenPayments.tipo} titulo={avisoOpenPayments.titulo} anunciar={false}>
-          {avisoOpenPayments.texto}
-        </Aviso>
-      ) : null}
+        {/* Con los pagos de cada refresco: si llega uno simulado, el aviso aparece sin recargar. */}
+        {avisoOpenPayments ? (
+          <Aviso tipo={avisoOpenPayments.tipo} titulo={avisoOpenPayments.titulo} anunciar={false}>
+            {avisoOpenPayments.texto}
+          </Aviso>
+        ) : null}
 
-      {fallo ? (
-        <p className="registro__fallo" role="status">
-          <Icono nombre="alerta" tamano="sm" />
-          <span>
-            {leidoEn
-              ? `No pudimos actualizar el registro. Lo seguimos intentando solo; lo que ves es de las ${formatoHora(leidoEn)}`
-              : "No pudimos leer el registro de pagos. Lo seguimos intentando solo."}
-          </span>
-        </p>
+        {fallo ? (
+          <p className="registro__fallo" role="status">
+            <Icono nombre="alerta" tamano="sm" />
+            <span>
+              {leidoEn
+                ? `No pudimos actualizar el registro. Lo seguimos intentando solo; lo que ves es de las ${formatoHora(leidoEn)}`
+                : "No pudimos leer el registro de pagos. Lo seguimos intentando solo."}
+            </span>
+          </p>
+        ) : null}
+        </div>
       ) : null}
 
       {/* Solo anuncia pagos que acaban de completarse o fallar, no cada refresco. */}

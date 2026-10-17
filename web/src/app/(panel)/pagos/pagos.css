@@ -11,8 +11,10 @@
 @keyframes registro-latido { 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .registro__vivo { animation: none; } }
 
+/* Los avisos (estado de la API, pagos simulados, falla de refresco) van juntos, separados entre sí y de las cifras. */
+.registro__avisos { display: flex; flex-direction: column; gap: var(--espacio-3); margin-bottom: var(--espacio-5); }
 .registro__fallo {
-  display: flex; align-items: center; gap: var(--espacio-2); margin: 0 0 var(--espacio-5);
+  display: flex; align-items: center; gap: var(--espacio-2); margin: 0;
   padding: var(--espacio-3) var(--espacio-4); border-radius: var(--radio-md);
   background: var(--superficie-hundida); color: var(--tinta); font-size: 15px; line-height: 20px;
 }
