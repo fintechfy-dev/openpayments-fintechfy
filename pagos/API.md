@@ -12,6 +12,13 @@ Decisiones del 16 de octubre, en la tarde:
 
 El laboratorio `playground/open-payments-lab` del servicio externo se leyó como referencia del flujo. Su código no se copió.
 
+## Swagger
+
+- **Swagger UI:** https://natillera-pagos.azurewebsites.net/docs. Ahí se prueba cada ruta: en *Authorize* se cargan `X-Api-Key` y las tres llaves `X-OP-*`. No quedan guardadas en el navegador.
+- **El contrato OpenAPI 3.0:** https://natillera-pagos.azurewebsites.net/api/openapi.json, para importarlo en Postman o generar un cliente.
+- **Disponibles aunque falte configuración:** el resto de la API responde `503` hasta que se configure, pero `/docs` y el contrato se sirven igual.
+- **El contrato no se desincroniza del código:** las 6 rutas de staging salen de la misma tabla que valida los cuerpos (`REGLAS` en `src/operaciones.js`). Una prueba exige que cada ruta del contrato exista en el servidor y al revés, y que sus ejemplos sean cuerpos que la API acepta.
+
 ## Rutas
 
 | Quién llama | Ruta | Llave | Llaves de Open Payments |
@@ -96,7 +103,7 @@ El bot lee estos avisos aquí, aparte de los de staging que recibe la web, y gua
 ```bash
 cd pagos
 npm install
-npm test          # 33 pruebas con un Open Payments falso, sin red
+npm test          # 38 pruebas con un Open Payments falso, sin red
 cp .env.example .env   # llenar
 npm run dev
 ```
