@@ -81,6 +81,7 @@ Una línea por archivo o componente: qué herramienta, para qué y cuánto (much
 | Ocultar la sección de créditos: `web/src/lib/secciones.ts`, `web/src/proxy.ts`, `web/src/components/Navegacion.tsx`, `web/src/app/(panel)/creditos/page.tsx` y `actions.ts`, `web/README.md` | Claude Code (Claude Opus 5.5) | Apagar Créditos en la entrega (menú, 404 y acción del servidor) sin borrar su código | Mucho |
 | `docs/tecnica/` (arquitectura, maquetas, estados y datos), enlaces en `README.md` y `docs/checklist-entrega.md` | Claude Code (Claude Opus 5.5) | Diagramas Mermaid de contexto, piezas y contratos, despliegue y flujos; maquetas de baja fidelidad de cada pantalla con los componentes del design system; estados y datos, contrastados con el código de `pagos/`, `web/` y `telegram/` | Mucho |
 | `README.md` (sección «Para revisar»), `docs/checklist-entrega.md` (`s-demo-link`) | Claude Code (Claude Opus 5.5) | URLs en vivo de la demo (bot, web, API de pagos, servicio externo en staging y billeteras) y la guía de dónde está el código de cada pieza y cómo se prueba, comprobadas contra los servicios y los `package.json` | Mucho |
+| Botones del reloj de staging: `telegram/src/bot/comandos/reloj.js`, `telegram/src/registro.js` (`natillerasRecientes`) y `telegram/test/reloj.test.js` | Claude Code (Claude Opus 5.5) | Mover el tiempo de una natillera desde el chat del equipo con botones, sin escribir nombres ni fechas | Mucho |
 
 ## Servicios externos
 

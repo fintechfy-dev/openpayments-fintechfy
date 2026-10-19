@@ -47,6 +47,7 @@ export function crearRegistro(db) {
     participacionesDe: db.prepare('SELECT * FROM participaciones WHERE telegram_id = ? ORDER BY rowid DESC'),
     natillerasPorNombre: db.prepare('SELECT * FROM natilleras WHERE lower(nombre) = lower(?) OR natillera_id = ? ORDER BY creada_en DESC'),
     natillerasDelAdmin: db.prepare('SELECT * FROM natilleras WHERE admin_telegram_id = ? ORDER BY creada_en DESC'),
+    natillerasRecientes: db.prepare('SELECT * FROM natilleras ORDER BY creada_en DESC LIMIT ?'),
     cursor: db.prepare('SELECT valor FROM cursores WHERE fuente = ?'),
     permisoRol: db.prepare('SELECT permiso_id FROM permisos_rol WHERE tipo = ?'),
     guardarPermisoRol: db.prepare(
@@ -115,6 +116,7 @@ export function crearRegistro(db) {
     // Para «Mi natillera»: todas las de una persona, la más reciente primero.
     participacionesDe: (telegramId) => sql.participacionesDe.all(telegramId),
     natillerasDelAdmin: (telegramId) => sql.natillerasDelAdmin.all(telegramId),
+    natillerasRecientes: (limite) => sql.natillerasRecientes.all(limite),
     // Para /reloj: por nombre sin importar mayúsculas, o por su id.
     natillerasPorNombre: (texto) => sql.natillerasPorNombre.all(texto, texto),
     // El último aviso leído de una fuente (avisos/pagos.js); undefined si nunca leyó.
