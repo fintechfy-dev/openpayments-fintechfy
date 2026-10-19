@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Bot } from 'grammy';
-import { crearBotDePrueba, crearFetchFalso, mensaje, textos, logSilencioso, BOT_INFO, CHAT_EQUIPO } from './helpers/bot-prueba.js';
+import { crearBotDePrueba, crearFetchFalso, mensaje, textos, botones, boton, logSilencioso, BOT_INFO, CHAT_EQUIPO } from './helpers/bot-prueba.js';
 import { crearRegistro } from '../src/registro.js';
 import { abrirBaseDeDatos, EN_MEMORIA } from '../src/db.js';
 import { AccionRechazadaError } from '../src/externo/cliente.js';
-import { AYUDA, leerOrden, reloj, siguientePaso, textoResultado } from '../src/bot/comandos/reloj.js';
+import { AYUDA, PANEL, datoAccion, datoNatillera, leerOrden, reloj, siguientePaso, textoResultado } from '../src/bot/comandos/reloj.js';
 import { COMANDOS } from '../src/bot/index.js';
 
 // /reloj: mover el tiempo de una natillera en staging desde el chat del equipo.
@@ -148,11 +148,59 @@ test('una acción que staging rechaza se informa con su motivo', async () => {
 
 test('/reloj sin acción válida o con una natillera que no existe', async () => {
   const { bot, llamadas, disparos } = preparar();
-  await bot.handleUpdate(enEquipo('/reloj'));
   await bot.handleUpdate(enEquipo('/reloj volar test2'));
   await bot.handleUpdate(enEquipo('/reloj iniciar otra'));
-  assert.deepEqual(textos(llamadas), [AYUDA, AYUDA, 'No conozco la natillera «otra».']);
+  assert.deepEqual(textos(llamadas), [AYUDA, 'No conozco la natillera «otra».']);
   assert.deepEqual(disparos, []);
+});
+
+// Los botones: lo mismo que /reloj sin escribir nombres ni fechas.
+const tocarEnEquipo = (dato) => boton(dato, { chatId: CHAT_EQUIPO });
+const ultimaRespuesta = (llamadas) => llamadas.filter((l) => l.method === 'sendMessage').at(-1);
+
+test('/reloj solo muestra las natilleras como botones, y cada una abre sus acciones', async () => {
+  const { bot, llamadas, disparos } = preparar();
+  await bot.handleUpdate(enEquipo('/reloj'));
+  assert.equal(ultimaRespuesta(llamadas).payload.text, PANEL);
+  assert.deepEqual(botones(ultimaRespuesta(llamadas)), [datoNatillera('nat-1')]);
+
+  await bot.handleUpdate(tocarEnEquipo(datoNatillera('nat-1')));
+  assert.equal(ultimaRespuesta(llamadas).payload.text, 'test2: ¿qué hago?');
+  const acciones = botones(ultimaRespuesta(llamadas));
+  assert.equal(acciones[0], datoAccion('siguiente', 'nat-1'));
+  for (const accion of ['estado', 'periodo', 'mora', 'cobrar', 'liquidar', 'reintentar', 'auto', 'parar']) {
+    assert.ok(acciones.includes(datoAccion(accion, 'nat-1')), accion);
+  }
+  assert.ok(acciones.every((d) => Buffer.byteLength(d) <= 64), 'callback_data cabe en 64 bytes');
+  assert.deepEqual(disparos, []);
+});
+
+test('«Siguiente paso» dispara lo que toca y la respuesta trae otra vez los botones', async () => {
+  const { bot, llamadas, disparos } = preparar({ estado: natillera({ EstadoNatillera: 2, PeriodoActual: 1, FechaProximoCobro: '2026-12-01' }) });
+  await bot.handleUpdate(tocarEnEquipo(datoAccion('siguiente', 'nat-1')));
+  assert.deepEqual(disparos, [{ contractId: 'c-nat', trigger: 'AbrirPeriodo', fecha: '2026-12-01' }]);
+  assert.equal(ultimaRespuesta(llamadas).payload.text, '✓ AbrirPeriodo con fecha 2026-12-01: corrió.\nX: 0 → 1');
+  assert.equal(botones(ultimaRespuesta(llamadas))[0], datoAccion('siguiente', 'nat-1'));
+});
+
+test('el botón de una acción usa las mismas fechas que el comando', async () => {
+  const { bot, disparos } = preparar({ estado: natillera({ EstadoNatillera: 2, PeriodoActual: 1 }) });
+  await bot.handleUpdate(tocarEnEquipo(datoAccion('mora', 'nat-1')));
+  await bot.handleUpdate(tocarEnEquipo(datoAccion('liquidar', 'nat-1')));
+  assert.deepEqual(disparos.map((d) => [d.contractId, d.trigger, d.fecha]), [
+    ['c-p1', 'CausarMoraDiaria', '2026-11-02'],
+    ['c-p2', 'CausarMoraDiaria', '2026-11-02'],
+    ['c-nat', 'IniciarLiquidacion', '2026-12-31'],
+  ]);
+});
+
+test('los botones del reloj no hacen nada fuera del chat del equipo, ni con una natillera o acción desconocida', async () => {
+  const { bot, llamadas, disparos } = preparar();
+  await bot.handleUpdate(boton(datoAccion('siguiente', 'nat-1'), { chatId: 100 }));
+  await bot.handleUpdate(tocarEnEquipo(datoAccion('siguiente', 'nat-otra')));
+  await bot.handleUpdate(tocarEnEquipo(datoAccion('volar', 'nat-1')));
+  assert.deepEqual(disparos, []);
+  assert.deepEqual(textos(llamadas), []);
 });
 
 test('/reloj auto da un paso ya y uno por cada tic, y se para solo al terminar', async () => {

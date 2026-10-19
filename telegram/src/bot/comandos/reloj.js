@@ -1,4 +1,4 @@
-import { Composer } from 'grammy';
+import { Composer, InlineKeyboard } from 'grammy';
 import { estadoDe, AccionRechazadaError } from '../../externo/cliente.js';
 import { sumarDias, sumarMeses } from '../../natillera/reglas.js';
 import { textoCobros } from '../../externo/cobros.js';
@@ -16,6 +16,7 @@ const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 
 export const AYUDA = [
   'Reloj de staging (fechas simuladas, AAAA-MM-DD):',
+  '/reloj  · solo, muestra botones con las natilleras y sus acciones',
   '/reloj estado <natillera>',
   '/reloj iniciar <natillera> [fecha]  · por defecto, la fecha de inicio',
   '/reloj periodo <natillera> [fecha]  · abre la siguiente cuota',
@@ -27,6 +28,40 @@ export const AYUDA = [
   '/reloj cobrar <natillera>  · con COBRAR_CUOTAS_BOT=si, cobra las cuotas que staging ya registró',
   '/reloj parar',
 ].join('\n');
+
+// Botones del reloj: lo mismo que /reloj sin escribir nombres ni fechas. `/reloj` solo muestra las
+// natilleras; al elegir una salen sus acciones, y cada resultado vuelve a traer los botones.
+export const PANEL = 'Reloj de staging. Elige la natillera:';
+export const MAX_NATILLERAS_PANEL = 10;
+export const ACCIONES_BOTON = [
+  ['siguiente', '▶ Siguiente paso'],
+  ['estado', 'Estado'],
+  ['iniciar', 'Iniciar'],
+  ['periodo', 'Abrir cuota'],
+  ['cupo', 'Revisar cupo'],
+  ['mora', 'Causar mora'],
+  ['cobrar', 'Cobrar cuotas'],
+  ['liquidar', 'Liquidar'],
+  ['reintentar', 'Reintentar liquidación'],
+  ['auto', 'Automático'],
+  ['parar', 'Parar automático'],
+];
+const ACCIONES = new Set(ACCIONES_BOTON.map(([accion]) => accion));
+// El natillera_id cabe en los 64 bytes de callback_data: «rl:a:reintentar:nat-<uuid>» son 56.
+export const datoNatillera = (natilleraId) => `rl:n:${natilleraId}`;
+export const datoAccion = (accion, natilleraId) => `rl:a:${accion}:${natilleraId}`;
+
+export function tecladoNatilleras(natilleras) {
+  return InlineKeyboard.from(natilleras.map((n) => [InlineKeyboard.text(n.nombre, datoNatillera(n.natillera_id))]));
+}
+
+// «Siguiente paso» solo arriba; el resto, de a dos por fila.
+export function tecladoAcciones(natilleraId) {
+  const [primero, ...resto] = ACCIONES_BOTON;
+  const filas = [[primero]];
+  for (let i = 0; i < resto.length; i += 2) filas.push(resto.slice(i, i + 2));
+  return InlineKeyboard.from(filas.map((fila) => fila.map(([accion, texto]) => InlineKeyboard.text(texto, datoAccion(accion, natilleraId)))));
+}
 
 const ESTADOS = ['CREADA', 'INICIADA', 'ACTIVA', 'LIQUIDANDO', 'REEMBOLSANDO', 'CERRADA', 'CERRADA_SIN_CUPO'];
 
@@ -179,54 +214,103 @@ export function reloj({ config, registro, servicio, log, cobrador, programar = s
     await paso();
   }
 
-  comandos
-    .filter((ctx) => String(ctx.chat?.id) === config.teamChatId)
-    .command('reloj', async (ctx) => {
-      const { accion, nombre, fecha, segundos } = leerOrden(ctx.match);
-      if (accion === 'parar') {
-        const cuantos = autos.size;
-        for (const id of [...autos.keys()]) parar(id);
-        await ctx.reply(cuantos ? `Paré ${cuantos} reloj(es) automático(s).` : 'No había relojes automáticos andando.');
-        return;
-      }
-      if (!['estado', 'iniciar', 'periodo', 'cupo', 'mora', 'liquidar', 'reintentar', 'auto', 'cobrar'].includes(accion) || !nombre) {
-        await ctx.reply(AYUDA);
-        return;
-      }
+  // Lo que hace cada acción sobre una natillera: los mensajes que responde, en orden (un paso con cobro
+  // responde dos). `auto` responde por su cuenta porque sigue avisando en cada paso.
+  async function ejecutar(ctx, accion, natillera, { fecha = null, segundos = null } = {}) {
+    if (accion === 'parar') {
+      const andaba = autos.has(natillera.natillera_id);
+      parar(natillera.natillera_id);
+      return [andaba ? `Paré el reloj automático de ${natillera.nombre}.` : `${natillera.nombre} no tenía reloj automático andando.`];
+    }
 
-      const encontradas = registro.natillerasPorNombre(nombre);
-      if (encontradas.length !== 1) {
-        await ctx.reply(encontradas.length ? `Hay ${encontradas.length} natilleras «${nombre}»; usa su id (nat-…).` : `No conozco la natillera «${nombre}».`);
-        return;
-      }
-      const [natillera] = encontradas;
+    let n;
+    try {
+      n = await leer(natillera.contract_id);
+    } catch (error) {
+      log.error('/reloj no pudo leer staging:', error);
+      return [`No pude leer ${natillera.nombre} en staging: ${error.message}`];
+    }
 
-      let n;
-      try {
-        n = await leer(natillera.contract_id);
-      } catch (error) {
-        log.error('/reloj no pudo leer staging:', error);
-        await ctx.reply(`No pude leer ${natillera.nombre} en staging: ${error.message}`);
-        return;
-      }
+    if (accion === 'estado') return [textoEstado(natillera.nombre, n)];
+    if (accion === 'cobrar') return [await cobrar(natillera, { esperar: false })];
+    if (accion === 'auto') {
+      await auto(ctx, natillera, segundos && segundos >= 5 ? segundos : INTERVALO_AUTO_S);
+      return [];
+    }
+    if (accion === 'mora') return [await mora(natillera, fecha ?? diaDeMora(n))];
+    if (accion === 'reintentar') return [await reintentar(natillera, fecha ?? diaDeReintento(n))];
 
-      if (accion === 'estado') return ctx.reply(textoEstado(natillera.nombre, n));
-      if (accion === 'cobrar') return ctx.reply(await cobrar(natillera, { esperar: false }));
-      if (accion === 'auto') return auto(ctx, natillera, segundos && segundos >= 5 ? segundos : INTERVALO_AUTO_S);
-      if (accion === 'mora') return ctx.reply(await mora(natillera, fecha ?? diaDeMora(n)));
-      if (accion === 'reintentar') return ctx.reply(await reintentar(natillera, fecha ?? diaDeReintento(n)));
-
-      const [trigger, porDefecto] = {
+    let trigger;
+    let porDefecto;
+    if (accion === 'siguiente') {
+      const paso = siguientePaso(n);
+      if (!paso) return [`${natillera.nombre} ya terminó (${ESTADOS[Number(n.EstadoNatillera)]}): no hay siguiente paso.`];
+      ({ trigger, fecha: porDefecto } = paso);
+    } else {
+      [trigger, porDefecto] = {
         iniciar: ['Iniciar', n.FechaInicio],
         periodo: ['AbrirPeriodo', proximoCobro(n)],
         cupo: ['VerificarCupo', limiteCupo(n)],
         liquidar: ['IniciarLiquidacion', n.FechaFinal],
       }[accion];
-      const { ok, texto } = await disparar(natillera.contract_id, trigger, fecha ?? porDefecto);
-      await ctx.reply(texto);
-      const cobrado = ok && (await cobrar(natillera, { trigger }));
-      if (cobrado) await ctx.reply(cobrado);
-    });
+    }
+    const { ok, texto } = await disparar(natillera.contract_id, trigger, fecha ?? porDefecto);
+    const cobrado = ok && (await cobrar(natillera, { trigger }));
+    return cobrado ? [texto, cobrado] : [texto];
+  }
+
+  async function mostrarPanel(ctx) {
+    const natilleras = registro.natillerasRecientes(MAX_NATILLERAS_PANEL);
+    if (!natilleras.length) return ctx.reply('Todavía no hay natilleras registradas en el bot.');
+    return ctx.reply(PANEL, { reply_markup: tecladoNatilleras(natilleras) });
+  }
+
+  // El botón trae el natillera_id: natillerasPorNombre también busca por id.
+  const natilleraPorId = (natilleraId) => registro.natillerasPorNombre(natilleraId).find((n) => n.natillera_id === natilleraId);
+
+  const equipo = comandos.filter((ctx) => String(ctx.chat?.id) === config.teamChatId);
+
+  equipo.command('reloj', async (ctx) => {
+    const { accion, nombre, fecha, segundos } = leerOrden(ctx.match);
+    if (!accion) return mostrarPanel(ctx);
+    if (accion === 'parar') {
+      const cuantos = autos.size;
+      for (const id of [...autos.keys()]) parar(id);
+      await ctx.reply(cuantos ? `Paré ${cuantos} reloj(es) automático(s).` : 'No había relojes automáticos andando.');
+      return;
+    }
+    if (!['estado', 'iniciar', 'periodo', 'cupo', 'mora', 'liquidar', 'reintentar', 'auto', 'cobrar'].includes(accion) || !nombre) {
+      await ctx.reply(AYUDA);
+      return;
+    }
+
+    const encontradas = registro.natillerasPorNombre(nombre);
+    if (encontradas.length !== 1) {
+      await ctx.reply(encontradas.length ? `Hay ${encontradas.length} natilleras «${nombre}»; usa su id (nat-…).` : `No conozco la natillera «${nombre}».`);
+      return;
+    }
+    for (const texto of await ejecutar(ctx, accion, encontradas[0], { fecha, segundos })) await ctx.reply(texto);
+  });
+
+  equipo.callbackQuery(/^rl:n:(.+)$/, async (ctx) => {
+    const natillera = natilleraPorId(ctx.match[1]);
+    if (!natillera) return ctx.answerCallbackQuery({ text: 'Ya no conozco esa natillera.' });
+    await ctx.answerCallbackQuery();
+    await ctx.reply(`${natillera.nombre}: ¿qué hago?`, { reply_markup: tecladoAcciones(natillera.natillera_id) });
+  });
+
+  equipo.callbackQuery(/^rl:a:([a-z]+):(.+)$/, async (ctx) => {
+    const [, accion, natilleraId] = ctx.match;
+    const natillera = natilleraPorId(natilleraId);
+    if (!natillera || !ACCIONES.has(accion)) return ctx.answerCallbackQuery({ text: 'Ese botón ya no sirve. Escribe /reloj otra vez.' });
+    await ctx.answerCallbackQuery({ text: 'Voy…' });
+    const textos = await ejecutar(ctx, accion, natillera);
+    if (!textos.length) textos.push(`${natillera.nombre}: el reloj automático va solo.`);
+    // El último mensaje trae otra vez los botones: el siguiente paso queda a un toque.
+    for (const [i, texto] of textos.entries()) {
+      await ctx.reply(texto, i === textos.length - 1 ? { reply_markup: tecladoAcciones(natillera.natillera_id) } : undefined);
+    }
+  });
 
   return comandos;
 }
